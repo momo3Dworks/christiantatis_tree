@@ -245,7 +245,7 @@ export default function GlbSceneViewer() {
       composer.addPass(bloomPass);
 
       saoPass = new SAOPass(scene, camera, false, true);
-      saoPass.params.saoIntensity = 0.00001;
+      saoPass.params.saoIntensity = 0.00005;
       saoPass.params.saoBias = 0.003;
       saoPass.params.saoScale = 0.1;
       saoPass.params.saoKernelRadius = 10;
@@ -344,7 +344,7 @@ export default function GlbSceneViewer() {
 
 
       if (saoPass) {
-        const targetIntensity = isMoving.current ? 0 : 0.00001;
+        const targetIntensity = isMoving.current ? 0 : 0.00005;
         saoPass.params.saoIntensity = THREE.MathUtils.lerp(
           saoPass.params.saoIntensity,
           targetIntensity,

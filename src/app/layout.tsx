@@ -3,8 +3,11 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'CHRISTIANTATIS',
-  description: 'CHRISTIANTATIS',
+  title: 'CHRISTIANITATIS',
+  description: 'CHRISTIANITATIS',
+  icons: {
+    icon: [],
+  },
 };
 
 export default function RootLayout({
