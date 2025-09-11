@@ -9,6 +9,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { SAOPass } from "three/examples/jsm/postprocessing/SAOPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 type AnimatingSphere = {
   mesh: THREE.Mesh;
@@ -31,6 +32,7 @@ export default function GlbSceneViewer() {
   const clockRef = useRef(new THREE.Clock());
 
   const [hoveredObject, setHoveredObject] = useState<THREE.Object3D | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Esferas para la animación de escalado
   const animatingSpheresRef = useRef<AnimatingSphere[]>([]);
@@ -97,7 +99,8 @@ export default function GlbSceneViewer() {
     let saoPass: SAOPass;
 
     const loader = new GLTFLoader();
-    loader.load('/models/CHRISTIANTATIS_TREE.glb', (gltf) => {
+    loader.load('/models/CHRISTIANTATIS_TREE.glb', 
+    (gltf) => {
       const newModel = gltf.scene;
 
       const sphereNames = ["redBall Remeshed", "blueBall", "redBall", "blackBall", "greenBall"];
@@ -260,7 +263,12 @@ export default function GlbSceneViewer() {
         description: "El modelo del árbol ha sido cargado.",
       });
 
-    }, undefined, (error) => {
+    },
+    (xhr) => {
+        const progress = (xhr.loaded / xhr.total) * 100;
+        setLoadingProgress(progress);
+    },
+    (error) => {
       console.error('An error happened while loading the model:', error);
       toast({
           variant: "destructive",
@@ -390,7 +398,16 @@ export default function GlbSceneViewer() {
   }, []);
   
   return (
-    <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+    <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing relative">
+      {loadingProgress > 0 && loadingProgress < 100 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+          <div className="w-1/4">
+            <Progress value={loadingProgress} className="w-full" />
+            <p className="text-center mt-2 text-sm text-foreground">Loading model...</p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
     

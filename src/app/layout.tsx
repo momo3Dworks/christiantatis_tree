@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'GLB Scene Viewer',
-  description: 'View and interact with GLB models in a 3D scene.',
+  title: 'CHRISTIANTATIS',
+  description: 'CHRISTIANTATIS',
 };
 
 export default function RootLayout({
