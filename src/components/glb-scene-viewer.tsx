@@ -10,6 +10,7 @@ import { SAOPass } from "three/examples/jsm/postprocessing/SAOPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { TextureAnimator } from "@/lib/texture-animator";
 
 type AnimatingSphere = {
   mesh: THREE.Mesh;
@@ -26,7 +27,6 @@ export default function GlbSceneViewer() {
   
   const skySphereMaterialRef = useRef<THREE.MeshStandardMaterial>();
   const treeLightMaterialRef = useRef<THREE.MeshStandardMaterial>();
-  const redBallMaterialRef = useRef<THREE.MeshStandardMaterial>();
   
   const mixerRef = useRef<THREE.AnimationMixer>();
   const clockRef = useRef(new THREE.Clock());
@@ -34,9 +34,13 @@ export default function GlbSceneViewer() {
   const [hoveredObject, setHoveredObject] = useState<THREE.Object3D | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
-  // Esferas para la animación de escalado
   const animatingSpheresRef = useRef<AnimatingSphere[]>([]);
   const allSpheresRef = useRef<THREE.Mesh[]>([]);
+  const textureAnimatorsRef = useRef<TextureAnimator[]>([]);
+
+  const blueBallMaterialsRef = useRef<{blueText1: THREE.MeshStandardMaterial | null, blueText2: THREE.MeshStandardMaterial | null}>({blueText1: null, blueText2: null});
+  const redBallRemeshedMaterialsRef = useRef<{fireText1: THREE.MeshStandardMaterial | null, fireText2: THREE.MeshStandardMaterial | null}>({fireText1: null, fireText2: null});
+
 
   // =================================================================
   // CONTROLES DE EMISIÓN (Modificar aquí los valores)
@@ -45,7 +49,14 @@ export default function GlbSceneViewer() {
   const [skySphereEmissionIntensity, setSkySphereEmissionIntensity] = useState(10);
   const [treeLightEmissionColor, setTreeLightEmissionColor] = useState("#ff0000");
   const [treeLightEmissionIntensity, setTreeLightEmissionIntensity] = useState(10);
-  const [redBallEmissionIntensity, setRedBallEmissionIntensity] = useState(50);
+  
+  // Intensidades para redBall Remeshed (FireTex)
+  const [fireText1Intensity, setFireText1Intensity] = useState(10);
+  const [fireText2Intensity, setFireText2Intensity] = useState(10);
+
+  // Intensidades para blueBall (BlueText)
+  const [blueText1Intensity, setBlueText1Intensity] = useState(10);
+  const [blueText2Intensity, setBlueText2Intensity] = useState(10);
   // =================================================================
 
   const { toast } = useToast();
@@ -59,10 +70,7 @@ export default function GlbSceneViewer() {
       treeLightMaterialRef.current.emissive.set(treeLightEmissionColor);
       treeLightMaterialRef.current.emissiveIntensity = treeLightEmissionIntensity;
     }
-    if (redBallMaterialRef.current) {
-      redBallMaterialRef.current.emissiveIntensity = redBallEmissionIntensity;
-    }
-  }, [skySphereEmissionColor, skySphereEmissionIntensity, treeLightEmissionColor, treeLightEmissionIntensity, redBallEmissionIntensity]);
+  }, [skySphereEmissionColor, skySphereEmissionIntensity, treeLightEmissionColor, treeLightEmissionIntensity]);
 
 
   useEffect(() => {
@@ -74,7 +82,13 @@ export default function GlbSceneViewer() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--background').trim());
 
-    let camera: THREE.PerspectiveCamera;
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      currentMount.clientWidth / currentMount.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 8, 150);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
@@ -89,7 +103,7 @@ export default function GlbSceneViewer() {
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xdcdcdc, 0.3);
-    directionalLight.position.set(5, 10, -25);
+    directionalLight.position.set(0, 15, 50);
     directionalLight.castShadow = true;
     directionalLight.shadow.bias = -0.001; 
     scene.add(directionalLight);
@@ -103,7 +117,7 @@ export default function GlbSceneViewer() {
     (gltf) => {
       const newModel = gltf.scene;
 
-      const sphereNames = ["redBall Remeshed", "blueBall", "redBall", "blackBall", "greenBall"];
+      const sphereNames = ["redBall_Remeshed_1", "blueBall_3", "redBall_1", "blackBall_1", "greenBall_1"];
 
       newModel.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -116,16 +130,6 @@ export default function GlbSceneViewer() {
                 child.scale.set(0, 0, 0);
             }
             
-            if (child.name === "redBall Remeshed") {
-              if (child.material instanceof THREE.MeshStandardMaterial) {
-                redBallMaterialRef.current = child.material;
-                if (child.material.emissiveMap) {
-                  child.material.emissive = new THREE.Color(0xffffff);
-                } else {
-                  child.material.emissiveMap = child.material.map;
-                }
-              }
-            }
             if(child.name === "SKY_SPHERE" && Array.isArray(child.material)) {
                 const skySphereMat = child.material.find(m => m.name === "SKY_SPHERE");
                 const treeLightMat = child.material.find(m => m.name === "TREE_LIGHT");
@@ -135,6 +139,65 @@ export default function GlbSceneViewer() {
                 if (treeLightMat && treeLightMat instanceof THREE.MeshStandardMaterial) {
                     treeLightMaterialRef.current = treeLightMat;
                 }
+            }
+
+            if (child.name === 'christiantatis_tree') {
+              directionalLight.target = child;
+              directionalLight.target.updateMatrixWorld();
+            }
+
+            // Configuración de materiales emisivos para redBall Remeshed y blueBall
+            const applyEmissiveSettings = (mat: THREE.Material) => {
+                if (mat instanceof THREE.MeshStandardMaterial) {
+                    let animator: TextureAnimator | null = null;
+                    const texturesToAnimate: THREE.Texture[] = [];
+                    
+                    const textureMaps = ['map', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'normalMap', 'aoMap', 'displacementMap'];
+                    
+                    textureMaps.forEach(mapKey => {
+                        const map = mapKey as keyof THREE.MeshStandardMaterial;
+                        const texture = mat[map] as THREE.Texture | null;
+                        if (texture) {
+                            texturesToAnimate.push(texture);
+                        }
+                    });
+
+                    if (mat.alphaMap) {
+                        texturesToAnimate.push(mat.alphaMap);
+                        mat.transparent = true;
+                        mat.depthWrite = false;
+                    }
+
+                    if (texturesToAnimate.length > 0) {
+                        if (mat.name === "FireTex") {
+                            mat.emissiveIntensity = fireText1Intensity;
+                            redBallRemeshedMaterialsRef.current.fireText1 = mat;
+                            animator = new TextureAnimator(texturesToAnimate, { offsetXSpeed: 0.5, offsetYSpeed: 0.0, rotationSpeed: 0.2 });
+                        } else if (mat.name === "FireTex2") {
+                            mat.emissiveIntensity = fireText2Intensity;
+                            redBallRemeshedMaterialsRef.current.fireText2 = mat;
+                            animator = new TextureAnimator(texturesToAnimate, { offsetXSpeed: 0.6, offsetYSpeed: 0.0, rotationSpeed: 0.1 });
+                        } else if (mat.name === "BlueText") {
+                            mat.emissiveIntensity = blueText1Intensity;
+                            blueBallMaterialsRef.current.blueText1 = mat;
+                            animator = new TextureAnimator(texturesToAnimate, { offsetXSpeed: 0.5, offsetYSpeed: 0.0, rotationSpeed: 0.2 });
+                        } else if (mat.name === "BlueText2") {
+                            mat.emissiveIntensity = blueText2Intensity;
+                            blueBallMaterialsRef.current.blueText2 = mat;
+                            animator = new TextureAnimator(texturesToAnimate, { offsetXSpeed: 0.6, offsetYSpeed: 0.0, rotationSpeed: 0.1 });
+                        }
+                    }
+
+                    if (animator) {
+                        textureAnimatorsRef.current.push(animator);
+                    }
+                }
+            };
+            
+            if (Array.isArray(child.material)) {
+                child.material.forEach(applyEmissiveSettings);
+            } else if (child.material) {
+                applyEmissiveSettings(child.material);
             }
         }
       });
@@ -147,13 +210,10 @@ export default function GlbSceneViewer() {
         treeLightMaterialRef.current.emissive.set(treeLightEmissionColor);
         treeLightMaterialRef.current.emissiveIntensity = treeLightEmissionIntensity;
       }
-      if (redBallMaterialRef.current) {
-        redBallMaterialRef.current.emissiveIntensity = redBallEmissionIntensity;
-      }
 
       // Set model transform in code
-      newModel.position.set(0, -2, 0);
-      newModel.rotation.set(0, 0, 0);
+      newModel.position.set(0, -2, 40);
+      newModel.rotation.set(6, 0, 0);
       newModel.scale.set(0.5, 0.5, 0.5);
 
       scene.add(newModel);
@@ -161,12 +221,28 @@ export default function GlbSceneViewer() {
       // Handle animations
       if (gltf.animations && gltf.animations.length) {
         mixerRef.current = new THREE.AnimationMixer(newModel);
-        const treeGrowClip = THREE.AnimationClip.findByName(gltf.animations, 'treeGrow');
-        if (treeGrowClip) {
-          const treeGrowAction = mixerRef.current.clipAction(treeGrowClip);
-          treeGrowAction.setLoop(THREE.LoopOnce, 1);
-          treeGrowAction.clampWhenFinished = true;
-          
+        
+        const animationMap: { [key: string]: string } = {
+          'treeGrow': 'christiantatis_tree',
+          'OrangeBall': 'redBall_Remeshed_1',
+          'BlueBall': 'blueBall_3',
+          'RedBall': 'redBall_1',
+          'BlackBall': 'blackBall_1',
+          'GreenBall': 'greenBall_1',
+        };
+        const clipsToPlay = gltf.animations.filter(clip => Object.keys(animationMap).some(name => clip.name.includes(name)));
+        const actions: THREE.AnimationAction[] = [];
+
+        clipsToPlay.forEach(clip => {
+            const action = mixerRef.current!.clipAction(clip);
+            action.setLoop(THREE.LoopOnce, 1);
+            action.clampWhenFinished = true;
+            actions.push(action);
+        });
+
+        const treeGrowAction = actions.find(action => action.getClip().name.includes('treeGrow'));
+
+        if (treeGrowAction) {
           mixerRef.current.addEventListener('finished', (e) => {
             if (e.action === treeGrowAction) {
               if (rendererRef.current) {
@@ -184,51 +260,26 @@ export default function GlbSceneViewer() {
                });
             }
           });
-
-          setTimeout(() => {
-            treeGrowAction.play();
-          }, 1000);
         }
+        
+        setTimeout(() => {
+          actions.forEach(action => action.play());
+        }, 1000);
+
       } else {
         // If there's no animation, bake shadows right away.
         if (rendererRef.current) {
           rendererRef.current.shadowMap.needsUpdate = true;
         }
       }
-
-      let glbCamera: THREE.PerspectiveCamera | undefined;
-      gltf.cameras.forEach((cam) => {
-        if (cam instanceof THREE.PerspectiveCamera) {
-          if (!glbCamera) {
-             glbCamera = cam;
-          }
-        }
-      });
-
-      if (glbCamera) {
-        camera = glbCamera;
-        camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
-        camera.updateProjectionMatrix();
-        toast({
-          title: "Cámara del modelo cargada",
-          description: "Usando la cámara encontrada en el archivo GLB.",
-        });
-      } else {
-        camera = new THREE.PerspectiveCamera(
-          75,
-          currentMount.clientWidth / currentMount.clientHeight,
-          0.1,
-          1000
-        );
-        camera.position.set(0, 8, 25);
-      }
       
       controls = new OrbitControls(camera, renderer.domElement);
+      controls.enabled = false; // Bloquear la cámara
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.screenSpacePanning = false;
-      controls.minDistance = 1;
-      controls.maxDistance = 500;
+      controls.minDistance = 15;
+      controls.maxDistance = 50;
       controls.maxPolarAngle = Math.PI;
 
       // Post-processing
@@ -238,9 +289,9 @@ export default function GlbSceneViewer() {
 
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(currentMount.clientWidth, currentMount.clientHeight),
-        0.4, // strength
+        0.2, // strength
         0.3, // radius
-        1.0 // threshold
+        10.0 // threshold
       );
       composer.addPass(bloomPass);
 
@@ -275,8 +326,6 @@ export default function GlbSceneViewer() {
           title: "Error de Carga",
           description: "No se pudo cargar el modelo GLB.",
       });
-      camera = new THREE.PerspectiveCamera( 75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-      camera.position.z = 5;
       controls = new OrbitControls(camera, renderer.domElement);
     });
 
@@ -284,10 +333,35 @@ export default function GlbSceneViewer() {
     const mouse = new THREE.Vector2();
 
     const onPointerMove = (event: MouseEvent) => {
-        if (!currentMount) return;
+        if (!currentMount || !camera) return;
         const rect = currentMount.getBoundingClientRect();
         mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        
+        const intersects = raycaster.intersectObjects(scene.children, true);
+
+        let foundMesh: THREE.Object3D | null = null;
+        if (intersects.length > 0) {
+            let intersect = intersects[0].object;
+            const ignoreNames = ["christiantatis_tree", "GROUND", "SKY_SPHERE"];
+            
+            if (!ignoreNames.includes(intersect.name)) {
+                console.log("Intersected object:", intersect.name);
+            }
+
+            // Traverse up to find the main interactive mesh
+            const interactiveNames = ["redBall_Remeshed_1", "blueBall_3", "blackBall_1"];
+            while(intersect.parent && !interactiveNames.includes(intersect.name)) {
+                intersect = intersect.parent;
+            }
+            if (interactiveNames.includes(intersect.name)) {
+              foundMesh = intersect;
+            }
+        }
+        
+        setHoveredObject(foundMesh);
     };
     window.addEventListener('pointermove', onPointerMove);
 
@@ -302,6 +376,9 @@ export default function GlbSceneViewer() {
         mixerRef.current.update(delta);
       }
 
+      // Actualizar animadores de textura
+      textureAnimatorsRef.current.forEach(animator => animator.update(delta));
+
       // Animación de escalado de esferas
       animatingSpheresRef.current.forEach(sphere => {
         const timeSinceStart = elapsedTime - sphere.startTime;
@@ -313,33 +390,49 @@ export default function GlbSceneViewer() {
       });
 
       if (controls) controls.update();
+      
+      // Animation for hovered objects
+      const redBallMesh = allSpheresRef.current.find(m => m.name === "redBall_Remeshed_1");
+      const blueBallMesh = allSpheresRef.current.find(m => m.name === "blueBall_3");
+      const blackBallMesh = allSpheresRef.current.find(m => m.name === "blackBall_1");
 
-      // Raycasting for hover
-      const redBallMesh = allSpheresRef.current.find(m => m.name === "redBall Remeshed");
-      if (camera && redBallMesh) {
-          raycaster.setFromCamera(mouse, camera);
-          const intersects = raycaster.intersectObjects(scene.children, true);
-          const found = intersects.find(intersect => intersect.object === redBallMesh || (intersect.object.parent && intersect.object.parent === redBallMesh));
+      const handleHoverAnimation = (mesh: THREE.Mesh | undefined, isHovered: boolean, scaleFactor = 1.1) => {
+        if (!mesh) return;
+        const isGrowing = animatingSpheresRef.current.some(s => s.mesh === mesh && s.mesh.scale.x < 1);
+        
+        const targetScale = isHovered ? scaleFactor : 1.0;
+        
+        if (!isGrowing) {
+            mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+        }
 
-          if (found) {
-              setHoveredObject(redBallMesh);
-          } else {
-              setHoveredObject(null);
-          }
+        if (isHovered) {
+          mesh.rotation.y += 0.02;
+        }
+      }
+
+      handleHoverAnimation(redBallMesh, hoveredObject === redBallMesh);
+      handleHoverAnimation(blueBallMesh, hoveredObject === blueBallMesh);
+      handleHoverAnimation(blackBallMesh, hoveredObject === blackBallMesh, 1.3);
+
+      // Emission intensity for blueBall hover
+      if (blueBallMaterialsRef.current.blueText1 && blueBallMaterialsRef.current.blueText2) {
+          const isBlueHovered = hoveredObject === blueBallMesh;
+          const targetIntensity1 = isBlueHovered ? blueText1Intensity * 1.3 : blueText1Intensity;
+          const targetIntensity2 = isBlueHovered ? blueText2Intensity * 1.3 : blueText2Intensity;
+
+          blueBallMaterialsRef.current.blueText1.emissiveIntensity = THREE.MathUtils.lerp(blueBallMaterialsRef.current.blueText1.emissiveIntensity, targetIntensity1, 0.1);
+          blueBallMaterialsRef.current.blueText2.emissiveIntensity = THREE.MathUtils.lerp(blueBallMaterialsRef.current.blueText2.emissiveIntensity, targetIntensity2, 0.1);
       }
       
-      // Animation for hovered object
-      if (redBallMesh) {
-        const targetScale = hoveredObject === redBallMesh ? 1.1 : 1;
-        // Solo aplicar lerp si la animación de aparición ha terminado
-        const isAnimating = animatingSpheresRef.current.some(s => s.mesh === redBallMesh && s.mesh.scale.x < 1);
-        if (!isAnimating) {
-          redBallMesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
-        }
+      // Emission intensity for redBall Remeshed hover
+      if (redBallRemeshedMaterialsRef.current.fireText1 && redBallRemeshedMaterialsRef.current.fireText2) {
+          const isRedHovered = hoveredObject === redBallMesh;
+          const targetIntensity1 = isRedHovered ? fireText1Intensity * 1.3 : fireText1Intensity;
+          const targetIntensity2 = isRedHovered ? fireText2Intensity * 1.3 : fireText2Intensity;
 
-        if(hoveredObject === redBallMesh) {
-          redBallMesh.rotation.y += 0.02;
-        }
+          redBallRemeshedMaterialsRef.current.fireText1.emissiveIntensity = THREE.MathUtils.lerp(redBallRemeshedMaterialsRef.current.fireText1.emissiveIntensity, targetIntensity1, 0.1);
+          redBallRemeshedMaterialsRef.current.fireText2.emissiveIntensity = THREE.MathUtils.lerp(redBallRemeshedMaterialsRef.current.fireText2.emissiveIntensity, targetIntensity2, 0.1);
       }
 
 
@@ -354,18 +447,17 @@ export default function GlbSceneViewer() {
 
       if (composer) {
         composer.render();
-      } else if (camera) {
+      } else {
         renderer.render(scene, camera);
       }
     };
     animate();
 
     const handleResize = () => {
+      if (!currentMount || !camera || !renderer) return;
       const { clientWidth, clientHeight } = currentMount;
-      if (camera) {
-        camera.aspect = clientWidth / clientHeight;
-        camera.updateProjectionMatrix();
-      }
+      camera.aspect = clientWidth / clientHeight;
+      camera.updateProjectionMatrix();
       renderer.setSize(clientWidth, clientHeight);
       if (composer) {
         composer.setSize(clientWidth, clientHeight);
@@ -398,7 +490,7 @@ export default function GlbSceneViewer() {
   }, []);
   
   return (
-    <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing relative">
+    <div ref={mountRef} className="w-full h-full cursor-default relative">
       {loadingProgress > 0 && loadingProgress < 100 && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="w-1/4">
@@ -410,4 +502,3 @@ export default function GlbSceneViewer() {
     </div>
   );
 }
-    
