@@ -35,10 +35,10 @@ export default function Header() {
               <Menu />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl border-white/30 dark:border-gray-700/30 shadow-xl" align="start">
+          <DropdownMenuContent className="w-[calc(100vw-3rem)] md:w-56 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl border-white/30 dark:border-gray-700/30 shadow-xl" align="start">
             {navigationLinks.map((link) => (
               <DropdownMenuItem key={link.href} asChild>
-                <Link href={link.href} className="flex items-center gap-2 text-black dark:text-white cursor-pointer">
+                <Link href={link.href} className="flex items-center gap-2 text-black dark:text-white cursor-pointer text-xl md:text-sm py-4">
                   {link.icon}
                   <span>{link.label}</span>
                 </Link>
