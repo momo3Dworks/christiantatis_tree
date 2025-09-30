@@ -13,19 +13,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { TextureAnimator } from "@/lib/texture-animator";
 import TWEEN from '@tweenjs/tween.js';
+import { Button } from "@/components/ui/button";
 
 type MaterialRefs = {
   [materialName: string]: THREE.MeshStandardMaterial | null;
 };
+
+const INTERACTIVE_MESH_NAMES = ["orangeBall", "blueBall", "redBall", "blackBall", "greenBall"];
 
 const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const animationFrameId = useRef<number>();
   const isMoving = useRef(false);
+  const controlsRef = useRef<OrbitControls>();
   
   const mixerRef = useRef<THREE.AnimationMixer>();
   const clockRef = useRef(new THREE.Clock());
+
+  const [isFaded, setIsFaded] = useState(false);
+  const [showReturnButton, setShowReturnButton] = useState(false);
+  const fadeOverlayOpacity = useRef({ value: 0 }).current;
+  const initialCameraPosition = useRef<THREE.Vector3>(new THREE.Vector3());
+  const initialControlsTarget = useRef<THREE.Vector3>(new THREE.Vector3());
 
   const [hoveredObject, setHoveredObject] = useState<THREE.Object3D | null>(null);
   const previouslyHoveredObject = useRef<THREE.Object3D | null>(null);
@@ -36,7 +46,8 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const materialRefs = useRef<MaterialRefs>({});
   const sphereMeshesRef = useRef<THREE.Mesh[]>([]);
 
-  // =================================================================
+  // ... (material state variables remain the same)
+    // =================================================================
   // CONTROLES DE MATERIALES (Modificar aquí los valores)
   // =================================================================
   
@@ -84,7 +95,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const [GreenBallGlass_color, setGreenBallGlass_color] = useState("#ffffff");
   const [GreenBallGlass_opacity, setGreenBallGlass_opacity] = useState(1);
   // =================================================================
-  
+
   const { toast } = useToast();
 
   const emissionIntensityConfig: { [key: string]: number } = {
@@ -165,45 +176,18 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     GreenBallGlass_opacity,
   ]);
 
+
   useEffect(() => {
     if (previouslyHoveredObject.current && previouslyHoveredObject.current !== hoveredObject) {
       new TWEEN.Tween(previouslyHoveredObject.current.scale)
-        .to({ x: 1, y: 1, z: 1 }, 700)
+        .to({ x: 1, y: 1, z: 1 }, 500)
         .easing(TWEEN.Easing.Cubic.InOut)
         .start();
     }
 
-    if (hoveredObject && hoveredObject.name === 'orangeBall') {
+    if (hoveredObject && INTERACTIVE_MESH_NAMES.includes(hoveredObject.name)) {
       new TWEEN.Tween(hoveredObject.scale)
-        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
-    }
-
-    if (hoveredObject && hoveredObject.name === 'blueBall') {
-      new TWEEN.Tween(hoveredObject.scale)
-        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
-    }
-
-    if (hoveredObject && hoveredObject.name === 'redBall') {
-      new TWEEN.Tween(hoveredObject.scale)
-        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
-    }
-
-    if (hoveredObject && hoveredObject.name === 'blackBall') {
-      new TWEEN.Tween(hoveredObject.scale)
-        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
-    }
-
-    if (hoveredObject && hoveredObject.name === 'greenBall') {
-      new TWEEN.Tween(hoveredObject.scale)
-        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
+        .to({ x: 1.3, y: 1.3, z: 1.3 }, 500)
         .easing(TWEEN.Easing.Cubic.InOut)
         .start();
     }
@@ -228,6 +212,8 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       1000
     );
     camera.position.set(0, 8, 150);
+    initialCameraPosition.current.copy(camera.position);
+
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
@@ -247,7 +233,6 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     directionalLight.shadow.bias = -0.001; 
     scene.add(directionalLight);
     
-    let controls: OrbitControls;
     let composer: EffectComposer;
     let saoPass: SAOPass;
 
@@ -256,11 +241,10 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     (gltf) => {
       const newModel = gltf.scene;
       const sphereMaterials = ['orangeBall', 'ballBall', 'RedBallGlass', 'BlackBallGlass', 'GreenBallGlass'];
-      const sphereMeshNames = ["orangeBall", "blueBall", "redBall", "blackBall", "greenBall"];
 
       newModel.traverse((child) => {
         if (child instanceof THREE.Mesh) {
-            if (sphereMeshNames.some(name => child.name.includes(name))) {
+            if (INTERACTIVE_MESH_NAMES.some(name => child.name.includes(name))) {
                 sphereMeshesRef.current.push(child);
                 child.scale.set(0, 0, 0); // Set initial scale to 0
             }
@@ -319,7 +303,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
                         mat.depthWrite = false;
                     }
                     
-                    const isSphereMaterial = sphereMeshNames.some(name => child.name.includes(name));
+                    const isSphereMaterial = INTERACTIVE_MESH_NAMES.some(name => child.name.includes(name));
 
                     if (texturesToAnimate.length > 0 && (isSphereMaterial || mat.name.toLowerCase().includes('tex') || mat.name.toLowerCase().includes('text'))) {
                          const animator = new TextureAnimator(texturesToAnimate, { offsetXSpeed: 0.5, offsetYSpeed: 0.0, rotationSpeed: 0.2 });
@@ -405,7 +389,10 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
         }
       }
       
-      controls = new OrbitControls(camera, renderer.domElement);
+      controlsRef.current = new OrbitControls(camera, renderer.domElement);
+      const controls = controlsRef.current;
+      initialControlsTarget.current.copy(controls.target);
+
       controls.enabled = false;
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
@@ -457,7 +444,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
           title: "Error de Carga",
           description: "No se pudo cargar el modelo GLB.",
       });
-      controls = new OrbitControls(camera, renderer.domElement);
+      controlsRef.current = new OrbitControls(camera, renderer.domElement);
     });
 
     const raycaster = new THREE.Raycaster();
@@ -477,23 +464,68 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
         if (intersects.length > 0) {
             let intersect = intersects[0].object;
             
-            const interactiveNames = ["orangeBall", "blueBall", "redBall", "blackBall", "greenBall"];
-            
             // Traverse up to find the main sphere group if intersected a child mesh
             let parent = intersect;
-            while(parent.parent && !interactiveNames.includes(parent.name)) {
+            while(parent.parent && !INTERACTIVE_MESH_NAMES.includes(parent.name)) {
                 parent = parent.parent;
             }
 
-            if (interactiveNames.includes(parent.name)) {
+            if (INTERACTIVE_MESH_NAMES.includes(parent.name)) {
               foundMesh = parent;
-              console.log("Intersected object:", parent.name);
             }
         }
         
         setHoveredObject(foundMesh);
     };
     window.addEventListener('pointermove', onPointerMove);
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (isFaded) return;
+      if (!currentMount || !camera) return;
+      const rect = currentMount.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      if (intersects.length > 0) {
+          let intersect = intersects[0].object;
+          
+          let parent = intersect;
+          while(parent.parent && !INTERACTIVE_MESH_NAMES.includes(parent.name)) {
+              parent = parent.parent;
+          }
+
+          if (INTERACTIVE_MESH_NAMES.includes(parent.name)) {
+            console.log("Clicked on:", parent.name);
+            const targetPosition = new THREE.Vector3();
+            parent.getWorldPosition(targetPosition);
+            
+            let yOffset = 0;
+            if (parent.name === 'orangeBall') yOffset = 0.3;
+
+            setIsFaded(true);
+
+            new TWEEN.Tween(camera.position)
+              .to({ x: targetPosition.x, y: targetPosition.y + yOffset, z: targetPosition.z - 1 }, 1500)
+              .easing(TWEEN.Easing.Cubic.InOut)
+              .onComplete(() => {
+                setShowReturnButton(true);
+              })
+              .start();
+
+            new TWEEN.Tween(fadeOverlayOpacity)
+              .to({ value: 1 }, 1500)
+              .easing(TWEEN.Easing.Cubic.InOut)
+              .start();
+
+          
+          }
+      }
+    };
+    window.addEventListener('pointerdown', onPointerDown);
 
 
     const animate = () => {
@@ -509,7 +541,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
       textureAnimatorsRef.current.forEach(animator => animator.update(delta));
 
-      if (controls) controls.update();
+      if (controlsRef.current) controlsRef.current.update();
       
       if (saoPass) {
         const targetIntensity = isMoving.current ? 0 : 0.00005;
@@ -548,11 +580,13 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       if(animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerdown', onPointerDown);
       if (currentMount && renderer.domElement) {
         currentMount.removeChild(renderer.domElement);
       }
       renderer.dispose();
-      if (controls) {
+      if (controlsRef.current) {
+        const controls = controlsRef.current;
         controls.removeEventListener('start', () => {});
         controls.removeEventListener('end', () => {});
         controls.dispose();
@@ -564,14 +598,55 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
+  const handleReturnClick = () => {
+    setShowReturnButton(false);
+
+    new TWEEN.Tween(fadeOverlayOpacity)
+      .to({ value: 0 }, 1500)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .onComplete(() => {
+        setIsFaded(false);
+      })
+      .start();
+
+      if (controlsRef.current) {
+        new TWEEN.Tween(controlsRef.current.object.position)
+            .to(initialCameraPosition.current, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        new TWEEN.Tween(controlsRef.current.target)
+            .to(initialControlsTarget.current, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+    }
+  }
+
   return (
     <div ref={mountRef} className="w-full h-full cursor-default relative">
       {loadingProgress > 0 && loadingProgress < 100 && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
           <div className="w-1/4">
             <Progress value={loadingProgress} className="w-full" />
             <p className="text-center mt-2 text-sm text-foreground">Loading model...</p>
           </div>
+        </div>
+      )}
+       {isFaded && (
+        <div 
+          className="absolute inset-0 bg-gray-800/70 backdrop-blur-[5px] z-10"
+          style={{ opacity: fadeOverlayOpacity.value }}
+        >
+          {showReturnButton && (
+             <div className="absolute inset-0 flex items-center justify-center">
+                <Button 
+                    onClick={handleReturnClick}
+                    className="bg-sidebar text-sidebar-foreground hover:bg-sidebar/90"
+                >
+                    Return
+                </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
