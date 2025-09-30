@@ -28,6 +28,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const clockRef = useRef(new THREE.Clock());
 
   const [hoveredObject, setHoveredObject] = useState<THREE.Object3D | null>(null);
+  const previouslyHoveredObject = useRef<THREE.Object3D | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   const textureAnimatorsRef = useRef<TextureAnimator[]>([]);
@@ -52,7 +53,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const [treeLight_roughness, setTreeLight_roughness] = useState(1);
   const [treeLight_metalness, setTreeLight_metalness] = useState(0);
   
-  // redBall Remeshed
+  // orangeBall
   const [fireTexIntensity, setFireTexIntensity] = useState(0.5);
   const [fireTex2Intensity, setFireTex2Intensity] = useState(5);
   const [orangeBall_color, setOrangeBall_color] = useState("#ffffff");
@@ -164,6 +165,52 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     GreenBallGlass_opacity,
   ]);
 
+  useEffect(() => {
+    if (previouslyHoveredObject.current && previouslyHoveredObject.current !== hoveredObject) {
+      new TWEEN.Tween(previouslyHoveredObject.current.scale)
+        .to({ x: 1, y: 1, z: 1 }, 700)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
+
+    if (hoveredObject && hoveredObject.name === 'orangeBall') {
+      new TWEEN.Tween(hoveredObject.scale)
+        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
+
+    if (hoveredObject && hoveredObject.name === 'blueBall') {
+      new TWEEN.Tween(hoveredObject.scale)
+        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
+
+    if (hoveredObject && hoveredObject.name === 'redBall') {
+      new TWEEN.Tween(hoveredObject.scale)
+        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
+
+    if (hoveredObject && hoveredObject.name === 'blackBall') {
+      new TWEEN.Tween(hoveredObject.scale)
+        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
+
+    if (hoveredObject && hoveredObject.name === 'greenBall') {
+      new TWEEN.Tween(hoveredObject.scale)
+        .to({ x: 1.3, y: 1.3, z: 1.3 }, 350)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+    }
+
+    previouslyHoveredObject.current = hoveredObject;
+  }, [hoveredObject]);
+
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -209,7 +256,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     (gltf) => {
       const newModel = gltf.scene;
       const sphereMaterials = ['orangeBall', 'ballBall', 'RedBallGlass', 'BlackBallGlass', 'GreenBallGlass'];
-      const sphereMeshNames = ["redBall Remeshed", "blueBall", "redBall", "blackBall", "greenBall"];
+      const sphereMeshNames = ["orangeBall", "blueBall", "redBall", "blackBall", "greenBall"];
 
       newModel.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -430,7 +477,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
         if (intersects.length > 0) {
             let intersect = intersects[0].object;
             
-            const interactiveNames = ["redBall Remeshed", "blueBall", "redBall", "blackBall", "greenBall"];
+            const interactiveNames = ["orangeBall", "blueBall", "redBall", "blackBall", "greenBall"];
             
             // Traverse up to find the main sphere group if intersected a child mesh
             let parent = intersect;
