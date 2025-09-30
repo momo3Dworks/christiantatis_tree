@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
-export default function ForumPage() {
+const ForumPage = React.memo(function ForumPage() {
   return (
     <div className="min-h-screen text-black flex items-center justify-center">
       <div className="text-center p-8">
@@ -18,4 +19,6 @@ export default function ForumPage() {
       </div>
     </div>
   );
-}
+});
+
+export default ForumPage;

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import React from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -48,7 +49,7 @@ const subjectOptions = [
   "Other"
 ];
 
-export default function ContactPage() {
+const ContactPage = React.memo(function ContactPage() {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -150,4 +151,6 @@ export default function ContactPage() {
       </div>
     </div>
   );
-}
+});
+
+export default ContactPage;

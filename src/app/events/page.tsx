@@ -1,6 +1,7 @@
 import { Calendar } from "lucide-react";
+import React from "react";
 
-export default function EventsPage() {
+const EventsPage = React.memo(function EventsPage() {
   return (
     <div className="min-h-screen text-black pt-24">
       <div className="container mx-auto px-4">
@@ -34,4 +35,6 @@ export default function EventsPage() {
       </div>
     </div>
   );
-}
+});
+
+export default EventsPage;

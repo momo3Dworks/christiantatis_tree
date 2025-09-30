@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import React from "react";
 
 const faqs = [
   {
@@ -28,7 +29,7 @@ const faqs = [
   },
 ];
 
-export default function FaqPage() {
+const FaqPage = React.memo(function FaqPage() {
   return (
     <div className="min-h-screen text-black pt-24">
       <div className="container mx-auto px-4 max-w-3xl">
@@ -53,4 +54,6 @@ export default function FaqPage() {
       </div>
     </div>
   );
-}
+});
+
+export default FaqPage;

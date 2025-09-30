@@ -22,20 +22,30 @@ const navigationLinks = [
   { href: "/contact", label: "Contact Us", icon: <Mail /> },
 ];
 
-export default function Header() {
+const Header = React.memo(function Header() {
   const { setTheme, theme } = useTheme();
   const [isHovering, setIsHovering] = useState(false);
 
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl z-50">
-      <div className="h-[60px] rounded-[2rem] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm shadow-lg flex items-center justify-between px-6">
+      <div 
+        className="navBarAnimation h-[60px] rounded-[2rem] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm shadow-lg flex items-center justify-between px-6"
+        style={{
+          background: 'linear-gradient(90deg, rgba(230, 248, 255, 0.2) 0%, rgba(36, 197, 255, 0.07) 25%, rgba(255, 0, 0, 0.12) 50%, rgba(59, 212, 25, 0.12) 75%, rgba(230, 230, 230, 0.21) 100%)',
+          backgroundSize: '200% 200%',
+          animation: 'gradient-animation 15s ease-in-out infinite'
+        }}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="text-black dark:text-white">
               <Menu />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[calc(100vw-3rem)] md:w-56 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl border-white/30 dark:border-gray-700/30 shadow-xl" align="start">
+          <DropdownMenuContent 
+            className="w-[calc(100vw-3rem)] md:w-56 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl border-white/30 dark:border-gray-700/30 shadow-xl" 
+            align="start"
+          >
             {navigationLinks.map((link) => (
               <DropdownMenuItem key={link.href} asChild>
                 <Link href={link.href} className="flex items-center gap-2 text-black dark:text-white cursor-pointer text-xl md:text-sm py-4">
@@ -69,4 +79,6 @@ export default function Header() {
       </div>
     </header>
   );
-}
+});
+
+export default Header;

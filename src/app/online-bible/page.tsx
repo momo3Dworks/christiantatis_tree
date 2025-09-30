@@ -1,4 +1,6 @@
-export default function OnlineBiblePage() {
+import React from "react";
+
+const OnlineBiblePage = React.memo(function OnlineBiblePage() {
   return (
     <div className="min-h-screen flex flex-col pt-20 bg-gray-900">
       <div className="text-center mb-8 px-4">
@@ -12,4 +14,6 @@ export default function OnlineBiblePage() {
       ></iframe>
     </div>
   );
-}
+});
+
+export default OnlineBiblePage;

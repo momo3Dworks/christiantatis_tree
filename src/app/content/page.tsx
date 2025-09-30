@@ -1,6 +1,7 @@
 import { Youtube, Podcast } from "lucide-react";
+import React from "react";
 
-export default function ContentPage() {
+const ContentPage = React.memo(function ContentPage() {
   return (
     <div className="min-h-screen text-black pt-24">
       <div className="container mx-auto px-4">
@@ -51,4 +52,6 @@ export default function ContentPage() {
       </div>
     </div>
   );
-}
+});
+
+export default ContentPage;

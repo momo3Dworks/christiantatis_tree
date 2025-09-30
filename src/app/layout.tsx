@@ -16,12 +16,14 @@ const metadata: Metadata = {
   },
 };
 
-const HeaderPlaceholder = () => (
-  <header className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl z-50">
-      <div className="h-[60px] rounded-[2rem] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm shadow-lg flex items-center justify-between px-6">
-      </div>
-  </header>
-);
+const HeaderPlaceholder = React.memo(function HeaderPlaceholder() {
+  return (
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl z-50">
+        <div className="h-[60px] rounded-[2rem] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm shadow-lg flex items-center justify-between px-6">
+        </div>
+    </header>
+  );
+});
 
 
 export default function RootLayout({
