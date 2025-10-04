@@ -22,6 +22,21 @@ type MaterialRefs = {
 
 const INTERACTIVE_MESH_NAMES = ["orangeBall", "blueBall", "redBall", "blackBall", "greenBall"];
 
+// Helper function to get materials from an object
+const getMaterials = (object: THREE.Object3D): THREE.MeshStandardMaterial[] => {
+    const materials: THREE.MeshStandardMaterial[] = [];
+    object.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+            if (Array.isArray(child.material)) {
+                materials.push(...child.material as THREE.MeshStandardMaterial[]);
+            } else {
+                materials.push(child.material as THREE.MeshStandardMaterial);
+            }
+        }
+    });
+    return materials;
+};
+
 const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer>();
@@ -47,8 +62,8 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
   const materialRefs = useRef<MaterialRefs>({});
   const sphereMeshesRef = useRef<THREE.Mesh[]>([]);
+  const initialEmissionIntensityRef = useRef<Map<THREE.Material, number>>(new Map());
 
-  // ... (material state variables remain the same)
     // =================================================================
   // CONTROLES DE MATERIALES (Modificar aquí los valores)
   // =================================================================
@@ -184,21 +199,45 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
   useEffect(() => {
     if (previouslyHoveredObject.current && previouslyHoveredObject.current !== hoveredObject) {
-      new TWEEN.Tween(previouslyHoveredObject.current.scale)
-        .to({ x: 1, y: 1, z: 1 }, 500)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
+        new TWEEN.Tween(previouslyHoveredObject.current.scale)
+            .to({ x: 1, y: 1, z: 1 }, 500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        const materials = getMaterials(previouslyHoveredObject.current);
+        materials.forEach(material => {
+            if (material.emissiveMap) {
+                const initialIntensity = initialEmissionIntensityRef.current.get(material) || 0;
+                new TWEEN.Tween(material)
+                    .to({ emissiveIntensity: initialIntensity }, 500)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+            }
+        });
     }
 
     if (hoveredObject && INTERACTIVE_MESH_NAMES.includes(hoveredObject.name)) {
-      new TWEEN.Tween(hoveredObject.scale)
-        .to({ x: 1.3, y: 1.3, z: 1.3 }, 500)
-        .easing(TWEEN.Easing.Cubic.InOut)
-        .start();
+        new TWEEN.Tween(hoveredObject.scale)
+            .to({ x: 1.3, y: 1.3, z: 1.3 }, 500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        const materials = getMaterials(hoveredObject);
+        materials.forEach(material => {
+            if (material.emissiveMap) {
+                if (!initialEmissionIntensityRef.current.has(material)) {
+                    initialEmissionIntensityRef.current.set(material, material.emissiveIntensity);
+                }
+                new TWEEN.Tween(material)
+                    .to({ emissiveIntensity: material.emissiveIntensity * 5 }, 500)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+            }
+        });
     }
 
     previouslyHoveredObject.current = hoveredObject;
-  }, [hoveredObject]);
+}, [hoveredObject]);
 
 
   useEffect(() => {
