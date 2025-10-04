@@ -29,7 +29,7 @@ const Header = React.memo(function Header() {
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-4xl z-50">
       <div 
-        className="navBarAnimation h-[60px] rounded-[2rem] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm shadow-lg flex items-center justify-between px-6"
+        className="navBarAnimation h-[60px] rounded-[2rem] bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm shadow-lg flex items-center justify-between px-6 "
         style={{
           background: 'linear-gradient(90deg, rgba(230, 248, 255, 0.2) 0%, rgba(36, 197, 255, 0.07) 25%, rgba(255, 0, 0, 0.12) 50%, rgba(59, 212, 25, 0.12) 75%, rgba(230, 230, 230, 0.21) 100%)',
           backgroundSize: '200% 200%',

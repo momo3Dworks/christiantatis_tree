@@ -3,7 +3,8 @@
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
@@ -27,6 +28,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const animationFrameId = useRef<number>();
   const isMoving = useRef(false);
   const controlsRef = useRef<OrbitControls>();
+  const gltfRef = useRef<GLTF>();
   
   const mixerRef = useRef<THREE.AnimationMixer>();
   const clockRef = useRef(new THREE.Clock());
@@ -53,44 +55,46 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   
   // SKY_SPHERE & TREE_LIGHT
   const [skySphere_emissionColor, setSkySphere_emissionColor] = useState("#ffffff");
-  const [skySphere_emissionIntensity, setSkySphere_emissionIntensity] = useState(0.3);
+  const [skySphere_emissionIntensity, setSkySphere_emissionIntensity] = useState(0.0);
   const [skySphere_color, setSkySphere_color] = useState("#dcdcdc");
   const [skySphere_roughness, setSkySphere_roughness] = useState(1);
   const [skySphere_metalness, setSkySphere_metalness] = useState(0);
 
   const [treeLight_emissionColor, setTreeLight_emissionColor] = useState("#ffffff");
-  const [treeLight_emissionIntensity, setTreeLight_emissionIntensity] = useState(5);
+  const [treeLight_emissionIntensity, setTreeLight_emissionIntensity] = useState(2);
   const [treeLight_color, setTreeLight_color] = useState("#ffffff");
   const [treeLight_roughness, setTreeLight_roughness] = useState(1);
   const [treeLight_metalness, setTreeLight_metalness] = useState(0);
+
+  const [barkCrhistiantatis_emissionIntensity, setBarkCrhistiantatis_emissionIntensity] = useState(1);
   
   // orangeBall
-  const [fireTexIntensity, setFireTexIntensity] = useState(0.5);
+  const [fireTexIntensity, setFireTexIntensity] = useState(0.3);
   const [fireTex2Intensity, setFireTex2Intensity] = useState(5);
   const [orangeBall_color, setOrangeBall_color] = useState("#ffffff");
   const [orangeBall_opacity, setOrangeBall_opacity] = useState(1);
 
 
   // blueBall
-  const [blueTextIntensity, setBlueTextIntensity] = useState(1.5);
-  const [blueText2Intensity, setBlueText2Intensity] = useState(30);
+  const [blueTextIntensity, setBlueTextIntensity] = useState(0.8);
+  const [blueText2Intensity, setBlueText2Intensity] = useState(5);
   const [ballBall_color, setBallBall_color] = useState("#ffffff");
   const [ballBall_opacity, setBallBall_opacity] = useState(1);
 
   // redBall
-  const [redText01Intensity, setRedText01Intensity] = useState(1.5);
+  const [redText01Intensity, setRedText01Intensity] = useState(2);
   const [redText02Intensity, setRedText02Intensity] = useState(3);
   const [redBallGlass_color, setRedBallGlass_color] = useState("#ffffff");
   const [redBallGlass_opacity, setRedBallGlass_opacity] = useState(1);
 
   // blackBall
-  const [blackText01Intensity, setBlackText01Intensity] = useState(1.5);
-  const [blackText02Intensity, setBlackText02Intensity] = useState(30);
+  const [blackText01Intensity, setBlackText01Intensity] = useState(0.3);
+  const [blackText02Intensity, setBlackText02Intensity] = useState(3);
   const [blackBallGlass_color, setBlackBallGlass_color] = useState("#ffffff");
   const [blackBallGlass_opacity, setBlackBallGlass_opacity] = useState(1);
 
   // greenBall
-  const [greenText01Intensity, setGreenText01Intensity] = useState(1);
+  const [greenText01Intensity, setGreenText01Intensity] = useState(0.3);
   const [greenText02Intensity, setGreenText02Intensity] = useState(3);
   const [GreenBallGlass_color, setGreenBallGlass_color] = useState("#ffffff");
   const [GreenBallGlass_opacity, setGreenBallGlass_opacity] = useState(1);
@@ -109,6 +113,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     BlackText02: blackText02Intensity,
     GreenText01: greenText01Intensity,
     GreenText02: greenText02Intensity,
+    BarkCrhistiantatis: barkCrhistiantatis_emissionIntensity,
   };
 
   useEffect(() => {
@@ -121,7 +126,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   }, [
       fireTexIntensity, fireTex2Intensity, blueTextIntensity, blueText2Intensity,
       redText01Intensity, redText02Intensity, blackText01Intensity, blackText02Intensity,
-      greenText01Intensity, greenText02Intensity
+      greenText01Intensity, greenText02Intensity, barkCrhistiantatis_emissionIntensity
   ]);
 
   useEffect(() => {
@@ -219,7 +224,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.autoUpdate = false; 
+    renderer.shadowMap.autoUpdate = true;
     currentMount.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -227,7 +232,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xdcdcdc, 0.3);
+    const directionalLight = new THREE.DirectionalLight(0xdcdcdc, 1);
     directionalLight.position.set(0, 15, 50);
     directionalLight.castShadow = true;
     directionalLight.shadow.bias = -0.001; 
@@ -237,8 +242,13 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     let saoPass: SAOPass;
 
     const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('/draco/');
+    loader.setDRACOLoader(dracoLoader);
+    
     loader.load('/models/CHRISTIANTATIS_TREE.glb', 
     (gltf) => {
+      gltfRef.current = gltf;
       const newModel = gltf.scene;
       const sphereMaterials = ['orangeBall', 'ballBall', 'RedBallGlass', 'BlackBallGlass', 'GreenBallGlass'];
 
@@ -364,9 +374,6 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
         });
 
         const onFinished = () => {
-          if (rendererRef.current) {
-            rendererRef.current.shadowMap.needsUpdate = true;
-          }
           // Animate spheres appearing
           sphereMeshesRef.current.forEach((sphere, index) => {
             new TWEEN.Tween(sphere.scale)
@@ -383,10 +390,6 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
           actions.forEach(action => action.play());
         }, 1000);
 
-      } else {
-        if (rendererRef.current) {
-          rendererRef.current.shadowMap.needsUpdate = true;
-        }
       }
       
       controlsRef.current = new OrbitControls(camera, renderer.domElement);
@@ -405,20 +408,20 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       const renderPass = new RenderPass(scene, camera);
       composer.addPass(renderPass);
 
+      saoPass = new SAOPass(scene, camera, false, true);
+      saoPass.params.saoIntensity = 0.0005;
+      saoPass.params.saoBias = 0.008;
+      saoPass.params.saoScale = 0.07;
+      saoPass.params.saoKernelRadius = 10;
+      composer.addPass(saoPass);
+
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(currentMount.clientWidth, currentMount.clientHeight),
-        0.5,
-        0.10,
+        2,
+        3,
         15.0
       );
       composer.addPass(bloomPass);
-
-      saoPass = new SAOPass(scene, camera, false, true);
-      saoPass.params.saoIntensity = 0.00005;
-      saoPass.params.saoBias = 0.003;
-      saoPass.params.saoScale = 0.1;
-      saoPass.params.saoKernelRadius = 10;
-      composer.addPass(saoPass);
       
       controls.addEventListener('start', () => {
         isMoving.current = true;
@@ -480,7 +483,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     window.addEventListener('pointermove', onPointerMove);
 
     const onPointerDown = (event: MouseEvent) => {
-      if (isFaded) return;
+      if (isFaded || !camera) return;
       if (!currentMount || !camera) return;
       const rect = currentMount.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -508,16 +511,28 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
             setIsFaded(true);
 
-            new TWEEN.Tween(camera.position)
-              .to({ x: targetPosition.x, y: targetPosition.y + yOffset, z: targetPosition.z - 1 }, 1500)
+            const finalTargetPosition = new THREE.Vector3(targetPosition.x, targetPosition.y + yOffset, targetPosition.z - 2);
+
+            const cameraDirection = new THREE.Vector3();
+            camera.getWorldDirection(cameraDirection);
+            
+            const windUpPosition = camera.position.clone().add(cameraDirection.multiplyScalar(-3));
+
+            const windupTween = new TWEEN.Tween(camera.position)
+              .to(windUpPosition, 400)
+              .easing(TWEEN.Easing.Cubic.Out);
+
+            const zoomTween = new TWEEN.Tween(camera.position)
+              .to(finalTargetPosition, 1500)
               .easing(TWEEN.Easing.Cubic.InOut)
               .onComplete(() => {
                 setShowReturnButton(true);
-              })
-              .start();
+              });
+            
+            windupTween.chain(zoomTween).start();
 
             new TWEEN.Tween(fadeOverlayOpacity)
-              .to({ value: 1 }, 1500)
+              .to({ value: 1 }, 1900) // 400ms + 1500ms
               .easing(TWEEN.Easing.Cubic.InOut)
               .start();
 
@@ -544,7 +559,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       if (controlsRef.current) controlsRef.current.update();
       
       if (saoPass) {
-        const targetIntensity = isMoving.current ? 0 : 0.00005;
+        const targetIntensity = isMoving.current ? 0 : 0.0001;
         saoPass.params.saoIntensity = THREE.MathUtils.lerp(
           saoPass.params.saoIntensity,
           targetIntensity,
@@ -569,9 +584,6 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       if (composer) {
         composer.setSize(clientWidth, clientHeight);
-      }
-      if (rendererRef.current) {
-        rendererRef.current.shadowMap.needsUpdate = true;
       }
     };
     window.addEventListener("resize", handleResize);
@@ -632,21 +644,20 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
           </div>
         </div>
       )}
-       {isFaded && (
+      {isFaded && (
         <div 
-          className="absolute inset-0 bg-gray-800/70 backdrop-blur-[5px] z-10"
+          className="absolute inset-0 bg-gray-800/70 backdrop-blur-[5px] z-30"
           style={{ opacity: fadeOverlayOpacity.value }}
-        >
-          {showReturnButton && (
-             <div className="absolute inset-0 flex items-center justify-center">
-                <Button 
-                    onClick={handleReturnClick}
-                    className="bg-sidebar text-sidebar-foreground hover:bg-sidebar/90"
-                >
-                    Return
-                </Button>
-            </div>
-          )}
+        />
+      )}
+      {showReturnButton && (
+          <div className="absolute inset-0 flex items-center justify-center z-40">
+            <Button 
+                onClick={handleReturnClick}
+                className="ReturnButton bg-sidebar text-sidebar-foreground hover:bg-sidebar/90"
+            >
+                Return
+            </Button>
         </div>
       )}
     </div>

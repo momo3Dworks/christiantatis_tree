@@ -94,3 +94,18 @@
     background-position: 0% 50%;
   }
 }
+
+.navBarAnimation {
+  animation-duration: 15000ms;
+  z-index: 100 !important;
+}
+
+.ReturnButton {
+  background: #a0ec11;
+
+  color: black;
+  font-weight: 700;
+  font-size: 1.5rem;
+  bottom: 5% !important;
+  position: absolute;
+}
