@@ -206,7 +206,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
         const materials = getMaterials(previouslyHoveredObject.current);
         materials.forEach(material => {
-            if (material.emissiveMap) {
+            if (Object.keys(emissionIntensityConfig).includes(material.name)) {
                 const initialIntensity = initialEmissionIntensityRef.current.get(material) || 0;
                 new TWEEN.Tween(material)
                     .to({ emissiveIntensity: initialIntensity }, 500)
@@ -224,20 +224,22 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
         const materials = getMaterials(hoveredObject);
         materials.forEach(material => {
-            if (material.emissiveMap) {
+             if (Object.keys(emissionIntensityConfig).includes(material.name)) {
                 if (!initialEmissionIntensityRef.current.has(material)) {
                     initialEmissionIntensityRef.current.set(material, material.emissiveIntensity);
                 }
+                
                 new TWEEN.Tween(material)
                     .to({ emissiveIntensity: material.emissiveIntensity * 5 }, 500)
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
+                 
             }
         });
     }
 
     previouslyHoveredObject.current = hoveredObject;
-}, [hoveredObject]);
+}, [hoveredObject, emissionIntensityConfig]);
 
 
   useEffect(() => {
