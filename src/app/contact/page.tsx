@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -23,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -31,17 +33,19 @@ const formSchema = z.object({
   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
 });
 
-const subjectOptions = [
-  "General Inquiry",
-  "Prayer Request",
-  "Event Information",
-  "Volunteer Opportunities",
-  "Pastoral Care",
-  "Website Feedback",
-];
-
 export default function ContactPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
+  
+  const subjectOptions = [
+    t('contact.subjects.general'),
+    t('contact.subjects.prayer'),
+    t('contact.subjects.event'),
+    t('contact.subjects.volunteer'),
+    t('contact.subjects.pastoral'),
+    t('contact.subjects.website'),
+  ];
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,8 +59,8 @@ export default function ContactPage() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
-      title: "Message Sent!",
-      description: "Thank you for contacting us. We will get back to you shortly.",
+      title: t('contact.toastTitle'),
+      description: t('contact.toastDescription'),
     });
     form.reset();
   }
@@ -65,7 +69,7 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-24 flex items-center justify-center">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Contact Us</CardTitle>
+          <CardTitle className="text-center text-3xl">{t('contact.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -75,9 +79,9 @@ export default function ContactPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('contact.name')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your Name" {...field} />
+                      <Input placeholder={t('contact.namePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -88,9 +92,9 @@ export default function ContactPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('contact.email')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="your.email@example.com" {...field} />
+                      <Input placeholder={t('contact.emailPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -101,11 +105,11 @@ export default function ContactPage() {
                 name="subject"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject</FormLabel>
+                    <FormLabel>{t('contact.subject')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a subject" />
+                          <SelectValue placeholder={t('contact.subjectPlaceholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -125,10 +129,10 @@ export default function ContactPage() {
                 name="message"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Message</FormLabel>
+                    <FormLabel>{t('contact.message')}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Type your message here."
+                        placeholder={t('contact.messagePlaceholder')}
                         className="min-h-[150px]"
                         {...field}
                       />
@@ -138,7 +142,7 @@ export default function ContactPage() {
                 )}
               />
               <Button type="submit" className="w-full">
-                Send Message
+                {t('contact.sendMessage')}
               </Button>
             </form>
           </Form>

@@ -1,39 +1,45 @@
 
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function AboutUsContent() {
+  const { t } = useTranslation();
+  const values = [
+    { title: t('contentPreview.aboutUs.faith'), description: t('contentPreview.aboutUs.faithDesc') },
+    { title: t('contentPreview.aboutUs.community'), description: t('contentPreview.aboutUs.communityDesc') },
+    { title: t('contentPreview.aboutUs.service'), description: t('contentPreview.aboutUs.serviceDesc') },
+    { title: t('contentPreview.aboutUs.integrity'), description: t('contentPreview.aboutUs.integrityDesc') },
+    { title: t('contentPreview.aboutUs.worship'), description: t('contentPreview.aboutUs.worshipDesc') },
+    { title: t('contentPreview.aboutUs.discipleship'), description: t('contentPreview.aboutUs.discipleshipDesc') },
+  ];
+
   return (
     <div className="PreviewContent p-4 md:p-8 text-foreground">
       <div className="w-full max-w-5xl mx-auto">
         <header className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">About Us</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{t('contentPreview.aboutUs.title')}</h1>
         </header>
 
         <main className="space-y-12">
           <section className="grid md:grid-cols-1 gap-8">
             <Card>
               <CardHeader>
-                <CardTitle>Our Mission</CardTitle>
+                <CardTitle>{t('contentPreview.aboutUs.missionTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-lg">
-                  To spread the message of faith, hope, and love, fostering a global community of believers dedicated to spiritual growth and service. We aim to make the teachings of the Bible accessible to everyone, everywhere, empowering individuals to build a personal relationship with God.
+                  {t('contentPreview.aboutUs.missionDescription')}
                 </p>
               </CardContent>
             </Card>
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-center mb-8">Our Values</h2>
+            <h2 className="text-3xl font-bold text-center mb-8">{t('contentPreview.aboutUs.valuesTitle')}</h2>
             <div className="grid grid-cols-1 gap-6">
-              {[
-                { title: "Faith", description: "Rooted in the teachings of Jesus Christ and the Holy Scripture." },
-                { title: "Community", description: "Building strong, supportive relationships among believers." },
-                { title: "Service", description: "Serving others with love and compassion, following Christ's example." },
-                { title: "Integrity", description: "Upholding honesty and transparency in all our actions." },
-                { title: "Worship", description: "Glorifying God in all that we do, in spirit and in truth." },
-                { title: "Discipleship", description: "Helping believers grow in their faith and become followers of Christ." },
-              ].map((value, index) => (
+              {values.map((value, index) => (
                 <Card key={index}>
                     <CardHeader>
                         <CardTitle>{value.title}</CardTitle>

@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "../ui/label";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const formSchema = z.object({
   phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }),
@@ -46,10 +47,17 @@ const formSchema = z.object({
     path: ["contact_email"], // you can pick any of the fields to show the error
 });
 
-const statusOptions = ["Open", "Closed", "Temporarily Closed", "Suspended"];
-
 export default function RegisterHomeChurchContent() {
+  const { t } = useTranslation();
   const { toast } = useToast();
+
+  const statusOptions = [
+    t('contentPreview.registerChurch.statusOptions.open'),
+    t('contentPreview.registerChurch.statusOptions.closed'),
+    t('contentPreview.registerChurch.statusOptions.tempClosed'),
+    t('contentPreview.registerChurch.statusOptions.suspended'),
+  ];
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -69,8 +77,8 @@ export default function RegisterHomeChurchContent() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
-      title: "Registration Request Sent!",
-      description: "You will receive a confirmation email shortly. Your registration will be validated by our team.",
+      title: t('contentPreview.registerChurch.toastTitle'),
+      description: t('contentPreview.registerChurch.toastDescription'),
     });
     form.reset();
   }
@@ -79,7 +87,7 @@ export default function RegisterHomeChurchContent() {
     <div className="PreviewContent flex flex-col items-center justify-center p-4 md:p-8 text-foreground">
       <Card className="w-full max-w-4xl">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">Register a Home Church</CardTitle>
+          <CardTitle className="text-center text-3xl">{t('contentPreview.registerChurch.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -89,9 +97,9 @@ export default function RegisterHomeChurchContent() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone (with country code) *</FormLabel>
+                    <FormLabel>{t('contentPreview.registerChurch.phone')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1 555-555-5555" {...field} />
+                      <Input placeholder={t('contentPreview.registerChurch.phonePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -99,16 +107,16 @@ export default function RegisterHomeChurchContent() {
               />
               
               <div>
-                <Label>Session/Meeting Info (at least 1 required)</Label>
+                <Label>{t('contentPreview.registerChurch.sessionInfo')}</Label>
                 <div className="grid grid-cols-1 gap-4 mt-2 p-4 border rounded-lg">
                     <FormField
                     control={form.control}
                     name="contact_email"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>{t('contentPreview.registerChurch.email')}</FormLabel>
                         <FormControl>
-                            <Input placeholder="contact@church.com" {...field} />
+                            <Input placeholder={t('contentPreview.registerChurch.emailPlaceholder')} {...field} />
                         </FormControl>
                         </FormItem>
                     )}
@@ -118,9 +126,9 @@ export default function RegisterHomeChurchContent() {
                     name="contact_whatsapp"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>WhatsApp</FormLabel>
+                        <FormLabel>{t('contentPreview.registerChurch.whatsapp')}</FormLabel>
                         <FormControl>
-                            <Input placeholder="+1 555-555-5555" {...field} />
+                            <Input placeholder={t('contentPreview.registerChurch.whatsappPlaceholder')} {...field} />
                         </FormControl>
                         </FormItem>
                     )}
@@ -130,9 +138,9 @@ export default function RegisterHomeChurchContent() {
                     name="contact_website"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Website</FormLabel>
+                        <FormLabel>{t('contentPreview.registerChurch.website')}</FormLabel>
                         <FormControl>
-                            <Input placeholder="https://mychurch.org" {...field} />
+                            <Input placeholder={t('contentPreview.registerChurch.websitePlaceholder')} {...field} />
                         </FormControl>
                         </FormItem>
                     )}
@@ -142,9 +150,9 @@ export default function RegisterHomeChurchContent() {
                     name="neighborhood"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Neighborhood</FormLabel>
+                        <FormLabel>{t('contentPreview.registerChurch.neighborhood')}</FormLabel>
                         <FormControl>
-                            <Input placeholder="Downtown" {...field} />
+                            <Input placeholder={t('contentPreview.registerChurch.neighborhoodPlaceholder')} {...field} />
                         </FormControl>
                         </FormItem>
                     )}
@@ -158,12 +166,12 @@ export default function RegisterHomeChurchContent() {
                 name="tags"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tags</FormLabel>
+                    <FormLabel>{t('contentPreview.registerChurch.tags')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="#neighborhood #date #city" {...field} />
+                      <Input placeholder={t('contentPreview.registerChurch.tagsPlaceholder')} {...field} />
                     </FormControl>
                      <FormDescription>
-                      Add tags to help people find your church.
+                      {t('contentPreview.registerChurch.tagsDescription')}
                     </FormDescription>
                   </FormItem>
                 )}
@@ -175,9 +183,9 @@ export default function RegisterHomeChurchContent() {
                     name="people_limit"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>People Limit</FormLabel>
+                        <FormLabel>{t('contentPreview.registerChurch.peopleLimit')}</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="20" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || '')} />
+                        <Input type="number" placeholder={t('contentPreview.registerChurch.peopleLimitPlaceholder')} {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || '')} />
                         </FormControl>
                     </FormItem>
                     )}
@@ -188,7 +196,7 @@ export default function RegisterHomeChurchContent() {
                     render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-6">
                         <div className="space-y-0.5">
-                        <FormLabel>Mark as Full</FormLabel>
+                        <FormLabel>{t('contentPreview.registerChurch.markAsFull')}</FormLabel>
                         </div>
                         <FormControl>
                         <Switch
@@ -206,10 +214,10 @@ export default function RegisterHomeChurchContent() {
                 name="schedule"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Meeting Schedule</FormLabel>
+                    <FormLabel>{t('contentPreview.registerChurch.schedule')}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., Every Friday at 7:00 PM"
+                        placeholder={t('contentPreview.registerChurch.schedulePlaceholder')}
                         className="min-h-[100px]"
                         {...field}
                       />
@@ -224,11 +232,11 @@ export default function RegisterHomeChurchContent() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel>{t('contentPreview.registerChurch.status')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select the church status" />
+                          <SelectValue placeholder={t('contentPreview.registerChurch.statusPlaceholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -245,15 +253,15 @@ export default function RegisterHomeChurchContent() {
               />
 
               <div className="pt-4">
-                 <h3 className="font-semibold">Upcoming Meetings Near You</h3>
+                 <h3 className="font-semibold">{t('contentPreview.registerChurch.upcomingMeetings')}</h3>
                  <div className="text-center p-8 border rounded-lg mt-2">
-                    <p className="text-muted-foreground">Location-based feature coming soon.</p>
+                    <p className="text-muted-foreground">{t('contentPreview.registerChurch.locationFeaturePlaceholder')}</p>
                  </div>
               </div>
 
 
               <Button type="submit" className="w-full" size="lg">
-                Submit for Validation
+                {t('contentPreview.registerChurch.submitButton')}
               </Button>
             </form>
           </Form>

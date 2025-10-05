@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState, memo } from 'react';
@@ -14,6 +15,7 @@ import RegisterHomeChurchContent from './content/register-home-church-content';
 import StartBibleMeetingContent from './content/start-bible-meeting-content';
 import FindHomeChurchContent from './content/find-home-church-content';
 import AboutUsContent from './content/about-us-content';
+import { useTranslation } from '@/hooks/useTranslation';
 
 type Orb = {
   angle: number;
@@ -35,6 +37,7 @@ const initialCameraTarget = new THREE.Vector3(0, 6.8, 0);
 
 const Scene = () => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [viewState, setViewState] = useState<ViewState>('default');
@@ -348,11 +351,11 @@ const Scene = () => {
     };
     
     const labelMap: { [key: string]: string } = {
-        orangeBall_2: 'Support the Movement',
-        blueBall_2: 'Register a Home Church',
-        redBall_2: 'Start a Bible Meeting',
-        blackBall_2: 'Find a Home Church',
-        greenBall_2: 'About Us',
+        orangeBall_2: 'scene.support',
+        blueBall_2: 'scene.register',
+        redBall_2: 'scene.startMeeting',
+        blackBall_2: 'scene.findChurch',
+        greenBall_2: 'scene.aboutUs',
     };
 
     const originalIntensities: WeakMap<THREE.Material, number> = new WeakMap();
@@ -619,21 +622,33 @@ const Scene = () => {
   };
   
   const contentMap: { [key: string]: React.ReactNode } = {
-    'Support the Movement': <DonationContent />,
-    'Register a Home Church': <RegisterHomeChurchContent />,
-    'Start a Bible Meeting': <StartBibleMeetingContent />,
-    'Find a Home Church': <FindHomeChurchContent />,
-    'About Us': <AboutUsContent />,
+    [t('scene.support')]: <DonationContent />,
+    [t('scene.register')]: <RegisterHomeChurchContent />,
+    [t('scene.startMeeting')]: <StartBibleMeetingContent />,
+    [t('scene.findChurch')]: <FindHomeChurchContent />,
+    [t('scene.aboutUs')]: <AboutUsContent />,
   };
+
+  const getLabelKey = () => {
+    if (!zoomedTarget) return '';
+    const key = zoomedTarget.name;
+    if (key === 'orangeBall_2') return t('scene.support');
+    if (key === 'blueBall_2') return t('scene.register');
+    if (key === 'redBall_2') return t('scene.startMeeting');
+    if (key === 'blackBall_2') return t('scene.findChurch');
+    if (key === 'greenBall_2') return t('scene.aboutUs');
+    return '';
+  }
 
   return (
     <>
       {loading && (
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gray-200">
-          <div
-            className="h-full bg-black"
-            style={{ width: `${progress}%`, backgroundColor: 'black' }}
-          />
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white z-20">
+          <div className="w-1/2">
+            <div className="h-[1px] w-full bg-gray-200">
+              <div className="h-full bg-black transition-all duration-150" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
         </div>
       )}
       <div ref={mountRef} className="w-full h-full" />
@@ -648,7 +663,7 @@ const Scene = () => {
             backgroundImage: theme === 'light' ? 'var(--gradient-light)' : 'var(--gradient-dark)'
           } as React.CSSProperties}
         >
-          {hoveredLabel}
+          {t(hoveredLabel)}
         </div>
       </div>
       
@@ -658,24 +673,20 @@ const Scene = () => {
         }`}
       >
         <div className="w-full h-full bg-card/80 backdrop-blur-sm border border-border rounded-lg shadow-2xl overflow-auto">
-          {contentMap[hoveredLabel as keyof typeof contentMap]}
+          {contentMap[t(hoveredLabel) as keyof typeof contentMap]}
         </div>
       </div>
 
       <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${showContentContainer ? 'opacity-100' : 'opacity-0'}`}>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto p-8 overflow-auto" id="content-container">
-            {zoomedTarget?.name === 'orangeBall_2' && <DonationContent />}
-            {zoomedTarget?.name === 'blueBall_2' && <RegisterHomeChurchContent />}
-            {zoomedTarget?.name === 'redBall_2' && <StartBibleMeetingContent />}
-            {zoomedTarget?.name === 'blackBall_2' && <FindHomeChurchContent />}
-            {zoomedTarget?.name === 'greenBall_2' && <AboutUsContent />}
+            {contentMap[getLabelKey() as keyof typeof contentMap]}
           </div>
           <Button 
             className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-auto"
             onClick={handleReturn}
             variant="outline"
           >
-            Return
+            {t('scene.return')}
           </Button>
       </div>
     </>
@@ -683,42 +694,5 @@ const Scene = () => {
 };
 
 export default memo(Scene);
-    
-
-    
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-    
 
     

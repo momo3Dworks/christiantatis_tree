@@ -1,20 +1,24 @@
 
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslation } from "@/hooks/useTranslation";
 import { CreditCard, Landmark, QrCode } from "lucide-react";
 
 export default function DonationContent() {
+  const { t } = useTranslation();
+
   return (
     <div className="PreviewContent flex flex-col items-center justify-center p-4 md:p-8 text-foreground">
       <div className="w-full max-w-4xl">
         <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Support the Movement</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{t('contentPreview.donation.title')}</h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Your generosity fuels our mission to spread the message and support communities in need.
-            Every contribution, big or small, makes a significant impact.
+            {t('contentPreview.donation.description')}
           </p>
         </header>
 
@@ -23,54 +27,54 @@ export default function DonationContent() {
             <TabsList className="grid w-full grid-cols-1 h-auto">
               <TabsTrigger value="card" className="py-2.5">
                 <CreditCard className="mr-2" />
-                Credit/Debit Card
+                {t('contentPreview.donation.card')}
               </TabsTrigger>
               <TabsTrigger value="transfer" className="py-2.5">
                 <Landmark className="mr-2" />
-                Bank Transfer
+                {t('contentPreview.donation.bank')}
               </TabsTrigger>
               <TabsTrigger value="pix" className="py-2.5">
                 <QrCode className="mr-2" />
-                PIX
+                {t('contentPreview.donation.pix')}
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="card" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Pay with Card</CardTitle>
+                  <CardTitle>{t('contentPreview.donation.payWithCard')}</CardTitle>
                   <CardDescription>
-                    Enter your card details below. We accept all major credit and debit cards.
+                    {t('contentPreview.donation.cardDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name on Card</Label>
+                    <Label htmlFor="name">{t('contentPreview.donation.nameOnCard')}</Label>
                     <Input id="name" placeholder="John Doe" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cardNumber">Card Number</Label>
+                    <Label htmlFor="cardNumber">{t('contentPreview.donation.cardNumber')}</Label>
                     <Input id="cardNumber" placeholder="•••• •••• •••• ••••" />
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="expiry">Expiry</Label>
+                      <Label htmlFor="expiry">{t('contentPreview.donation.expiry')}</Label>
                       <Input id="expiry" placeholder="MM/YY" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cvc">CVC</Label>
+                      <Label htmlFor="cvc">{t('contentPreview.donation.cvc')}</Label>
                       <Input id="cvc" placeholder="•••" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="zip">ZIP Code</Label>
+                      <Label htmlFor="zip">{t('contentPreview.donation.zip')}</Label>
                       <Input id="zip" placeholder="12345" />
                     </div>
                   </div>
                    <div className="space-y-2">
-                      <Label htmlFor="amount">Amount (USD)</Label>
+                      <Label htmlFor="amount">{t('contentPreview.donation.amount')}</Label>
                       <Input id="amount" type="number" placeholder="50.00" />
                     </div>
-                  <Button className="w-full" size="lg">Donate</Button>
+                  <Button className="w-full" size="lg">{t('contentPreview.donation.donate')}</Button>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -78,34 +82,34 @@ export default function DonationContent() {
             <TabsContent value="transfer" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Bank Transfer Details</CardTitle>
+                  <CardTitle>{t('contentPreview.donation.bankDetails')}</CardTitle>
                   <CardDescription>
-                    Use the details below to make a direct bank transfer.
+                    {t('contentPreview.donation.bankDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Bank Name:</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.bankName')}:</span>
                     <span>Faithful Trust Bank</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Account Holder:</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.bankHolder')}:</span>
                     <span>CHRISTIANITATIS MOVEMENT</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Account Number:</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.accountNumber')}:</span>
                     <span>123-456-7890</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Routing Number:</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.routingNumber')}:</span>
                     <span>0987654321</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">SWIFT Code (for international):</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.swift')}:</span>
                     <span>FTBXXXX</span>
                   </div>
                   <p className="text-xs text-muted-foreground pt-4">
-                    Please include "General Donation" in the memo or reference field of your transfer.
+                    {t('contentPreview.donation.memo')}
                   </p>
                 </CardContent>
               </Card>
@@ -114,9 +118,9 @@ export default function DonationContent() {
             <TabsContent value="pix" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>PIX Transfer</CardTitle>
+                  <CardTitle>{t('contentPreview.donation.pixTransfer')}</CardTitle>
                   <CardDescription>
-                    Scan the QR code or use the PIX key below for an instant transfer.
+                    {t('contentPreview.donation.pixDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center space-y-4">
@@ -126,7 +130,7 @@ export default function DonationContent() {
                       <p className="text-gray-500">QR Code</p>
                     </div>
                   </div>
-                  <p className="text-muted-foreground">Or use the PIX key:</p>
+                  <p className="text-muted-foreground">{t('contentPreview.donation.pixKey')}</p>
                   <p className="font-mono bg-muted p-2 rounded-md">donations@christianitatis.org</p>
                 </CardContent>
               </Card>

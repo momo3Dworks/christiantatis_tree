@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,25 +12,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const navItems = [
-  { href: '/events', label: 'Events' },
-  { href: '/bible', label: 'Online Bible' },
-  { href: '/content', label: 'Content' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/forum', label: 'Forum' },
-  { href: '/contact', label: 'Contact Us' },
-];
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function Header() {
   const [isSheetOpen, setSheetOpen] = useState(false);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState<string | null>(null);
   const [isTitleHovered, setIsTitleHovered] = useState(false);
 
+  const { t, setLocale, locale } = useTranslation();
+
+  const navItems = [
+    { href: '/events', label: t('header.events') },
+    { href: '/bible', label: t('header.onlineBible') },
+    { href: '/content', label: t('header.content') },
+    { href: '/faq', label: t('header.faq') },
+    { href: '/forum', label: t('header.forum') },
+    { href: '/contact', label: t('header.contactUs') },
+  ];
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-    if (savedTheme === 'dark') {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const defaultTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    setTheme(defaultTheme);
+    if (defaultTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -75,7 +81,7 @@ export default function Header() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setSheetOpen(false)}
-                  className="text-lg font-medium"
+                  className="text-lg font-medium p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                   {item.label}
                 </Link>
@@ -86,35 +92,39 @@ export default function Header() {
         
         {/* Center: Title */}
         <div 
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-fit"
           onMouseEnter={() => setIsTitleHovered(true)}
           onMouseLeave={() => setIsTitleHovered(false)}
         >
-          <Link href="/" className="text-2xl font-bold tracking-wider flex items-center justify-center w-[270px] h-full">
+          <Link href="/" className="text-base max-[500px]:text-xl sm:text-2xl font-bold tracking-wider flex items-center justify-center w-auto h-full">
             {isTitleHovered ? <Home className="h-8 w-8" /> : "CHRISTIANITATIS"}
           </Link>
         </div>
 
         {/* Right Side: Theme and Language Toggles */}
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {theme === 'light' ? <Moon className="h-6 w-6" /> : <Sun className="h-6 w-6" />}
-            <span className="sr-only">Toggle theme</span>
-            </Button>
+        <div className="flex items-center max-[630px]:gap-0 gap-2">
+          {theme && (
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === 'light' ? <Moon className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" /> : <Sun className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />}
+              <span className="sr-only">Toggle theme</span>
+              </Button>
+          )}
+          {locale && (
             <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                <Globe className="h-6 w-6" />
-                <span className="sr-only">Change language</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem>English</DropdownMenuItem>
-                <DropdownMenuItem>Español</DropdownMenuItem>
-                <DropdownMenuItem>Português</DropdownMenuItem>
-                <DropdownMenuItem>Français</DropdownMenuItem>
-            </DropdownMenuContent>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                  <Globe className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
+                  <span className="sr-only">Change language</span>
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('en')}>English</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('es')}>Español</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('pt')}>Português</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('fr')}>Français</DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
+          )}
         </div>
 
       </div>

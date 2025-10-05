@@ -1,12 +1,17 @@
-import type {Metadata} from 'next';
+
+"use client";
+
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/header';
+import { TranslationProvider } from '@/context/TranslationContext';
 
-export const metadata: Metadata = {
-  title: 'Christianitatis',
-  description: 'A minimalist Three.js 3D scene.',
-};
+// This metadata is static and will not be translated
+// export const metadata: Metadata = {
+//   title: 'Christianitatis',
+//   description: 'A minimalist Three.js 3D scene.',
+// };
 
 export default function RootLayout({
   children,
@@ -24,9 +29,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <Header />
-        {children}
-        <Toaster />
+        <TranslationProvider>
+          <Header />
+          {children}
+          <Toaster />
+        </TranslationProvider>
       </body>
     </html>
   );
