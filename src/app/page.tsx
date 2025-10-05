@@ -1,12 +1,9 @@
-import GlbSceneViewer from "@/components/glb-scene-viewer";
-import React from "react";
+import Scene from '@/components/scene';
 
-const Home = React.memo(function Home() {
+export default function Home() {
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      <GlbSceneViewer />
-    </div>
+    <main className="relative w-screen h-screen overflow-hidden">
+      <Scene />
+    </main>
   );
-});
-
-export default Home;
+}
