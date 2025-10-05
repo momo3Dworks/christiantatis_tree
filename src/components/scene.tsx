@@ -32,8 +32,8 @@ type OrbSystem = {
 
 type ViewState = 'default' | 'zoomed';
 
-const initialCameraPosition = new THREE.Vector3(0, 2.5, 15);
-const initialCameraTarget = new THREE.Vector3(0, 6.8, 0);
+const initialCameraPosition = new THREE.Vector3(0, 4, 24);
+const initialCameraTarget = new THREE.Vector3(0, 11, 0);
 
 const Scene = () => {
   const mountRef = useRef<HTMLDivElement>(null);
