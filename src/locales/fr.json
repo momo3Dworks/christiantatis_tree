@@ -7,7 +7,9 @@
     "faq": "FAQ",
     "forum": "Forum",
     "contactUs": "Contactez-nous",
-    "home": "Accueil"
+    "home": "Accueil",
+    "currentLanguage": "Actuelle:",
+    "languageSelected": "Langue Sélectionnée:"
   },
   "bible": {
     "title": "Bible en Ligne"

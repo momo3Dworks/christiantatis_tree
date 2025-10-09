@@ -11,8 +11,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from '@/hooks/useTranslation';
+import { useToast } from '@/hooks/use-toast';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
 
 export default function Header() {
   const [isSheetOpen, setSheetOpen] = useState(false);
@@ -20,6 +26,10 @@ export default function Header() {
   const [isTitleHovered, setIsTitleHovered] = useState(false);
 
   const { t, setLocale, locale } = useTranslation();
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const navItems = [
     { href: '/events', label: t('header.events') },
@@ -51,6 +61,23 @@ export default function Header() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  };
+  
+  const getLanguageName = (locale: string | null) => {
+    switch (locale) {
+      case 'en': return 'English';
+      case 'es': return 'Español';
+      case 'pt': return 'Português';
+      case 'fr': return 'Français';
+      default: return '';
+    }
+  }
+
+  const handleLanguageChange = (newLocale: string) => {
+    setLocale(newLocale);
+    toast({
+      title: `${t('header.languageSelected')} ${getLanguageName(newLocale)}`,
+    });
   };
 
   return (
@@ -96,7 +123,7 @@ export default function Header() {
           onMouseEnter={() => setIsTitleHovered(true)}
           onMouseLeave={() => setIsTitleHovered(false)}
         >
-          <Link href="/" className="text-base max-[500px]:text-xl sm:text-2xl font-bold tracking-wider flex items-center justify-center w-auto h-full">
+          <Link href="/" className="text-sm max-[500px]:text-lg sm:text-2xl font-bold tracking-wider flex items-center justify-center w-auto h-full">
             {isTitleHovered ? <Home className="h-8 w-8" /> : "CHRISTIANITATIS"}
           </Link>
         </div>
@@ -112,16 +139,23 @@ export default function Header() {
           {locale && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                  <Globe className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
-                  <span className="sr-only">Change language</span>
-                  </Button>
+                <div className="relative">
+                    <Button variant="ghost" size="icon">
+                        <Globe className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
+                        <span className="sr-only">Change language</span>
+                    </Button>
+                    <span className="absolute top-1 right-0.5 w-4 h-4 text-[10px] flex items-center justify-center bg-muted text-muted-foreground rounded-full font-bold">
+                        {locale.toUpperCase()}
+                    </span>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('en')}>English</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('es')}>Español</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('pt')}>Português</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => setLocale('fr')}>Français</DropdownMenuItem>
+                  <DropdownMenuLabel>{t('header.currentLanguage')} {getLanguageName(locale)}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('en')}>English</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('es')}>Español</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('pt')}>Português</DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('fr')}>Français</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

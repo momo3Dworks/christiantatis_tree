@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, memo, Suspense } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
@@ -16,6 +16,7 @@ import StartBibleMeetingContent from './content/start-bible-meeting-content';
 import FindHomeChurchContent from './content/find-home-church-content';
 import AboutUsContent from './content/about-us-content';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useSearchParams } from 'next/navigation';
 
 type Orb = {
   angle: number;
@@ -46,10 +47,21 @@ const Scene = () => {
   const [hoveredLabel, setHoveredLabel] = useState('');
   const [theme, setTheme] = useState('light');
 
-  const hoveredGroupRef = useRef<{meshes: THREE.Mesh[], materials: THREE.Material[], name: string, orbSystem: OrbSystem | null } | null>(null);
+
+  const hoveredMeshRef = useRef<{mesh: THREE.Mesh, name: string, orbSystem: OrbSystem | null } | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const modelRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const sparkMaterialsRef = useRef<{ [key: string]: THREE.MeshStandardMaterial }>({});
+  const waypointsRef = useRef<{ [key: string]: THREE.Vector3 }>({});
+  const sphereToSparkMap: { [key: string]: string } = {
+    orangeBall: 'Spark_1',
+    blueBall: 'Spark_2',
+    redBall: 'Spark_3',
+    blackBall: 'Spark_4',
+    greenBall: 'Spark_5',
+  };
+  const searchParams = useSearchParams();
 
 
   useEffect(() => {
@@ -84,18 +96,20 @@ const Scene = () => {
     renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000);
-
-    // Post-processing - Bloom
-    const renderPass = new RenderPass(scene, camera);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(currentMount.clientWidth, currentMount.clientHeight), 1.5, 0.4, 0.85);
-    bloomPass.threshold = 10;
-    bloomPass.strength = 0.8;
-    bloomPass.radius = 0.55;
-
-    const composer = new EffectComposer(renderer);
-    composer.addPass(renderPass);
-    composer.addPass(bloomPass);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
     currentMount.appendChild(renderer.domElement);
+
+    // Post-processing
+    const renderScene = new RenderPass(scene, camera);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.threshold = 6.5;
+    bloomPass.strength = 1.5;
+    bloomPass.radius = 0.4;
+    
+    const composer = new EffectComposer(renderer);
+    composer.addPass(renderScene);
+    composer.addPass(bloomPass);
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
@@ -104,50 +118,51 @@ const Scene = () => {
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
+    // Video Texture Setup
+    const video = document.createElement('video');
+    video.src = '/assets/SparkVideo.mp4';
+    video.muted = true;
+    video.loop = false; 
+    video.playsInline = true;
+    
+    const onCanPlay = () => {
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                video.pause();
+            }).catch(e => {
+                console.error("Pre-play failed:", e);
+            });
+        }
+        video.removeEventListener('canplay', onCanPlay);
+    };
+
+    video.addEventListener('canplay', onCanPlay);
+    video.load(); 
+
+    const videoTexture = new THREE.VideoTexture(video);
+    videoTexture.colorSpace = THREE.SRGBColorSpace;
+
+    video.onended = () => {
+      Object.values(sparkMaterialsRef.current).forEach(mat => {
+        mat.visible = false;
+      });
+    };
+    
     // GLTF Loader with DRACO
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
     
-    const spheresForHover: THREE.Object3D[] = [];
+    const meshesForHover: THREE.Mesh[] = [];
+    const sphereScaleMap: { [key: string]: THREE.Mesh[] } = {
+      orange: [], blue: [], red: [], black: [], green: []
+    };
     
-    const animatedMaterials: { [key: string]: THREE.MeshStandardMaterial } = {};
-    const targetMaterialNames = ["FireTex", "BlueText", "RedText01", "BlackText01", "GreenText01"];
-    const targetMaterialNamesTwo = ["orangeBall", "blueBall", "RedBallGlass", "BlackBallGlass", "GreenBallGlass"];
-    const allTargetMaterials = [...targetMaterialNames, ...targetMaterialNamesTwo];
-    const sphereGroups: { [key: string]: THREE.Mesh[] } = {
-        orange: [],
-        blue: [],
-        red: [],
-        black: [],
-        green: [],
-      };
-  
-      const sphereNameMapping: { [key: string]: string } = {
-        FireTex: 'orange',
-        orangeBall: 'orange',
-        BlueText: 'blue',
-        blueBall: 'blue',
-        RedText01: 'red',
-        RedBallGlass: 'red',
-        BlackText01: 'black',
-        BlackBallGlass: 'black',
-        GreenText01: 'green',
-        GreenBallGlass: 'green',
-      };
+    const orbSystems: OrbSystem[] = [];
+    const orbSystemMap: { [key: string]: OrbSystem } = {};
       
-      const animationSpeeds: {[key: string]: number} = {
-        FireTex: 1,
-        BlueText: 1,
-        RedText01: 1,
-        BlackText01: 1,
-        GreenText01: 1,
-      };
-
-      const orbSystems: OrbSystem[] = [];
-      const orbSystemMap: { [key: string]: OrbSystem } = {};
-    
     loader.load(
       '/models/CHRISTIANTATIS_TREE.glb',
       (gltf) => {
@@ -158,46 +173,47 @@ const Scene = () => {
         model.rotation.set(0, 0, 0);
         model.scale.set(1, 1, 1);
         
-        const sphereNameKeys = ["orangeBall_2", "blueBall_2", "redBall_2", "blackBall_2", "greenBall_2"];
-        
-        sphereNameKeys.forEach(name => {
-            const sphere = model.getObjectByName(name);
-            if (sphere) {
-                spheresForHover.push(sphere);
-            }
-        });
-        
+        const sphereNameKeys = [
+          "orangeBall",
+          "blueBall",
+          "redBall",
+          "blackBall",
+          "greenBall",
+        ];
+
         model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
-              const material = child.material as THREE.MeshStandardMaterial;
-              if (material && sphereNameMapping[material.name]) {
-                const sphereColor = sphereNameMapping[material.name];
-                sphereGroups[sphereColor].push(child);
-              }
-      
-              if (material && allTargetMaterials.includes(material.name)) {
-                if (!animatedMaterials[material.name]) {
-                    animatedMaterials[material.name] = material;
+                const material = child.material as THREE.MeshStandardMaterial;
+                const isSparkMesh = material && Object.values(sphereToSparkMap).some(name => material.name === name);
+
+                if (isSparkMesh) {
+                    sparkMaterialsRef.current[material.name] = material;
+                    material.map = videoTexture;
+                    material.emissiveMap = videoTexture;
+                    material.alphaMap = videoTexture;
+
+                    if (material.name === 'Spark_2' || material.name === 'Spark_3') {
+                        material.emissiveIntensity = 25;
+                    } else {
+                        material.emissiveIntensity = 8;
+                    }
+                    
+                    material.transparent = true;
+                    material.visible = false;
+                } else {
+                    const parentObject = child.parent;
+                    const parentName = parentObject ? parentObject.name : '';
+                    if (sphereNameKeys.includes(parentName)) {
+                        meshesForHover.push(child);
+                        const groupKey = parentName.replace('Ball', '');
+                        if (sphereScaleMap[groupKey]) {
+                            sphereScaleMap[groupKey].push(child);
+                        }
+                    }
                 }
-                if (material.map) {
-                  material.map.wrapS = THREE.RepeatWrapping;
-                  material.map.wrapT = THREE.RepeatWrapping;
-                }
-              }
             }
-          });
-
-        if (animatedMaterials["FireTex"]) animatedMaterials["FireTex"].emissiveIntensity = 0.1;
-        if (animatedMaterials["BlueText"]) animatedMaterials["BlueText"].emissiveIntensity = 0.1;
-        if (animatedMaterials["RedText01"]) animatedMaterials["RedText01"].emissiveIntensity = 0.1;
-        if (animatedMaterials["BlackText01"]) animatedMaterials["BlackText01"].emissiveIntensity = 0.1;
-        if (animatedMaterials["GreenText01"]) animatedMaterials["GreenText01"].emissiveIntensity = 0.1;
-
-        Object.values(sphereGroups).forEach(group => {
-            group.forEach(mesh => {
-                mesh.scale.set(0, 0, 0);
-            });
         });
+
 
         const createOrbs = (color: number, parent: THREE.Object3D): OrbSystem => {
             const particlesGeometry = new THREE.BufferGeometry();
@@ -218,34 +234,13 @@ const Scene = () => {
 
             particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
             
-            const particlesMaterial = new THREE.ShaderMaterial({
-                uniforms: {
-                    color: { value: new THREE.Color(color) },
-                },
-                vertexShader: `
-                    attribute float size;
-                    void main() {
-                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                        gl_PointSize = 100.0 * (1.0 / -mvPosition.z);
-                        gl_Position = projectionMatrix * mvPosition;
-                    }
-                `,
-                fragmentShader: `
-                    uniform vec3 color;
-                    void main() {
-                        float d = distance(gl_PointCoord, vec2(0.5, 0.5));
-                        if (d > 0.5) {
-                            discard;
-                        }
-                        float alpha = 1.0 - smoothstep(0.4, 0.5, d);
-                        gl_FragColor = vec4(color, alpha);
-                    }
-                `,
+            const particlesMaterial = new THREE.PointsMaterial({
+                color: color,
+                size: 0.2,
                 blending: THREE.AdditiveBlending,
                 transparent: true,
                 depthWrite: false,
             });
-
 
             const particles = new THREE.Points(particlesGeometry, particlesMaterial);
             particles.visible = false;
@@ -255,23 +250,26 @@ const Scene = () => {
         };
 
         const sphereInfo: { [key: string]: { name: string, color: number } } = {
-            orange: { name: "orangeBall_2", color: 0xffa500 },
-            blue: { name: "blueBall_2", color: 0x0000ff },
-            red: { name: "redBall_2", color: 0xff0000 },
-            black: { name: "blackBall_2", color: 0x808080 },
-            green: { name: "greenBall_2", color: 0x00ff00 },
+            orangeBall: { name: "orangeBall", color: 0xffa500 },
+            blueBall: { name: "blueBall", color: 0x0000ff },
+            redBall: { name: "redBall", color: 0xff0000 },
+            blackBall: { name: "blackBall", color: 0x808080 },
+            greenBall: { name: "greenBall", color: 0x00ff00 },
         };
-
+        
         Object.keys(sphereInfo).forEach(key => {
-            const info = sphereInfo[key];
+            const info = sphereInfo[key as keyof typeof sphereInfo];
             const sphereObject = model.getObjectByName(info.name);
             if (sphereObject) {
                 const orbSystem = createOrbs(info.color, sphereObject);
-                orbSystems.push(orbSystem);
                 orbSystemMap[info.name] = orbSystem;
+                orbSystems.push(orbSystem);
+
+                const destination = new THREE.Vector3();
+                sphereObject.getWorldPosition(destination);
+                waypointsRef.current[info.name] = destination;
             }
         });
-
         
         mixer = new THREE.AnimationMixer(model);
         const animations = gltf.animations;
@@ -289,38 +287,39 @@ const Scene = () => {
         
         setLoading(false);
 
-        // Start scaling animation after load
         const orderedSphereGroups = [
-            sphereGroups.orange,
-            sphereGroups.blue,
-            sphereGroups.red,
-            sphereGroups.black,
-            sphereGroups.green
+            sphereScaleMap.orange,
+            sphereScaleMap.blue,
+            sphereScaleMap.red,
+            sphereScaleMap.black,
+            sphereScaleMap.green
         ];
 
         let delay = 0;
-        const animationDuration = 500; // ms
-        const delayIncrement = 200; // ms
+        const animationDuration = 500;
+        const delayIncrement = 200; 
 
         orderedSphereGroups.forEach((group) => {
-            setTimeout(() => {
-                const startTime = Date.now();
-                const animateScale = () => {
-                    const elapsedTime = Date.now() - startTime;
-                    const progress = Math.min(elapsedTime / animationDuration, 1);
-                    const currentScale = progress;
+             if(group) {
+                setTimeout(() => {
+                    const startTime = Date.now();
+                    const animateScale = () => {
+                        const elapsedTime = Date.now() - startTime;
+                        const progress = Math.min(elapsedTime / animationDuration, 1);
+                        const currentScale = progress;
 
-                    group.forEach(mesh => {
-                        mesh.scale.set(currentScale, currentScale, currentScale);
-                    });
+                        group.forEach(mesh => {
+                            mesh.scale.set(currentScale, currentScale, currentScale);
+                        });
 
-                    if (progress < 1) {
-                        requestAnimationFrame(animateScale);
-                    }
-                };
-                requestAnimationFrame(animateScale);
-            }, delay);
-            delay += delayIncrement;
+                        if (progress < 1) {
+                            requestAnimationFrame(animateScale);
+                        }
+                    };
+                    requestAnimationFrame(animateScale);
+                }, delay);
+                delay += delayIncrement;
+            }
         });
 
       },
@@ -333,29 +332,13 @@ const Scene = () => {
         setLoading(false);
       }
     );
-
-    const groupMap: { [key: string]: THREE.Mesh[] } = {
-        orangeBall_2: sphereGroups.orange,
-        blueBall_2: sphereGroups.blue,
-        redBall_2: sphereGroups.red,
-        blackBall_2: sphereGroups.black,
-        greenBall_2: sphereGroups.green,
-    };
-
-    const groupMaterialMap: { [key: string]: string } = {
-        orangeBall_2: 'FireTex',
-        blueBall_2: 'BlueText',
-        redBall_2: 'RedText01',
-        blackBall_2: 'BlackText01',
-        greenBall_2: 'GreenText01',
-    };
     
     const labelMap: { [key: string]: string } = {
-        orangeBall_2: 'scene.support',
-        blueBall_2: 'scene.register',
-        redBall_2: 'scene.startMeeting',
-        blackBall_2: 'scene.findChurch',
-        greenBall_2: 'scene.aboutUs',
+        orangeBall: 'scene.support',
+        blueBall: 'scene.register',
+        redBall: 'scene.startMeeting',
+        blackBall: 'scene.findChurch',
+        greenBall: 'scene.aboutUs',
     };
 
     const originalIntensities: WeakMap<THREE.Material, number> = new WeakMap();
@@ -372,17 +355,43 @@ const Scene = () => {
         if (viewState !== 'default' || !cameraRef.current) return;
 
         raycaster.setFromCamera(mouse, cameraRef.current);
-        const intersects = raycaster.intersectObjects(spheresForHover, true);
+        const intersects = raycaster.intersectObjects(meshesForHover, true);
 
         if (intersects.length > 0) {
-            const firstIntersected = intersects[0].object;
-            let parent: THREE.Object3D | null = firstIntersected;
-            while(parent && !groupMap[parent.name]) {
-                parent = parent.parent;
-            }
+            const firstIntersected = intersects[0].object as THREE.Mesh;
+            const parent = firstIntersected.parent;
+            
             if (parent) {
                 setZoomedTarget(parent);
                 setViewState('zoomed');
+
+                const sparkMaterialName = sphereToSparkMap[parent.name as keyof typeof sphereToSparkMap];
+                const sparkMaterial = sparkMaterialsRef.current[sparkMaterialName];
+
+                if (sparkMaterial && cameraRef.current) {
+                    sparkMaterial.visible = true;
+                    video.currentTime = 0;
+                    
+                    const playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => console.error("Video play failed:", e));
+                    }
+                    
+                    const waypoint = waypointsRef.current[parent.name];
+                    if (waypoint) {
+                       gsap.to(cameraRef.current.position, {
+                          x: waypoint.x,
+                          y: waypoint.y,
+                          z: waypoint.z - 12,
+                          duration: 2.1,
+                          delay: 0.5,
+                          ease: 'power3.inOut',
+                          onComplete: () => {
+                            setShowContentContainer(true);
+                          }
+                       });
+                    }
+                }
             }
         }
     }
@@ -393,127 +402,98 @@ const Scene = () => {
 
     const checkIntersections = () => {
       if (!cameraRef.current) return;
-      if(viewState !== 'default') {
-          if (hoveredGroupRef.current) {
-            hoveredGroupRef.current = null;
-          }
-          setHoveredLabel('');
-          return;
-      }
+
       raycaster.setFromCamera(mouse, cameraRef.current);
-      const intersects = raycaster.intersectObjects(spheresForHover, true);
+      const intersects = raycaster.intersectObjects(meshesForHover, true);
 
-      let currentHoveredGroup: {meshes: THREE.Mesh[], materials: (THREE.Material | THREE.Material[])[], name: string, orbSystem: OrbSystem | null } | null = null;
+      let currentHoveredName: string | null = null;
+      let firstIntersected : THREE.Mesh | null = null;
+      let parentObject: THREE.Object3D | null = null;
+
       if (intersects.length > 0) {
-        const firstIntersected = intersects[0].object;
-        let parent: THREE.Object3D | null = firstIntersected;
-        while(parent && !groupMap[parent.name]) {
-            parent = parent.parent;
-        }
-        if (parent && groupMap[parent.name]) {
-          const meshes = groupMap[parent.name];
-          const materials = meshes.map(mesh => mesh.material);
-          const orbSystem = orbSystemMap[parent.name] || null;
-          currentHoveredGroup = {meshes, materials: materials.flat(), name: parent.name, orbSystem };
+        firstIntersected = intersects[0].object as THREE.Mesh;
+        parentObject = firstIntersected.parent;
+
+        if (parentObject) {
+          currentHoveredName = parentObject.name;
         }
       }
 
-      if (hoveredGroupRef.current?.name !== currentHoveredGroup?.name) {
-        // De-hover previous group
-        if (hoveredGroupRef.current) {
-          const prevGroupName = hoveredGroupRef.current.name;
-          const prevMaterialName = groupMaterialMap[prevGroupName];
-          if (prevMaterialName) {
-            animationSpeeds[prevMaterialName] = 1;
-          }
-          if (hoveredGroupRef.current.orbSystem) {
-            hoveredGroupRef.current.orbSystem.points.visible = false;
-            gsap.to(hoveredGroupRef.current.orbSystem.points.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+      if (hoveredMeshRef.current?.name !== currentHoveredName) {
+        if (hoveredMeshRef.current) {
+          const { mesh, orbSystem } = hoveredMeshRef.current;
+          
+          if(mesh.parent) gsap.to(mesh.parent.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+          
+          const materials = mesh.material;
+            if (Array.isArray(materials)) {
+                materials.forEach(mat => {
+                    if (originalIntensities.has(mat)) {
+                        gsap.to(mat, { emissiveIntensity: originalIntensities.get(mat), duration: 0.3 });
+                    }
+                });
+            } else if (materials) {
+                if (originalIntensities.has(materials)) {
+                    gsap.to(materials, { emissiveIntensity: originalIntensities.get(materials), duration: 0.3 });
+                }
+            }
+
+
+          if (orbSystem) {
+            orbSystem.points.visible = false;
+            gsap.to(orbSystem.points.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
           }
           setHoveredLabel('');
-
-          hoveredGroupRef.current.meshes.forEach(mesh => {
-            gsap.to(mesh.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
-          });
-          hoveredGroupRef.current.materials.forEach(mat => {
-              const material = mat as THREE.MeshStandardMaterial;
-              if (originalIntensities.has(material)) {
-                gsap.to(material, { emissiveIntensity: originalIntensities.get(material), duration: 0.3 });
-              }
-          });
         }
         
-        // Hover new group
-        hoveredGroupRef.current = currentHoveredGroup as {meshes: THREE.Mesh[], materials: THREE.Material[], name: string, orbSystem: OrbSystem | null};
-        if (hoveredGroupRef.current) {
-            const currentGroupName = hoveredGroupRef.current.name;
-            const currentMaterialName = groupMaterialMap[currentGroupName];
-            if (currentMaterialName) {
-                animationSpeeds[currentMaterialName] = 2;
+        if (currentHoveredName && firstIntersected && parentObject) {
+            const orbSystem = orbSystemMap[currentHoveredName] || null;
+            hoveredMeshRef.current = { mesh: firstIntersected, name: currentHoveredName, orbSystem };
+            
+            const labelKey = Object.keys(labelMap).find(k => currentHoveredName!.includes(k));
+            if (labelKey && labelMap[labelKey]) {
+                setHoveredLabel(labelMap[labelKey]);
             }
-            if (labelMap[currentGroupName]) {
-                setHoveredLabel(labelMap[currentGroupName]);
+            
+            gsap.to(parentObject.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
+            const materials = firstIntersected.material;
+
+            const applyIntensity = (mat: THREE.Material) => {
+              if (!originalIntensities.has(mat)) {
+                  originalIntensities.set(mat, (mat as THREE.MeshStandardMaterial).emissiveIntensity || 0.1);
+              }
+              gsap.to(mat, { emissiveIntensity: (originalIntensities.get(mat) ?? 0.1) * 26, duration: 0.3 });
+            };
+
+            if (Array.isArray(materials)) {
+              materials.forEach(applyIntensity);
+            } else if (materials) {
+              applyIntensity(materials);
             }
-            if (hoveredGroupRef.current.orbSystem) {
-                hoveredGroupRef.current.orbSystem.points.visible = true;
-                gsap.to(hoveredGroupRef.current.orbSystem.points.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
+            
+            if (orbSystem) {
+                orbSystem.points.visible = true;
+                gsap.to(orbSystem.points.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
             }
 
-          hoveredGroupRef.current.meshes.forEach(mesh => {
-            gsap.to(mesh.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
-          });
-          hoveredGroupRef.current.materials.forEach(mat => {
-            const material = mat as THREE.MeshStandardMaterial;
-            if (!originalIntensities.has(material)) {
-                originalIntensities.set(material, material.emissiveIntensity);
-            }
-            gsap.to(material, { emissiveIntensity: (originalIntensities.get(material) ?? 0.1) * 26, duration: 0.3 });
-        });
+        } else {
+            hoveredMeshRef.current = null;
         }
       }
     }
 
 
-    // Animation loop
     let animationFrameId: number;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       const delta = clock.getDelta();
 
-      checkIntersections();
+      if (viewState === 'default') {
+        checkIntersections();
+      }
       
       if (mixer) {
         mixer.update(delta);
-      }
-      
-      if (animatedMaterials["FireTex"]?.map) {
-        animatedMaterials["FireTex"].map.offset.x += 0.001 * animationSpeeds.FireTex;
-        animatedMaterials["FireTex"].map.offset.y -= 0.002 * animationSpeeds.FireTex;
-        animatedMaterials["FireTex"].map.rotation += 0.0005 * animationSpeeds.FireTex;
-      }
-
-      if (animatedMaterials["BlueText"]?.map) {
-        animatedMaterials["BlueText"].map.offset.x -= 0.001 * animationSpeeds.BlueText;
-        animatedMaterials["BlueText"].map.offset.y += 0.002 * animationSpeeds.BlueText;
-        animatedMaterials["BlueText"].map.rotation -= 0.0005 * animationSpeeds.BlueText;
-      }
-
-      if (animatedMaterials["RedText01"]?.map) {
-        animatedMaterials["RedText01"].map.offset.x += 0.002 * animationSpeeds.RedText01;
-        animatedMaterials["RedText01"].map.offset.y += 0.001 * animationSpeeds.RedText01;
-        animatedMaterials["RedText01"].map.rotation += 0.0006 * animationSpeeds.RedText01;
-      }
-
-      if (animatedMaterials["BlackText01"]?.map) {
-        animatedMaterials["BlackText01"].map.offset.x -= 0.002 * animationSpeeds.BlackText01;
-        animatedMaterials["BlackText01"].map.offset.y -= 0.001 * animationSpeeds.BlackText01;
-        animatedMaterials["BlackText01"].map.rotation -= 0.0006 * animationSpeeds.BlackText01;
-      }
-
-      if (animatedMaterials["GreenText01"]?.map) {
-        animatedMaterials["GreenText01"].map.offset.x += 0.0015 * animationSpeeds.GreenText01;
-        animatedMaterials["GreenText01"].map.offset.y -= 0.0015 * animationSpeeds.GreenText01;
-        animatedMaterials["GreenText01"].map.rotation += 0.0007 * animationSpeeds.GreenText01;
       }
       
       orbSystems.forEach(system => {
@@ -526,7 +506,6 @@ const Scene = () => {
                 const z = Math.sin(orb.angle) * orb.radius;
                 const y = orb.elevation;
 
-                // Apply inclination
                 const cosInclination = Math.cos(orb.inclination);
                 const sinInclination = Math.sin(orb.inclination);
                 const rotated_x = x * cosInclination - z * sinInclination;
@@ -544,7 +523,6 @@ const Scene = () => {
     };
     animate();
 
-    // Handle window resize
     const handleResize = () => {
       if (mountRef.current && cameraRef.current) {
         const { clientWidth, clientHeight } = mountRef.current;
@@ -557,7 +535,6 @@ const Scene = () => {
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', onMouseMove);
@@ -567,7 +544,6 @@ const Scene = () => {
         currentMount.removeChild(renderer.domElement);
       }
       renderer.dispose();
-      composer.dispose();
       orbSystems.forEach(system => {
         system.points.geometry.dispose();
         (system.points.material as THREE.Material).dispose();
@@ -578,47 +554,25 @@ const Scene = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const camera = cameraRef.current;
-    if (!camera) return;
 
-    if (viewState === 'zoomed' && zoomedTarget) {
-        const targetPosition = new THREE.Vector3();
-        zoomedTarget.getWorldPosition(targetPosition);
-        
-        const direction = new THREE.Vector3().subVectors(camera.position, targetPosition).normalize();
-        const distance = -4; 
-        const newCameraPosition = new THREE.Vector3().addVectors(targetPosition, direction.multiplyScalar(distance));
-
-        gsap.to(camera.position, {
-            x: newCameraPosition.x,
-            y: newCameraPosition.y,
-            z: newCameraPosition.z,
-            duration: 1,
-            ease: 'power3.inOut',
-            onComplete: () => {
-              setShowContentContainer(true);
-            }
-        });
-
-    } else if (viewState === 'default') {
+  const handleReturn = () => {
+    if (cameraRef.current) {
         setShowContentContainer(false);
-        gsap.to(camera.position, {
+        gsap.to(cameraRef.current.position, {
             x: initialCameraPosition.x,
             y: initialCameraPosition.y,
             z: initialCameraPosition.z,
-            duration: 1,
+            duration: 1.5,
             ease: 'power3.inOut',
-            onUpdate: () => {
-                camera.lookAt(initialCameraTarget);
+            onComplete: () => {
+                setViewState('default');
+                setZoomedTarget(null);
+                if (cameraRef.current) {
+                    cameraRef.current.lookAt(initialCameraTarget);
+                }
             }
         });
     }
-  }, [viewState, zoomedTarget]);
-
-  const handleReturn = () => {
-    setZoomedTarget(null);
-    setViewState('default');
   };
   
   const contentMap: { [key: string]: React.ReactNode } = {
@@ -632,11 +586,11 @@ const Scene = () => {
   const getLabelKey = () => {
     if (!zoomedTarget) return '';
     const key = zoomedTarget.name;
-    if (key === 'orangeBall_2') return t('scene.support');
-    if (key === 'blueBall_2') return t('scene.register');
-    if (key === 'redBall_2') return t('scene.startMeeting');
-    if (key === 'blackBall_2') return t('scene.findChurch');
-    if (key === 'greenBall_2') return t('scene.aboutUs');
+    if (key.includes('orangeBall')) return t('scene.support');
+    if (key.includes('blueBall')) return t('scene.register');
+    if (key.includes('redBall')) return t('scene.startMeeting');
+    if (key.includes('blackBall')) return t('scene.findChurch');
+    if (key.includes('greenBall')) return t('scene.aboutUs');
     return '';
   }
 
@@ -693,6 +647,17 @@ const Scene = () => {
   );
 };
 
-export default memo(Scene);
+const SceneWrapper = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <Scene />
+  </Suspense>
+);
+
+const MemoizedScene = memo(SceneWrapper);
+export default MemoizedScene;
 
     
+
+    
+
+

@@ -6,6 +6,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/header';
 import { TranslationProvider } from '@/context/TranslationContext';
+import { Suspense } from 'react';
 
 // This metadata is static and will not be translated
 // export const metadata: Metadata = {
@@ -30,7 +31,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <TranslationProvider>
-          <Header />
+          <Suspense fallback={<div>Loading...</div>}>
+            <Header />
+          </Suspense>
           {children}
           <Toaster />
         </TranslationProvider>

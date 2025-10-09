@@ -7,7 +7,9 @@
     "faq": "FAQ",
     "forum": "Fórum",
     "contactUs": "Contato",
-    "home": "Início"
+    "home": "Início",
+    "currentLanguage": "Atual:",
+    "languageSelected": "Idioma Selecionado:"
   },
   "bible": {
     "title": "Bíblia Online"
@@ -24,15 +26,15 @@
     "messagePlaceholder": "Digite sua mensagem aqui.",
     "sendMessage": "Enviar Mensagem",
     "toastTitle": "Mensagem Enviada!",
-    "toastDescription": "Obrigado por nos contatar. Entraremos em contato em breve.",
-    "subjects": {
-      "general": "Inquérito Geral",
-      "prayer": "Pedido de Oração",
-      "event": "Informações sobre Eventos",
-      "volunteer": "Oportunidades de Voluntariado",
-      "pastoral": "Cuidado Pastoral",
-      "website": "Feedback do Site"
-    }
+    "toastDescription": "Obrigado por nos contatar. Entraremos em contato em breve."
+  },
+  "subjects": {
+    "general": "Inquérito Geral",
+    "prayer": "Pedido de Oração",
+    "event": "Informações sobre Eventos",
+    "volunteer": "Oportunidades de Voluntariado",
+    "pastoral": "Cuidado Pastoral",
+    "website": "Feedback do Site"
   },
   "content": {
     "youtubeTitle": "Nosso Canal no YouTube",
@@ -148,7 +150,7 @@
       "city": "Cidade",
       "cityPlaceholder": "ex: São Francisco",
       "neighborhood": "Bairro",
-      "neighborhoodPlaceholder": "ex: Centro",
+      "neighborhoodPlaceholder": "Centro",
       "closest": "Áreas Mais Próximas",
       "closestPlaceholder": "Pesquisar áreas próximas",
       "applyFilters": "Aplicar Filtros",
