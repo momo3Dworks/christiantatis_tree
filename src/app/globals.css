@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -104,6 +105,18 @@ body {
       background-position: 0% 50%;
     }
   }
+
+  .enter-button-gradient {
+    background: linear-gradient(90deg, rgba(237, 237, 237, 0.17) 0%, rgba(196, 196, 196, 0.13) 48%, rgba(255, 255, 255, 0.28) 100%);
+    background-size: 200% 200%;
+    animation: gradient-animation 10s ease infinite;
+  }
+
+  .dark .enter-button-gradient {
+    background: linear-gradient(90deg,rgba(255, 0, 0, 0.17) 0%, rgba(20, 165, 255, 0.13) 48%, rgba(109, 242, 0, 0.28) 100%);
+    background-size: 200% 200%;
+    animation: gradient-animation 10s ease infinite;
+  }
 }
 
 .PreviewContent {
@@ -113,4 +126,89 @@ body {
 
   align-content: flex-start;
   justify-content: flex-start;
+}
+
+@keyframes quiet {
+  25%{
+    transform: scaleY(.6);
+  }
+  50%{
+    transform: scaleY(.4);
+  }
+  75%{
+    transform: scaleY(.8);
+  }
+}
+
+@keyframes normal {
+  25%{
+    transform: scaleY(1);
+  }
+  50%{
+    transform: scaleY(.4);
+  }
+  75%{
+    transform: scaleY(.6);
+  }
+}
+@keyframes loud {
+  25%{
+    transform: scaleY(1);
+  }
+  50%{
+    transform: scaleY(.4);
+  }
+  75%{
+    transform: scaleY(1.2);
+  }
+}
+
+
+.boxContainer{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  --boxSize: 4px;
+  --gutter: 2px;
+  width: calc((var(--boxSize) + var(--gutter)) * 5);
+}
+
+.box{
+  transform: scaleY(.4);
+  height: 50%;
+  width: var(--boxSize);
+  background: hsl(var(--foreground));
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  border-radius: 8px;
+}
+
+.box.paused {
+  animation-play-state: paused;
+}
+
+.dark .box {
+  background: hsl(var(--foreground));
+}
+
+.box1{
+  animation-name: quiet;
+}
+
+.box2{
+  animation-name: normal;
+}
+
+.box3{
+  animation-name: quiet;
+}
+
+.box4{
+  animation-name: loud;
+}
+
+.box5{
+  animation-name: quiet;
 }

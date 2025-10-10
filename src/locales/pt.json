@@ -11,6 +11,9 @@
     "currentLanguage": "Atual:",
     "languageSelected": "Idioma Selecionado:"
   },
+  "welcome": {
+    "title": "Bem-vindo a CHRISTIANITATIS"
+  },
   "bible": {
     "title": "Bíblia Online"
   },

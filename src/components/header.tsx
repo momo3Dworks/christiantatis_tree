@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
-import { Menu, X, Sun, Moon, Home, Globe } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, Globe, Play, Pause } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { useSAO } from '@/context/SAOContext';
+import { AudioContext } from '@/context/AudioContext';
 
 export default function Header() {
   const [isSheetOpen, setSheetOpen] = useState(false);
@@ -32,6 +33,8 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { isSaoEnabled, toggleSAO } = useSAO();
+  const audioContext = useContext(AudioContext);
+
 
   const navItems = [
     { href: '/events', label: t('header.events') },
@@ -116,7 +119,7 @@ export default function Header() {
                 </Link>
               ))}
             </nav>
-            <div className="absolute bottom-8 left-0 right-0 p-4">
+            <div className="absolute bottom-8 left-0 right-0 p-4 space-y-4">
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <Label htmlFor="sao-toggle">Ambient Occlusion</Label>
                 <Switch
@@ -125,6 +128,20 @@ export default function Header() {
                   onCheckedChange={toggleSAO}
                 />
               </div>
+              {audioContext && audioContext.audioElement && (
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <Label htmlFor="audio-toggle">Music</Label>
+                  <Button
+                    id="audio-toggle"
+                    variant="ghost"
+                    size="icon"
+                    onClick={audioContext.togglePlayPause}
+                  >
+                    {audioContext.isPlaying ? <Pause /> : <Play />}
+                    <span className="sr-only">Toggle Music</span>
+                  </Button>
+                </div>
+              )}
             </div>
           </SheetContent>
         </Sheet>

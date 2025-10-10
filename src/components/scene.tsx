@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useRef, useState, memo, Suspense } from 'react';
@@ -54,9 +53,10 @@ interface SceneProps {
     ballNormal: THREE.Texture;
     imperfection: THREE.Texture;
   };
+  hasInteracted: boolean;
 }
 
-const Scene = ({ assets }: SceneProps) => {
+const Scene = ({ assets, hasInteracted }: SceneProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [viewState, setViewState] = useState<ViewState>('default');
@@ -76,6 +76,7 @@ const Scene = ({ assets }: SceneProps) => {
   const treeLightMaterialRef = useRef<THREE.MeshStandardMaterial | null>(null);
   
   const materialToAnimationsMapRef = useRef<Map<THREE.Material, { rough: TextureAnimation, normal: TextureAnimation }>>(new Map());
+  const grassScanAnimationRef = useRef<gsap.core.Timeline | null>(null);
 
   const scanUniformsRef = useRef({
     u_time: { value: 0 },
@@ -213,20 +214,22 @@ const Scene = ({ assets }: SceneProps) => {
     model.rotation.set(0, 0, 0);
     model.scale.set(1, 1, 1);
 
-    treeMixer = new THREE.AnimationMixer(gltf.scene);
-    const animations = gltf.animations;
+    if (hasInteracted) {
+      treeMixer = new THREE.AnimationMixer(gltf.scene);
+      const animations = gltf.animations;
 
-    if (animations && animations.length) {
-      setTimeout(() => {
-        animations.forEach((clip) => {
-          if (treeMixer) {
-            const action = treeMixer.clipAction(clip);
-            action.setLoop(THREE.LoopOnce, 1);
-            action.clampWhenFinished = true;
-            action.play();
-          }
-        });
-      }, 600);
+      if (animations && animations.length) {
+        setTimeout(() => {
+          animations.forEach((clip) => {
+            if (treeMixer) {
+              const action = treeMixer.clipAction(clip);
+              action.setLoop(THREE.LoopOnce, 1);
+              action.clampWhenFinished = true;
+              action.play();
+            }
+          });
+        }, 600);
+      }
     }
     
     // Grass model processing
@@ -237,10 +240,10 @@ const Scene = ({ assets }: SceneProps) => {
     grassModel.rotation.set(0, 0, 0);
     grassModel.scale.set(1, 1, 1);
 
-    if (grassGltf.animations && grassGltf.animations.length > 0) {
+    if (hasInteracted && grassGltf.animations && grassGltf.animations.length > 0) {
       grassMixer = new THREE.AnimationMixer(grassGltf.scene);
       const grassClip = THREE.AnimationClip.findByName(grassGltf.animations, 'GrassRight');
-      if (grassClip) {
+      if (grassClip && grassMixer) {
           grassAction = grassMixer.clipAction(grassClip);
           grassAction.setLoop(THREE.LoopRepeat, Infinity);
           grassAction.play();
@@ -263,8 +266,7 @@ const Scene = ({ assets }: SceneProps) => {
               shader.vertexShader = `
                 varying vec3 vWorldPosition;
                 ${shader.vertexShader}
-              `;
-              shader.vertexShader = shader.vertexShader.replace(
+              `.replace(
                 `#include <worldpos_vertex>`,
                 `#include <worldpos_vertex>
                   vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;
@@ -285,8 +287,7 @@ const Scene = ({ assets }: SceneProps) => {
                 }
 
                 ${shader.fragmentShader}
-              `;
-              shader.fragmentShader = shader.fragmentShader.replace(
+              `.replace(
                 `vec4 diffuseColor = vec4( diffuse, opacity );`,
                 `
                 float dist = distance(vWorldPosition.xz, vec2(0.0));
@@ -297,25 +298,25 @@ const Scene = ({ assets }: SceneProps) => {
                 wave_edge += noise;
                 
                 vec4 diffuseColor = vec4(diffuse, opacity);
-
-                if (u_is_closing < 0.5) { // Opening scan
-                  if (dist > wave_edge) {
+                
+                if (u_scan_radius < 0.0) {
                     discard;
-                  }
-                  if (dist > wave_trail && dist <= wave_edge) {
-                    diffuseColor.rgb = u_scan_color * 10.0;
-                    diffuseColor.a = 1.0;
-                  }
-                } else { // Closing scan
-                  if (dist < wave_trail) {
-                    discard;
-                  }
-                    if (dist > wave_trail && dist <= wave_edge) {
-                    diffuseColor.rgb = u_scan_color * 25.0;
-                    diffuseColor.a = 1.0;
-                  } else {
-                      discard;
-                  }
+                } else if (u_is_closing > 0.5) { // Closing scan
+                    if (dist < wave_trail) {
+                        discard;
+                    }
+                    if (dist <= wave_edge) {
+                        diffuseColor.rgb = mix(diffuseColor.rgb, u_scan_color, (wave_edge - dist) / u_wave_width) * 5.0;
+                    } else {
+                        discard;
+                    }
+                } else { // Opening scan
+                    if (dist > wave_edge) {
+                        discard;
+                    }
+                    if (dist > wave_trail) {
+                        diffuseColor.rgb = mix(diffuseColor.rgb, u_scan_color, (wave_edge - dist) / u_wave_width) * 5.0;
+                    }
                 }
                 `
               );
@@ -456,40 +457,42 @@ const Scene = ({ assets }: SceneProps) => {
         }
     });
     
-    const orderedSphereGroups = [
-        sphereScaleMap.orange,
-        sphereScaleMap.blue,
-        sphereScaleMap.red,
-        sphereScaleMap.black,
-        sphereScaleMap.green
-    ];
+    if (hasInteracted) {
+      const orderedSphereGroups = [
+          sphereScaleMap.orange,
+          sphereScaleMap.blue,
+          sphereScaleMap.red,
+          sphereScaleMap.black,
+          sphereScaleMap.green
+      ];
 
-    let delay = 0;
-    const animationDuration = 500;
-    const delayIncrement = 200; 
+      let delay = 0;
+      const animationDuration = 500;
+      const delayIncrement = 200; 
 
-    orderedSphereGroups.forEach((group) => {
-          if(group) {
-            setTimeout(() => {
-                const startTime = Date.now();
-                const animateScale = () => {
-                    const elapsedTime = Date.now() - startTime;
-                    const progress = Math.min(elapsedTime / animationDuration, 1);
-                    const currentScale = progress;
+      orderedSphereGroups.forEach((group) => {
+            if(group) {
+              setTimeout(() => {
+                  const startTime = Date.now();
+                  const animateScale = () => {
+                      const elapsedTime = Date.now() - startTime;
+                      const progress = Math.min(elapsedTime / animationDuration, 1);
+                      const currentScale = progress;
 
-                    group.forEach(mesh => {
-                        mesh.scale.set(currentScale, currentScale, currentScale);
-                    });
+                      group.forEach(mesh => {
+                          mesh.scale.set(currentScale, currentScale, currentScale);
+                      });
 
-                    if (progress < 1) {
-                        requestAnimationFrame(animateScale);
-                    }
-                };
-                requestAnimationFrame(animateScale);
-            }, delay);
-            delay += delayIncrement;
-        }
-    });
+                      if (progress < 1) {
+                          requestAnimationFrame(animateScale);
+                      }
+                  };
+                  requestAnimationFrame(animateScale);
+              }, delay);
+              delay += delayIncrement;
+          }
+      });
+    }
 
     const labelMap: { [key: string]: string } = {
         orangeBall: 'scene.support',
@@ -501,26 +504,62 @@ const Scene = ({ assets }: SceneProps) => {
 
     const originalIntensities: WeakMap<THREE.Material, number> = new WeakMap();
 
-    const playGrassScanAnimation = () => {
-      const uniforms = scanUniformsRef.current;
-      const tl = gsap.timeline({
-          onComplete: () => {
-              uniforms.u_scan_radius.value = -1;
-          }
-      });
-
-      tl.call(() => {
-        uniforms.u_is_closing.value = 0.0;
-        uniforms.u_scan_radius.value = 0.0;
-      });
-      tl.to(uniforms.u_scan_radius, { value: 30, duration: 1.5, ease: "power2.inOut" });
-
-      tl.call(() => {
-          uniforms.u_is_closing.value = 1.0;
-          uniforms.u_scan_radius.value = 0.0;
-      }, "+=1.0");
-      tl.to(uniforms.u_scan_radius, { value: 30, duration: 0.75, ease: "power2.inOut" });
+    const sphereColorMap: { [key: string]: THREE.Color } = {
+        orangeBall: new THREE.Color(0xffa500),
+        blueBall: new THREE.Color(0x0000ff),
+        redBall: new THREE.Color(0xff0000),
+        blackBall: new THREE.Color(0x404040),
+        greenBall: new THREE.Color(0x00ff00),
     };
+
+    const playGrassScanAnimation = (isClosing: boolean = false) => {
+        if (grassScanAnimationRef.current) {
+            grassScanAnimationRef.current.kill();
+        }
+        const uniforms = scanUniformsRef.current;
+        const tl = gsap.timeline({
+            onComplete: () => {
+                if (!isClosing) {
+                  // Don't reset if we are just opening on hover
+                } else {
+                  uniforms.u_scan_radius.value = -1;
+                }
+                grassScanAnimationRef.current = null;
+            }
+        });
+    
+        if (isClosing) {
+            tl.set(uniforms.u_is_closing, { value: 1.0 });
+            tl.fromTo(uniforms.u_scan_radius, {value: uniforms.u_scan_radius.value}, { value: 0, duration: 0.75, ease: "power2.inOut" });
+        } else {
+            tl.set(uniforms.u_is_closing, { value: 0.0 });
+            tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 1.5, ease: "power2.inOut" });
+        }
+    
+        grassScanAnimationRef.current = tl;
+    };
+    
+    const playFullGrassScanAnimation = () => {
+        if (grassScanAnimationRef.current) {
+            grassScanAnimationRef.current.kill();
+        }
+        const uniforms = scanUniformsRef.current;
+        const tl = gsap.timeline({
+            onComplete: () => {
+                uniforms.u_scan_radius.value = -1;
+                grassScanAnimationRef.current = null;
+            }
+        });
+
+        tl.set(uniforms.u_is_closing, { value: 0.0 });
+        tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 1.5, ease: "power2.inOut" });
+        
+        tl.set(uniforms.u_is_closing, { value: 1.0 }, "+=0.2");
+        tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 0.75, ease: "power2.inOut" });
+        
+        grassScanAnimationRef.current = tl;
+    };
+
 
     const onMouseMove = (event: MouseEvent) => {
       if (currentMount) {
@@ -537,11 +576,16 @@ const Scene = ({ assets }: SceneProps) => {
         const intersects = raycaster.intersectObjects(meshesForHover, true);
 
         if (intersects.length > 0) {
-            playGrassScanAnimation();
             const firstIntersected = intersects[0].object as THREE.Mesh;
             const parent = firstIntersected.parent;
             
             if (parent) {
+                const hoverColor = sphereColorMap[parent.name as keyof typeof sphereColorMap];
+                if (hoverColor) {
+                    scanUniformsRef.current.u_scan_color.value.set(hoverColor);
+                }
+                playFullGrassScanAnimation();
+
                 setZoomedTarget(parent);
                 setViewState('zoomed');
 
@@ -631,12 +675,12 @@ const Scene = ({ assets }: SceneProps) => {
                 }
             }
 
-
-          if (orbSystem) {
-            orbSystem.points.visible = false;
-            gsap.to(orbSystem.points.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
-          }
-          setHoveredLabel('');
+            playGrassScanAnimation(true);
+            if (orbSystem) {
+                orbSystem.points.visible = false;
+                gsap.to(orbSystem.points.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+            }
+            setHoveredLabel('');
         }
         
         // SHOW NEW
@@ -648,6 +692,9 @@ const Scene = ({ assets }: SceneProps) => {
             if (labelKey && labelMap[labelKey]) {
                 setHoveredLabel(labelMap[labelKey]);
             }
+
+            scanUniformsRef.current.u_scan_color.value.set(0x6EAA43); // Set to green on hover
+            playGrassScanAnimation(false);
             
             gsap.to(parentObject.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
             const materials = firstIntersected.material;
@@ -696,11 +743,9 @@ const Scene = ({ assets }: SceneProps) => {
       if (treeMixer) {
         treeMixer.update(delta);
       }
-      if (grassMixer) {
+      if (grassMixer && grassAction && hasInteracted) {
         grassMixer.update(delta);
-        if (grassAction) {
-            grassAction.weight = (Math.sin(time * 2) + 1) / 2;
-        }
+        grassAction.weight = (Math.sin(time * 2) + 1) / 2;
       }
       
       if(saoPassRef.current) {
@@ -786,7 +831,7 @@ const Scene = ({ assets }: SceneProps) => {
         }
     });
     };
-  }, [assets, isSaoEnabled]);
+  }, [assets, isSaoEnabled, hasInteracted]);
 
 
   const handleReturn = () => {
@@ -874,13 +919,20 @@ const Scene = ({ assets }: SceneProps) => {
 
 interface AppSceneProps {
     assets: any;
+    hasInteracted: boolean;
 }
 
-const AppScene = ({ assets }: AppSceneProps) => (
+const AppScene = ({ assets, hasInteracted }: AppSceneProps) => (
   <Suspense fallback={<div className="w-full h-screen flex items-center justify-center bg-background text-foreground">Loading Scene...</div>}>
-    <Scene assets={assets} />
+    <Scene assets={assets} hasInteracted={hasInteracted} />
   </Suspense>
 );
 
 const MemoizedScene = memo(AppScene);
 export default MemoizedScene;
+
+    
+
+    
+
+    

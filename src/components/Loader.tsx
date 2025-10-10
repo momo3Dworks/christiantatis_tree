@@ -16,6 +16,7 @@ const assetsToLoad = [
   { path: '/assets/SparkVideo.webm', type: 'video', id: 'sparkVideo' },
   { path: '/assets/BallNormal.webp', type: 'texture', id: 'ballNormal' },
   { path: '/assets/SurfaceImperfection01.webp', type: 'texture', id: 'imperfection' },
+  { path: '/assets/TreeOfTrust.mp3', type: 'audio', id: 'audio' },
 ];
 
 export default function Loader({ onLoaded }: LoaderProps) {
@@ -25,6 +26,7 @@ export default function Loader({ onLoaded }: LoaderProps) {
   useEffect(() => {
     const manager = new THREE.LoadingManager();
     const textureLoader = new THREE.TextureLoader(manager);
+    const audioLoader = new THREE.AudioLoader(manager);
 
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
@@ -70,6 +72,14 @@ export default function Loader({ onLoaded }: LoaderProps) {
             video.addEventListener('canplaythrough', onCanPlay);
             video.load();
             loadedAssets.current[asset.id] = video;
+          break;
+        case 'audio':
+          const audio = new Audio(asset.path);
+          audio.preload = 'auto';
+          audio.loop = true;
+          loadedAssets.current[asset.id] = audio;
+          // Audio doesn't play nice with loading manager progress, so we handle it simply.
+          // A more robust solution might need to track canplaythrough events for all media.
           break;
       }
     });
