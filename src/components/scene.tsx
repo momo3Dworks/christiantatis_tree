@@ -118,11 +118,10 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
       });
   
       if (isClosing) {
-          tl.set(uniforms.u_is_closing, { value: 1.0 });
-          tl.fromTo(uniforms.u_scan_radius, {value: 30.0}, { value: 0, duration: 0.75, ease: "power2.inOut" });
+          tl.to(uniforms.u_scan_radius, { value: 0, duration: 0.75, ease: "power2.inOut" });
       } else {
-          tl.set(uniforms.u_is_closing, { value: 0.0 });
-          tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 1.5, ease: "power2.inOut" });
+          uniforms.u_scan_radius.value = 0;
+          tl.to(uniforms.u_scan_radius, { value: 30, duration: 1.5, ease: "power2.out" });
       }
   
       grassScanAnimationRef.current = tl;
@@ -833,11 +832,6 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
         z: initialCameraPosition.z,
         duration: 1.5,
         ease: 'power3.inOut',
-        onUpdate: () => {
-          if (cameraRef.current) {
-            cameraRef.current.lookAt(currentTarget);
-          }
-        },
       });
   
       gsap.to(currentTarget, {
@@ -846,6 +840,11 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
         z: initialCameraTarget.z,
         duration: 1.5,
         ease: 'power3.inOut',
+        onUpdate: () => {
+          if (cameraRef.current) {
+            cameraRef.current.lookAt(currentTarget);
+          }
+        },
       });
     }
   }, [startIntroAnimation]);
@@ -966,3 +965,4 @@ const MemoizedScene = memo(AppScene);
 export default MemoizedScene;
 
     
+
