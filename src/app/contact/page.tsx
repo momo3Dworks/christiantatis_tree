@@ -25,6 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/useTranslation";
+import Link from "next/link";
+import { Home } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -69,7 +71,15 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-24 flex items-center justify-center">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-center text-3xl">{t('contact.title')}</CardTitle>
+          <div className="relative flex items-center justify-center">
+             <Link href="/" passHref className="absolute left-0">
+                <Button variant="ghost" size="icon">
+                    <Home className="h-6 w-6" />
+                    <span className="sr-only">Home</span>
+                </Button>
+            </Link>
+            <CardTitle className="text-center text-3xl">{t('contact.title')}</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>

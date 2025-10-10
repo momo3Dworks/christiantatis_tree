@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Calendar as CalendarIcon } from "lucide-react";
+import { Search, MapPin, Calendar as CalendarIcon, Home } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
+import Link from "next/link";
 
 export default function EventsPage() {
   const [date, setDate] = useState<Date | undefined>();
@@ -56,7 +57,15 @@ export default function EventsPage() {
   return (
     <div className="container mx-auto px-4 py-24">
       <header className="mb-12">
-        <h1 className="text-4xl font-bold text-center mb-4">{t('events.title')}</h1>
+        <div className="relative flex items-center justify-center mb-4">
+            <Link href="/" passHref className="absolute left-0">
+                <Button variant="ghost" size="icon">
+                    <Home className="h-6 w-6" />
+                    <span className="sr-only">Home</span>
+                </Button>
+            </Link>
+            <h1 className="text-4xl font-bold text-center">{t('events.title')}</h1>
+        </div>
         <div className="max-w-2xl mx-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

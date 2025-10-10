@@ -3,6 +3,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/useTranslation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Home } from "lucide-react";
 
 export default function ContentPage() {
   const { t } = useTranslation();
@@ -12,7 +15,15 @@ export default function ContentPage() {
       <div className="grid gap-16">
         {/* YouTube Section */}
         <section>
-          <h2 className="text-3xl font-bold text-center mb-8">{t('content.youtubeTitle')}</h2>
+            <div className="relative flex items-center justify-center mb-8">
+                <Link href="/" passHref className="absolute left-0">
+                    <Button variant="ghost" size="icon">
+                        <Home className="h-6 w-6" />
+                        <span className="sr-only">Home</span>
+                    </Button>
+                </Link>
+                <h2 className="text-3xl font-bold text-center">{t('content.youtubeTitle')}</h2>
+            </div>
           <div className="text-center p-8 border rounded-lg">
             <p className="text-muted-foreground">{t('content.youtubePlaceholder')}</p>
           </div>

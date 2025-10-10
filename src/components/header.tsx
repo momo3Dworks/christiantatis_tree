@@ -37,6 +37,7 @@ export default function Header() {
 
 
   const navItems = [
+    { href: '/', label: t('header.home') },
     { href: '/events', label: t('header.events') },
     { href: '/bible', label: t('header.onlineBible') },
     { href: '/content', label: t('header.content') },
