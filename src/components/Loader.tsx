@@ -1,0 +1,88 @@
+
+"use client";
+
+import { useEffect, useState, useRef } from 'react';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+
+interface LoaderProps {
+  onLoaded: (assets: any) => void;
+}
+
+const assetsToLoad = [
+  { path: '/models/CHRISTIANTATIS_TREE.glb', type: 'gltf', id: 'tree' },
+  { path: '/models/GRASS.glb', type: 'gltf', id: 'grass' },
+  { path: '/assets/SparkVideo.webm', type: 'video', id: 'sparkVideo' },
+  { path: '/assets/BallNormal.webp', type: 'texture', id: 'ballNormal' },
+  { path: '/assets/SurfaceImperfection01.webp', type: 'texture', id: 'imperfection' },
+];
+
+export default function Loader({ onLoaded }: LoaderProps) {
+  const [progress, setProgress] = useState(0);
+  const loadedAssets = useRef<any>({});
+
+  useEffect(() => {
+    const manager = new THREE.LoadingManager();
+    const textureLoader = new THREE.TextureLoader(manager);
+
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    const gltfLoader = new GLTFLoader(manager);
+    gltfLoader.setDRACOLoader(dracoLoader);
+
+    manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+      setProgress((itemsLoaded / itemsTotal) * 100);
+    };
+
+    manager.onLoad = () => {
+      onLoaded(loadedAssets.current);
+    };
+
+    assetsToLoad.forEach(asset => {
+      switch (asset.type) {
+        case 'gltf':
+          gltfLoader.load(asset.path, (gltf) => {
+            loadedAssets.current[asset.id] = gltf;
+          });
+          break;
+        case 'texture':
+          textureLoader.load(asset.path, (texture) => {
+            loadedAssets.current[asset.id] = texture;
+          });
+          break;
+        case 'video':
+            const video = document.createElement('video');
+            video.src = asset.path;
+            video.muted = true;
+            video.loop = false;
+            video.playsInline = true;
+            video.preload = 'auto';
+            
+            const onCanPlay = () => {
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => video.pause()).catch(() => {});
+                }
+                video.removeEventListener('canplaythrough', onCanPlay);
+            };
+    
+            video.addEventListener('canplaythrough', onCanPlay);
+            video.load();
+            loadedAssets.current[asset.id] = video;
+          break;
+      }
+    });
+
+  }, [onLoaded]);
+
+  return (
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-background z-20">
+      <div className="w-1/2">
+        <div className="h-[1px] w-full bg-muted-foreground/20">
+          <div className="h-full bg-foreground transition-all duration-150" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+}

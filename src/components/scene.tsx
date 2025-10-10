@@ -1,13 +1,14 @@
 
+
 "use client";
 
 import { useEffect, useRef, useState, memo, Suspense } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 import { gsap } from 'gsap';
 import { Button } from './ui/button';
 import DonationContent from './content/donation-content';
@@ -17,6 +18,7 @@ import FindHomeChurchContent from './content/find-home-church-content';
 import AboutUsContent from './content/about-us-content';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSearchParams } from 'next/navigation';
+import { useSAO } from '@/context/SAOContext';
 
 type Orb = {
   angle: number;
@@ -36,24 +38,54 @@ type ViewState = 'default' | 'zoomed';
 const initialCameraPosition = new THREE.Vector3(0, 4, 24);
 const initialCameraTarget = new THREE.Vector3(0, 11, 0);
 
-const Scene = () => {
+type TextureAnimation = {
+  material: THREE.MeshStandardMaterial;
+  speed: number;
+  originalSpeed: number;
+  direction: number;
+  intensity: number;
+};
+
+interface SceneProps {
+  assets: {
+    tree: GLTF;
+    grass: GLTF;
+    sparkVideo: HTMLVideoElement;
+    ballNormal: THREE.Texture;
+    imperfection: THREE.Texture;
+  };
+}
+
+const Scene = ({ assets }: SceneProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
-  const [progress, setProgress] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [viewState, setViewState] = useState<ViewState>('default');
   const [showContentContainer, setShowContentContainer] = useState(false);
   const [zoomedTarget, setZoomedTarget] = useState<THREE.Object3D | null>(null);
   const [hoveredLabel, setHoveredLabel] = useState('');
   const [theme, setTheme] = useState('light');
-
+  const { isSaoEnabled } = useSAO();
 
   const hoveredMeshRef = useRef<{mesh: THREE.Mesh, name: string, orbSystem: OrbSystem | null } | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const modelRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const saoPassRef = useRef<SAOPass | null>(null);
   const sparkMaterialsRef = useRef<{ [key: string]: THREE.MeshStandardMaterial }>({});
   const waypointsRef = useRef<{ [key: string]: THREE.Vector3 }>({});
+  const treeLightMaterialRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  
+  const materialToAnimationsMapRef = useRef<Map<THREE.Material, { rough: TextureAnimation, normal: TextureAnimation }>>(new Map());
+
+  const scanUniformsRef = useRef({
+    u_time: { value: 0 },
+    u_scan_radius: { value: -1.0 },
+    u_wave_width: { value: 0.5 },
+    u_scan_color: { value: new THREE.Color("#6EAA43") },
+    u_is_closing: { value: 0.0 },
+  });
+
+
   const sphereToSparkMap: { [key: string]: string } = {
     orangeBall: 'Spark_1',
     blueBall: 'Spark_2',
@@ -75,7 +107,9 @@ const Scene = () => {
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const clock = new THREE.Clock();
-    let mixer: THREE.AnimationMixer;
+    let treeMixer: THREE.AnimationMixer | null = null;
+    let grassMixer: THREE.AnimationMixer | null = null;
+    let grassAction: THREE.AnimationAction | null = null;
 
     // Raycaster for mouse interaction
     const raycaster = new THREE.Raycaster();
@@ -97,49 +131,42 @@ const Scene = () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     currentMount.appendChild(renderer.domElement);
-
-    // Post-processing
-    const renderScene = new RenderPass(scene, camera);
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-    bloomPass.threshold = 6.5;
-    bloomPass.strength = 1.5;
-    bloomPass.radius = 0.4;
     
+    // Post-processing
     const composer = new EffectComposer(renderer);
-    composer.addPass(renderScene);
+    composer.addPass(new RenderPass(scene, camera));
+    
+    const saoPass = new SAOPass(scene, camera, false, true);
+    saoPassRef.current = saoPass;
+    composer.addPass(saoPass);
+
+    saoPass.params.saoBias = 0.01; 
+    saoPass.params.saoIntensity = 0.0005;
+    saoPass.params.saoScale = 0.7; 
+    saoPass.params.saoKernelRadius = 60;
+    saoPass.params.saoMinResolution = 0;
+    saoPass.params.saoBlur = true;
+    saoPass.params.saoBlurRadius = 8;
+    saoPass.params.saoBlurStdDev = 120; 
+    saoPass.params.saoBlurDepthCutoff = 0.001; 
+
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.threshold = 15;
+    bloomPass.strength = 1;
+    bloomPass.radius = 0.1;
     composer.addPass(bloomPass);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    const ambientLight = new THREE.AmbientLight(0xdcdcdc, 2);
     scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 10, 7.5);
+    const directionalLight = new THREE.DirectionalLight(0xdcdcdc, 1);
+    directionalLight.position.set(0, 1, 7.5);
     scene.add(directionalLight);
 
     // Video Texture Setup
-    const video = document.createElement('video');
-    video.src = '/assets/SparkVideo.mp4';
-    video.muted = true;
-    video.loop = false; 
-    video.playsInline = true;
-    
-    const onCanPlay = () => {
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                video.pause();
-            }).catch(e => {
-                console.error("Pre-play failed:", e);
-            });
-        }
-        video.removeEventListener('canplay', onCanPlay);
-    };
-
-    video.addEventListener('canplay', onCanPlay);
-    video.load(); 
-
+    const video = assets.sparkVideo;
     const videoTexture = new THREE.VideoTexture(video);
     videoTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -148,13 +175,19 @@ const Scene = () => {
         mat.visible = false;
       });
     };
+
+    // Roughness/Normal Texture
+    const imperfectionTexture = assets.imperfection;
+    imperfectionTexture.wrapS = THREE.RepeatWrapping;
+    imperfectionTexture.wrapT = THREE.RepeatWrapping;
     
-    // GLTF Loader with DRACO
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-    
+    const ballNormalTexture = assets.ballNormal;
+    ballNormalTexture.wrapS = THREE.RepeatWrapping;
+    ballNormalTexture.wrapT = THREE.RepeatWrapping;
+
+    const roughnessAnimations: TextureAnimation[] = [];
+    const normalAnimations: TextureAnimation[] = [];
+
     const meshesForHover: THREE.Mesh[] = [];
     const sphereScaleMap: { [key: string]: THREE.Mesh[] } = {
       orange: [], blue: [], red: [], black: [], green: []
@@ -162,177 +195,302 @@ const Scene = () => {
     
     const orbSystems: OrbSystem[] = [];
     const orbSystemMap: { [key: string]: OrbSystem } = {};
+
+    const targetMaterialNames = [
+        "orangeBall", 
+        "blueBall", 
+        "RedBallGlass", 
+        "BlackBallGlass", 
+        "GreenBallGlass"
+    ];
       
-    loader.load(
-      '/models/CHRISTIANTATIS_TREE.glb',
-      (gltf) => {
-        const model = gltf.scene;
-        modelRef.current = model;
-        scene.add(model);
-        model.position.set(0, 0, 0);
-        model.rotation.set(0, 0, 0);
-        model.scale.set(1, 1, 1);
-        
-        const sphereNameKeys = [
-          "orangeBall",
-          "blueBall",
-          "redBall",
-          "blackBall",
-          "greenBall",
-        ];
+    // Main model processing
+    const gltf = assets.tree;
+    const model = gltf.scene;
+    modelRef.current = model;
+    scene.add(model);
+    model.position.set(0, 0, 0);
+    model.rotation.set(0, 0, 0);
+    model.scale.set(1, 1, 1);
 
-        model.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
-                const material = child.material as THREE.MeshStandardMaterial;
-                const isSparkMesh = material && Object.values(sphereToSparkMap).some(name => material.name === name);
+    treeMixer = new THREE.AnimationMixer(gltf.scene);
+    const animations = gltf.animations;
 
-                if (isSparkMesh) {
-                    sparkMaterialsRef.current[material.name] = material;
-                    material.map = videoTexture;
-                    material.emissiveMap = videoTexture;
-                    material.alphaMap = videoTexture;
+    if (animations && animations.length) {
+      setTimeout(() => {
+        animations.forEach((clip) => {
+          if (treeMixer) {
+            const action = treeMixer.clipAction(clip);
+            action.setLoop(THREE.LoopOnce, 1);
+            action.clampWhenFinished = true;
+            action.play();
+          }
+        });
+      }, 600);
+    }
+    
+    // Grass model processing
+    const grassGltf = assets.grass;
+    const grassModel = grassGltf.scene;
+    scene.add(grassModel);
+    grassModel.position.set(0, 0, 0);
+    grassModel.rotation.set(0, 0, 0);
+    grassModel.scale.set(1, 1, 1);
 
-                    if (material.name === 'Spark_2' || material.name === 'Spark_3') {
-                        material.emissiveIntensity = 25;
-                    } else {
-                        material.emissiveIntensity = 8;
-                    }
-                    
-                    material.transparent = true;
-                    material.visible = false;
+    if (grassGltf.animations && grassGltf.animations.length > 0) {
+      grassMixer = new THREE.AnimationMixer(grassGltf.scene);
+      const grassClip = THREE.AnimationClip.findByName(grassGltf.animations, 'GrassRight');
+      if (grassClip) {
+          grassAction = grassMixer.clipAction(grassClip);
+          grassAction.setLoop(THREE.LoopRepeat, Infinity);
+          grassAction.play();
+      }
+    }
+
+    grassModel.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+          const grassMat = child.material;
+          grassMat.color.set("#6EAA43");
+          grassMat.transparent = true;
+          
+          grassMat.onBeforeCompile = (shader) => {
+              shader.uniforms.u_time = scanUniformsRef.current.u_time;
+              shader.uniforms.u_scan_radius = scanUniformsRef.current.u_scan_radius;
+              shader.uniforms.u_wave_width = scanUniformsRef.current.u_wave_width;
+              shader.uniforms.u_scan_color = scanUniformsRef.current.u_scan_color;
+              shader.uniforms.u_is_closing = scanUniformsRef.current.u_is_closing;
+
+              shader.vertexShader = `
+                varying vec3 vWorldPosition;
+                ${shader.vertexShader}
+              `;
+              shader.vertexShader = shader.vertexShader.replace(
+                `#include <worldpos_vertex>`,
+                `#include <worldpos_vertex>
+                  vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                `
+              );
+              
+              shader.fragmentShader = `
+                uniform float u_time;
+                uniform float u_scan_radius;
+                uniform float u_wave_width;
+                uniform vec3 u_scan_color;
+                uniform float u_is_closing;
+
+                varying vec3 vWorldPosition;
+
+                float random(vec2 st) {
+                  return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+                }
+
+                ${shader.fragmentShader}
+              `;
+              shader.fragmentShader = shader.fragmentShader.replace(
+                `vec4 diffuseColor = vec4( diffuse, opacity );`,
+                `
+                float dist = distance(vWorldPosition.xz, vec2(0.0));
+                float wave_edge = u_scan_radius;
+                float wave_trail = wave_edge - u_wave_width;
+
+                float noise = (random(vWorldPosition.xz * 0.5 + u_time * 0.1) - 0.5) * 0.2;
+                wave_edge += noise;
+                
+                vec4 diffuseColor = vec4(diffuse, opacity);
+
+                if (u_is_closing < 0.5) { // Opening scan
+                  if (dist > wave_edge) {
+                    discard;
+                  }
+                  if (dist > wave_trail && dist <= wave_edge) {
+                    diffuseColor.rgb = u_scan_color * 10.0;
+                    diffuseColor.a = 1.0;
+                  }
+                } else { // Closing scan
+                  if (dist < wave_trail) {
+                    discard;
+                  }
+                    if (dist > wave_trail && dist <= wave_edge) {
+                    diffuseColor.rgb = u_scan_color * 25.0;
+                    diffuseColor.a = 1.0;
+                  } else {
+                      discard;
+                  }
+                }
+                `
+              );
+          };
+          grassMat.needsUpdate = true;
+      }
+    });
+    
+    const sphereNameKeys = [
+      "orangeBall",
+      "blueBall",
+      "redBall",
+      "blackBall",
+      "greenBall",
+    ];
+
+    model.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+            if (child.name === 'SKY_SPHERE' && child.material instanceof THREE.MeshStandardMaterial && child.material.name === 'TREE_LIGHT') {
+                treeLightMaterialRef.current = child.material;
+                child.material.emissive = child.material.color;
+                child.material.emissiveIntensity = 23;
+            }
+
+            const material = child.material as THREE.MeshStandardMaterial;
+
+            if (targetMaterialNames.includes(material.name)) {
+                const clonedRoughnessTexture = imperfectionTexture.clone();
+                clonedRoughnessTexture.needsUpdate = true;
+                material.roughnessMap = clonedRoughnessTexture;
+
+                const clonedNormalTexture = ballNormalTexture.clone();
+                clonedNormalTexture.needsUpdate = true;
+                material.normalMap = clonedNormalTexture;
+
+                const roughAnim: TextureAnimation = {
+                    material: material,
+                    speed: 0.1,
+                    originalSpeed: 0.1,
+                    direction: 1,
+                    intensity: 0.7
+                };
+                roughnessAnimations.push(roughAnim);
+
+                const normalAnim: TextureAnimation = {
+                  material: material,
+                  speed: 0.1,
+                  originalSpeed: 0.1,
+                  direction: 1,
+                  intensity: 0.8
+                };
+                normalAnimations.push(normalAnim);
+                materialToAnimationsMapRef.current.set(material, { rough: roughAnim, normal: normalAnim });
+            }
+
+            const isSparkMesh = material && Object.values(sphereToSparkMap).some(name => material.name === name);
+
+            if (isSparkMesh) {
+                sparkMaterialsRef.current[material.name] = material;
+                material.map = videoTexture;
+                material.emissiveMap = videoTexture;
+                material.alphaMap = videoTexture;
+
+                if ( material.name === 'Spark_3') {
+                    material.emissiveIntensity = 10;
                 } else {
-                    const parentObject = child.parent;
-                    const parentName = parentObject ? parentObject.name : '';
-                    if (sphereNameKeys.includes(parentName)) {
-                        meshesForHover.push(child);
-                        const groupKey = parentName.replace('Ball', '');
-                        if (sphereScaleMap[groupKey]) {
-                            sphereScaleMap[groupKey].push(child);
-                        }
+                    material.emissiveIntensity = 5;
+                }
+                
+                material.transparent = true;
+                material.visible = false;
+            } else {
+                const parentObject = child.parent;
+                const parentName = parentObject ? parentObject.name : '';
+                if (sphereNameKeys.includes(parentName)) {
+                    meshesForHover.push(child);
+                    const groupKey = parentName.replace('Ball', '');
+                    if (sphereScaleMap[groupKey]) {
+                        sphereScaleMap[groupKey].push(child);
                     }
                 }
             }
-        });
-
-
-        const createOrbs = (color: number, parent: THREE.Object3D): OrbSystem => {
-            const particlesGeometry = new THREE.BufferGeometry();
-            const orbCount = 6;
-            const posArray = new Float32Array(orbCount * 3);
-            const orbs: Orb[] = [];
-
-            for (let i = 0; i < orbCount; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const radius = 2.5 + Math.random() * 1;
-                const elevation = (Math.random() - 0.5) * 2;
-                const speed = (Math.random() * 0.2 + 0.1) * (Math.random() > 0.5 ? 1 : -1);
-                const inclination = (Math.random() - 0.5) * (Math.PI / 4);
-
-                orbs.push({ angle, speed, radius, elevation, inclination });
-                posArray.set([0, 0, 0], i * 3);
-            }
-
-            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            
-            const particlesMaterial = new THREE.PointsMaterial({
-                color: color,
-                size: 0.2,
-                blending: THREE.AdditiveBlending,
-                transparent: true,
-                depthWrite: false,
-            });
-
-            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-            particles.visible = false;
-            parent.add(particles);
-
-            return { points: particles, orbs };
-        };
-
-        const sphereInfo: { [key: string]: { name: string, color: number } } = {
-            orangeBall: { name: "orangeBall", color: 0xffa500 },
-            blueBall: { name: "blueBall", color: 0x0000ff },
-            redBall: { name: "redBall", color: 0xff0000 },
-            blackBall: { name: "blackBall", color: 0x808080 },
-            greenBall: { name: "greenBall", color: 0x00ff00 },
-        };
-        
-        Object.keys(sphereInfo).forEach(key => {
-            const info = sphereInfo[key as keyof typeof sphereInfo];
-            const sphereObject = model.getObjectByName(info.name);
-            if (sphereObject) {
-                const orbSystem = createOrbs(info.color, sphereObject);
-                orbSystemMap[info.name] = orbSystem;
-                orbSystems.push(orbSystem);
-
-                const destination = new THREE.Vector3();
-                sphereObject.getWorldPosition(destination);
-                waypointsRef.current[info.name] = destination;
-            }
-        });
-        
-        mixer = new THREE.AnimationMixer(model);
-        const animations = gltf.animations;
-
-        if (animations && animations.length) {
-          setTimeout(() => {
-            animations.forEach((clip) => {
-              const action = mixer.clipAction(clip);
-              action.setLoop(THREE.LoopOnce, 1);
-              action.clampWhenFinished = true;
-              action.play();
-            });
-          }, 600);
         }
+    });
+
+    const createOrbs = (color: number, parent: THREE.Object3D): OrbSystem => {
+        const particlesGeometry = new THREE.BufferGeometry();
+        const orbCount = 6;
+        const posArray = new Float32Array(orbCount * 3);
+        const orbs: Orb[] = [];
+
+        for (let i = 0; i < orbCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 2.5 + Math.random() * 1;
+            const elevation = (Math.random() - 0.5) * 2;
+            const speed = (Math.random() * 0.2 + 0.1) * (Math.random() > 0.5 ? 1 : -1);
+            const inclination = (Math.random() - 0.5) * (Math.PI / 4);
+
+            orbs.push({ angle, speed, radius, elevation, inclination });
+            posArray.set([0, 0, 0], i * 3);
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
         
-        setLoading(false);
-
-        const orderedSphereGroups = [
-            sphereScaleMap.orange,
-            sphereScaleMap.blue,
-            sphereScaleMap.red,
-            sphereScaleMap.black,
-            sphereScaleMap.green
-        ];
-
-        let delay = 0;
-        const animationDuration = 500;
-        const delayIncrement = 200; 
-
-        orderedSphereGroups.forEach((group) => {
-             if(group) {
-                setTimeout(() => {
-                    const startTime = Date.now();
-                    const animateScale = () => {
-                        const elapsedTime = Date.now() - startTime;
-                        const progress = Math.min(elapsedTime / animationDuration, 1);
-                        const currentScale = progress;
-
-                        group.forEach(mesh => {
-                            mesh.scale.set(currentScale, currentScale, currentScale);
-                        });
-
-                        if (progress < 1) {
-                            requestAnimationFrame(animateScale);
-                        }
-                    };
-                    requestAnimationFrame(animateScale);
-                }, delay);
-                delay += delayIncrement;
-            }
+        const particlesMaterial = new THREE.PointsMaterial({
+            color: color,
+            size: 0.25,
+            transparent: true,
+            depthWrite: true,
         });
 
-      },
-      (xhr) => {
-        const newProgress = (xhr.loaded / xhr.total) * 100;
-        setProgress(newProgress);
-      },
-      (error) => {
-        console.error('An error happened during loading:', error);
-        setLoading(false);
-      }
-    );
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        particles.visible = false;
+        parent.add(particles);
+
+        return { points: particles, orbs };
+    };
+
+    const sphereInfo: { [key: string]: { name: string, color: number } } = {
+        orangeBall: { name: "orangeBall", color: 0xffa500 },
+        blueBall: { name: "blueBall", color: 0x0000ff },
+        redBall: { name: "redBall", color: 0xff0000 },
+        blackBall: { name: "blackBall", color: 0x808080 },
+        greenBall: { name: "greenBall", color: 0x00ff00 },
+    };
     
+    Object.keys(sphereInfo).forEach(key => {
+        const info = sphereInfo[key as keyof typeof sphereInfo];
+        const sphereObject = model.getObjectByName(info.name);
+        if (sphereObject) {
+            const orbSystem = createOrbs(info.color, sphereObject);
+            orbSystemMap[info.name] = orbSystem;
+            orbSystems.push(orbSystem);
+
+            const destination = new THREE.Vector3();
+            sphereObject.getWorldPosition(destination);
+            waypointsRef.current[info.name] = destination;
+        }
+    });
+    
+    const orderedSphereGroups = [
+        sphereScaleMap.orange,
+        sphereScaleMap.blue,
+        sphereScaleMap.red,
+        sphereScaleMap.black,
+        sphereScaleMap.green
+    ];
+
+    let delay = 0;
+    const animationDuration = 500;
+    const delayIncrement = 200; 
+
+    orderedSphereGroups.forEach((group) => {
+          if(group) {
+            setTimeout(() => {
+                const startTime = Date.now();
+                const animateScale = () => {
+                    const elapsedTime = Date.now() - startTime;
+                    const progress = Math.min(elapsedTime / animationDuration, 1);
+                    const currentScale = progress;
+
+                    group.forEach(mesh => {
+                        mesh.scale.set(currentScale, currentScale, currentScale);
+                    });
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateScale);
+                    }
+                };
+                requestAnimationFrame(animateScale);
+            }, delay);
+            delay += delayIncrement;
+        }
+    });
+
     const labelMap: { [key: string]: string } = {
         orangeBall: 'scene.support',
         blueBall: 'scene.register',
@@ -342,6 +500,27 @@ const Scene = () => {
     };
 
     const originalIntensities: WeakMap<THREE.Material, number> = new WeakMap();
+
+    const playGrassScanAnimation = () => {
+      const uniforms = scanUniformsRef.current;
+      const tl = gsap.timeline({
+          onComplete: () => {
+              uniforms.u_scan_radius.value = -1;
+          }
+      });
+
+      tl.call(() => {
+        uniforms.u_is_closing.value = 0.0;
+        uniforms.u_scan_radius.value = 0.0;
+      });
+      tl.to(uniforms.u_scan_radius, { value: 30, duration: 1.5, ease: "power2.inOut" });
+
+      tl.call(() => {
+          uniforms.u_is_closing.value = 1.0;
+          uniforms.u_scan_radius.value = 0.0;
+      }, "+=1.0");
+      tl.to(uniforms.u_scan_radius, { value: 30, duration: 0.75, ease: "power2.inOut" });
+    };
 
     const onMouseMove = (event: MouseEvent) => {
       if (currentMount) {
@@ -358,6 +537,7 @@ const Scene = () => {
         const intersects = raycaster.intersectObjects(meshesForHover, true);
 
         if (intersects.length > 0) {
+            playGrassScanAnimation();
             const firstIntersected = intersects[0].object as THREE.Mesh;
             const parent = firstIntersected.parent;
             
@@ -374,22 +554,24 @@ const Scene = () => {
                     
                     const playPromise = video.play();
                     if (playPromise !== undefined) {
-                        playPromise.catch(e => console.error("Video play failed:", e));
-                    }
-                    
-                    const waypoint = waypointsRef.current[parent.name];
-                    if (waypoint) {
-                       gsap.to(cameraRef.current.position, {
-                          x: waypoint.x,
-                          y: waypoint.y,
-                          z: waypoint.z - 12,
-                          duration: 2.1,
-                          delay: 0.5,
-                          ease: 'power3.inOut',
-                          onComplete: () => {
-                            setShowContentContainer(true);
-                          }
-                       });
+                        playPromise.then(() => {
+                            const waypoint = waypointsRef.current[parent.name];
+                            if (waypoint && cameraRef.current) {
+                                gsap.to(cameraRef.current.position, {
+                                  x: waypoint.x,
+                                  y: waypoint.y,
+                                  z: waypoint.z - 12,
+                                  duration: 3.5,
+                                  ease: 'power3.inOut',
+                                });
+
+                                gsap.delayedCall(3.0, () => {
+                                  setShowContentContainer(true);
+                                });
+                            }
+                        }).catch(e => {
+                            console.error("Video play failed:", e);
+                        });
                     }
                 }
             }
@@ -420,6 +602,7 @@ const Scene = () => {
       }
 
       if (hoveredMeshRef.current?.name !== currentHoveredName) {
+        // HIDE OLD
         if (hoveredMeshRef.current) {
           const { mesh, orbSystem } = hoveredMeshRef.current;
           
@@ -431,10 +614,20 @@ const Scene = () => {
                     if (originalIntensities.has(mat)) {
                         gsap.to(mat, { emissiveIntensity: originalIntensities.get(mat), duration: 0.3 });
                     }
+                    const anims = materialToAnimationsMapRef.current.get(mat);
+                    if (anims) {
+                        anims.rough.speed = anims.rough.originalSpeed;
+                        anims.normal.speed = anims.normal.originalSpeed;
+                    }
                 });
             } else if (materials) {
                 if (originalIntensities.has(materials)) {
                     gsap.to(materials, { emissiveIntensity: originalIntensities.get(materials), duration: 0.3 });
+                }
+                const anims = materialToAnimationsMapRef.current.get(materials);
+                if (anims) {
+                    anims.rough.speed = anims.rough.originalSpeed;
+                    anims.normal.speed = anims.normal.originalSpeed;
                 }
             }
 
@@ -446,6 +639,7 @@ const Scene = () => {
           setHoveredLabel('');
         }
         
+        // SHOW NEW
         if (currentHoveredName && firstIntersected && parentObject) {
             const orbSystem = orbSystemMap[currentHoveredName] || null;
             hoveredMeshRef.current = { mesh: firstIntersected, name: currentHoveredName, orbSystem };
@@ -458,17 +652,23 @@ const Scene = () => {
             gsap.to(parentObject.scale, { x: 1.3, y: 1.3, z: 1.3, duration: 0.3 });
             const materials = firstIntersected.material;
 
-            const applyIntensity = (mat: THREE.Material) => {
+            const applyEffects = (mat: THREE.Material) => {
               if (!originalIntensities.has(mat)) {
                   originalIntensities.set(mat, (mat as THREE.MeshStandardMaterial).emissiveIntensity || 0.1);
               }
               gsap.to(mat, { emissiveIntensity: (originalIntensities.get(mat) ?? 0.1) * 26, duration: 0.3 });
+
+              const anims = materialToAnimationsMapRef.current.get(mat);
+              if (anims) {
+                  anims.rough.speed = anims.rough.originalSpeed * 5;
+                  anims.normal.speed = anims.normal.originalSpeed * 5;
+              }
             };
 
             if (Array.isArray(materials)) {
-              materials.forEach(applyIntensity);
+              materials.forEach(applyEffects);
             } else if (materials) {
-              applyIntensity(materials);
+              applyEffects(materials);
             }
             
             if (orbSystem) {
@@ -487,15 +687,32 @@ const Scene = () => {
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
 
       if (viewState === 'default') {
         checkIntersections();
       }
       
-      if (mixer) {
-        mixer.update(delta);
+      if (treeMixer) {
+        treeMixer.update(delta);
+      }
+      if (grassMixer) {
+        grassMixer.update(delta);
+        if (grassAction) {
+            grassAction.weight = (Math.sin(time * 2) + 1) / 2;
+        }
       }
       
+      if(saoPassRef.current) {
+        saoPassRef.current.enabled = isSaoEnabled;
+      }
+      
+      scanUniformsRef.current.u_time.value = time;
+
+      if (treeLightMaterialRef.current) {
+        treeLightMaterialRef.current.emissiveIntensity = 13 + Math.sin(time * 0.5) * 5;
+      }
+
       orbSystems.forEach(system => {
         if (system.points.visible) {
             const positions = system.points.geometry.attributes.position.array as Float32Array;
@@ -516,6 +733,17 @@ const Scene = () => {
                 positions[i * 3 + 2] = rotated_z;
             });
             system.points.geometry.attributes.position.needsUpdate = true;
+        }
+    });
+
+    materialToAnimationsMapRef.current.forEach(({ rough, normal }) => {
+        if (rough.material.roughnessMap) {
+            rough.material.roughness = rough.intensity;
+            rough.material.roughnessMap.offset.x += rough.speed * rough.direction * delta;
+        }
+        if (normal.material.normalMap) {
+            normal.material.normalScale.set(normal.intensity, normal.intensity);
+            normal.material.normalMap.offset.x += normal.speed * normal.direction * delta;
         }
     });
 
@@ -540,6 +768,12 @@ const Scene = () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('click', onMouseClick);
       cancelAnimationFrame(animationFrameId);
+      if (treeMixer) {
+          treeMixer.stopAllAction();
+      }
+      if (grassMixer) {
+          grassMixer.stopAllAction();
+      }
       if (currentMount && renderer.domElement) {
         currentMount.removeChild(renderer.domElement);
       }
@@ -552,7 +786,7 @@ const Scene = () => {
         }
     });
     };
-  }, []);
+  }, [assets, isSaoEnabled]);
 
 
   const handleReturn = () => {
@@ -596,15 +830,6 @@ const Scene = () => {
 
   return (
     <>
-      {loading && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white z-20">
-          <div className="w-1/2">
-            <div className="h-[1px] w-full bg-gray-200">
-              <div className="h-full bg-black transition-all duration-150" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        </div>
-      )}
       <div ref={mountRef} className="w-full h-full" />
       <div 
         className={`absolute bottom-10 left-1/2 -translate-x-1/2 transition-opacity duration-300 pointer-events-none ${hoveredLabel ? 'opacity-100' : 'opacity-0'}`}
@@ -647,17 +872,15 @@ const Scene = () => {
   );
 };
 
-const SceneWrapper = () => (
-  <Suspense fallback={<div>Loading...</div>}>
-    <Scene />
+interface AppSceneProps {
+    assets: any;
+}
+
+const AppScene = ({ assets }: AppSceneProps) => (
+  <Suspense fallback={<div className="w-full h-screen flex items-center justify-center bg-background text-foreground">Loading Scene...</div>}>
+    <Scene assets={assets} />
   </Suspense>
 );
 
-const MemoizedScene = memo(SceneWrapper);
+const MemoizedScene = memo(AppScene);
 export default MemoizedScene;
-
-    
-
-    
-
-

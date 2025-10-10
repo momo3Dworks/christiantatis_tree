@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { useSAO } from '@/context/SAOContext';
 
 export default function Header() {
   const [isSheetOpen, setSheetOpen] = useState(false);
@@ -30,6 +31,7 @@ export default function Header() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const { isSaoEnabled, toggleSAO } = useSAO();
 
   const navItems = [
     { href: '/events', label: t('header.events') },
@@ -114,6 +116,16 @@ export default function Header() {
                 </Link>
               ))}
             </nav>
+            <div className="absolute bottom-8 left-0 right-0 p-4">
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <Label htmlFor="sao-toggle">Ambient Occlusion</Label>
+                <Switch
+                  id="sao-toggle"
+                  checked={isSaoEnabled}
+                  onCheckedChange={toggleSAO}
+                />
+              </div>
+            </div>
           </SheetContent>
         </Sheet>
         
