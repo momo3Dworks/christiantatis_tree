@@ -14,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
+  const [startIntro, setStartIntro] = useState(false);
   const audioContext = useContext(AudioContext);
   const { t } = useTranslation();
 
@@ -35,6 +36,7 @@ function App() {
     setShowOverlay(false); // Starts fade out
     setTimeout(() => {
       setHasInteracted(true); // Fully removes overlay and starts animations after fade
+      setStartIntro(true); // Start intro animation
     }, 500); // Match duration of transition
   };
 
@@ -61,7 +63,7 @@ function App() {
         </div>
       )}
 
-      {assets && <MemoizedScene assets={assets} hasInteracted={hasInteracted} />}
+      {assets && <MemoizedScene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntro} />}
       <SoundwaveButton />
     </main>
   );

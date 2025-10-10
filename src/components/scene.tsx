@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState, memo, Suspense } from 'react';
+import { useEffect, useRef, useState, memo, Suspense, useCallback } from 'react';
 import * as THREE from 'three';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -18,6 +18,7 @@ import AboutUsContent from './content/about-us-content';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSearchParams } from 'next/navigation';
 import { useSAO } from '@/context/SAOContext';
+import { X } from 'lucide-react';
 
 type Orb = {
   angle: number;
@@ -34,8 +35,12 @@ type OrbSystem = {
 
 type ViewState = 'default' | 'zoomed';
 
+const introCameraPosition = new THREE.Vector3(0, 40, 0);
+const introCameraTarget = new THREE.Vector3(0, 0, 0);
+
 const initialCameraPosition = new THREE.Vector3(0, 4, 24);
 const initialCameraTarget = new THREE.Vector3(0, 11, 0);
+
 
 type TextureAnimation = {
   material: THREE.MeshStandardMaterial;
@@ -54,9 +59,10 @@ interface SceneProps {
     imperfection: THREE.Texture;
   };
   hasInteracted: boolean;
+  startIntroAnimation: boolean;
 }
 
-const Scene = ({ assets, hasInteracted }: SceneProps) => {
+const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [viewState, setViewState] = useState<ViewState>('default');
@@ -81,9 +87,10 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
   const scanUniformsRef = useRef({
     u_time: { value: 0 },
     u_scan_radius: { value: -1.0 },
-    u_wave_width: { value: 0.5 },
+    u_wave_width: { value: 0.1 },
     u_scan_color: { value: new THREE.Color("#6EAA43") },
     u_is_closing: { value: 0.0 },
+    u_closing_radius: { value: -1.0 },
   });
 
 
@@ -96,6 +103,60 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
   };
   const searchParams = useSearchParams();
 
+  const playGrassScanAnimation = useCallback((isClosing: boolean = false) => {
+      if (grassScanAnimationRef.current) {
+          grassScanAnimationRef.current.kill();
+      }
+      const uniforms = scanUniformsRef.current;
+      const tl = gsap.timeline({
+          onComplete: () => {
+              if (isClosing) {
+                uniforms.u_scan_radius.value = -1;
+              }
+              grassScanAnimationRef.current = null;
+          }
+      });
+  
+      if (isClosing) {
+          tl.set(uniforms.u_is_closing, { value: 1.0 });
+          tl.fromTo(uniforms.u_scan_radius, {value: 30.0}, { value: 0, duration: 0.75, ease: "power2.inOut" });
+      } else {
+          tl.set(uniforms.u_is_closing, { value: 0.0 });
+          tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 1.5, ease: "power2.inOut" });
+      }
+  
+      grassScanAnimationRef.current = tl;
+  }, []);
+
+  const playFullGrassScanAnimation = useCallback(() => {
+    if (grassScanAnimationRef.current) {
+        grassScanAnimationRef.current.kill();
+    }
+    const uniforms = scanUniformsRef.current;
+    uniforms.u_is_closing.value = 0.0;
+    uniforms.u_closing_radius.value = -1.0;
+
+    const tl = gsap.timeline({
+        onComplete: () => {
+            uniforms.u_scan_radius.value = -1;
+            uniforms.u_closing_radius.value = -1;
+            grassScanAnimationRef.current = null;
+        }
+    });
+
+    tl.fromTo(uniforms.u_scan_radius, 
+        { value: 0.0 }, 
+        { value: 30, duration: 1.5, ease: "power2.out" }
+    );
+    
+    tl.fromTo(uniforms.u_closing_radius, 
+        { value: 0.0 }, 
+        { value: 30, duration: 1.5, ease: "power2.out" },
+        "<0.7" 
+    );
+    
+    grassScanAnimationRef.current = tl;
+}, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -118,8 +179,8 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
-    camera.position.copy(initialCameraPosition);
-    camera.lookAt(initialCameraTarget);
+    camera.position.copy(introCameraPosition);
+    camera.lookAt(introCameraTarget);
     cameraRef.current = camera;
     
     // Renderer
@@ -190,9 +251,9 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
     const normalAnimations: TextureAnimation[] = [];
 
     const meshesForHover: THREE.Mesh[] = [];
-    const sphereScaleMap: { [key: string]: THREE.Mesh[] } = {
-      orange: [], blue: [], red: [], black: [], green: []
-    };
+    const sphereToParentMap = new Map<THREE.Mesh, THREE.Object3D>();
+    const sphereParentObjects: THREE.Object3D[] = [];
+
     
     const orbSystems: OrbSystem[] = [];
     const orbSystemMap: { [key: string]: OrbSystem } = {};
@@ -214,24 +275,6 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
     model.rotation.set(0, 0, 0);
     model.scale.set(1, 1, 1);
 
-    if (hasInteracted) {
-      treeMixer = new THREE.AnimationMixer(gltf.scene);
-      const animations = gltf.animations;
-
-      if (animations && animations.length) {
-        setTimeout(() => {
-          animations.forEach((clip) => {
-            if (treeMixer) {
-              const action = treeMixer.clipAction(clip);
-              action.setLoop(THREE.LoopOnce, 1);
-              action.clampWhenFinished = true;
-              action.play();
-            }
-          });
-        }, 600);
-      }
-    }
-    
     // Grass model processing
     const grassGltf = assets.grass;
     const grassModel = grassGltf.scene;
@@ -262,64 +305,62 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
               shader.uniforms.u_wave_width = scanUniformsRef.current.u_wave_width;
               shader.uniforms.u_scan_color = scanUniformsRef.current.u_scan_color;
               shader.uniforms.u_is_closing = scanUniformsRef.current.u_is_closing;
+              shader.uniforms.u_closing_radius = scanUniformsRef.current.u_closing_radius;
 
               shader.vertexShader = `
                 varying vec3 vWorldPosition;
-                ${shader.vertexShader}
-              `.replace(
-                `#include <worldpos_vertex>`,
-                `#include <worldpos_vertex>
-                  vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;
-                `
-              );
+                ${shader.vertexShader.replace(
+                  `#include <worldpos_vertex>`,
+                  `#include <worldpos_vertex>
+                    vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;`
+                )}
+              `;
               
               shader.fragmentShader = `
+                varying vec3 vWorldPosition;
                 uniform float u_time;
                 uniform float u_scan_radius;
                 uniform float u_wave_width;
                 uniform vec3 u_scan_color;
-                uniform float u_is_closing;
-
-                varying vec3 vWorldPosition;
+                uniform float u_closing_radius;
 
                 float random(vec2 st) {
                   return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
                 }
 
-                ${shader.fragmentShader}
-              `.replace(
-                `vec4 diffuseColor = vec4( diffuse, opacity );`,
-                `
-                float dist = distance(vWorldPosition.xz, vec2(0.0));
-                float wave_edge = u_scan_radius;
-                float wave_trail = wave_edge - u_wave_width;
+                ${shader.fragmentShader.replace(
+                `#include <dithering_fragment>`,
+                `#include <dithering_fragment>
 
-                float noise = (random(vWorldPosition.xz * 0.5 + u_time * 0.1) - 0.5) * 0.2;
-                wave_edge += noise;
+                float dist = distance(vWorldPosition.xz, vec2(0.0));
                 
-                vec4 diffuseColor = vec4(diffuse, opacity);
-                
-                if (u_scan_radius < 0.0) {
+                // Visibility Logic
+                bool isVisible = dist < u_scan_radius && dist > u_closing_radius;
+                if (!isVisible) {
                     discard;
-                } else if (u_is_closing > 0.5) { // Closing scan
-                    if (dist < wave_trail) {
-                        discard;
-                    }
-                    if (dist <= wave_edge) {
-                        diffuseColor.rgb = mix(diffuseColor.rgb, u_scan_color, (wave_edge - dist) / u_wave_width) * 5.0;
-                    } else {
-                        discard;
-                    }
-                } else { // Opening scan
-                    if (dist > wave_edge) {
-                        discard;
-                    }
-                    if (dist > wave_trail) {
-                        diffuseColor.rgb = mix(diffuseColor.rgb, u_scan_color, (wave_edge - dist) / u_wave_width) * 5.0;
-                    }
+                }
+
+                // Wave Edge Effect for revealing wave
+                float wave_edge_reveal = u_scan_radius;
+                float wave_trail_reveal = wave_edge_reveal - u_wave_width;
+                float noise = (random(vWorldPosition.xz * 0.5 + u_time * 0.1) - 0.5) * 0.2;
+                wave_edge_reveal += noise;
+                
+                float waveFactorReveal = smoothstep(wave_trail_reveal, wave_edge_reveal, dist);
+
+                // Wave Edge Effect for closing wave
+                float wave_edge_close = u_closing_radius + u_wave_width;
+                float wave_trail_close = u_closing_radius;
+                float waveFactorClose = 1.0 - smoothstep(wave_trail_close, wave_edge_close, dist);
+
+                float waveFactor = max(1.0 - waveFactorReveal, waveFactorClose);
+
+                if (waveFactor > 0.01) {
+                    outgoingLight = mix(outgoingLight, u_scan_color, waveFactor) * (1.0 + waveFactor * 4.0);
                 }
                 `
-              );
+              )}
+              `;
           };
           grassMat.needsUpdate = true;
       }
@@ -390,17 +431,54 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
                 material.visible = false;
             } else {
                 const parentObject = child.parent;
-                const parentName = parentObject ? parentObject.name : '';
-                if (sphereNameKeys.includes(parentName)) {
+                if (parentObject && sphereNameKeys.includes(parentObject.name)) {
                     meshesForHover.push(child);
-                    const groupKey = parentName.replace('Ball', '');
-                    if (sphereScaleMap[groupKey]) {
-                        sphereScaleMap[groupKey].push(child);
+                    sphereToParentMap.set(child, parentObject);
+
+                    if (!sphereParentObjects.some(p => p === parentObject)) {
+                        sphereParentObjects.push(parentObject);
                     }
+                    parentObject.scale.set(0, 0, 0); // Set initial scale to 0
                 }
             }
         }
     });
+
+    if (hasInteracted) {
+      treeMixer = new THREE.AnimationMixer(gltf.scene);
+      const treeGrowClip = THREE.AnimationClip.findByName(gltf.animations, 'treeGrow');
+      
+      if (treeGrowClip && treeMixer) {
+          const action = treeMixer.clipAction(treeGrowClip);
+          action.setLoop(THREE.LoopOnce, 1);
+          action.clampWhenFinished = true;
+
+          const onAnimationFinish = (event: any) => {
+              if (event.action === action) {
+                  // Animate spheres after tree growth
+                  const shuffledSpheres = gsap.utils.shuffle([...sphereParentObjects]);
+                  gsap.to(shuffledSpheres.map(s => s.scale), {
+                      x: 1,
+                      y: 1,
+                      z: 1,
+                      duration: 0.5,
+                      ease: 'back.out(1.7)',
+                      stagger: {
+                          each: 0.1,
+                          from: "random"
+                      }
+                  });
+                  treeMixer?.removeEventListener('finished', onAnimationFinish);
+              }
+          };
+
+          treeMixer.addEventListener('finished', onAnimationFinish);
+          
+          setTimeout(() => {
+            action.play();
+          }, 600); 
+      }
+    }
 
     const createOrbs = (color: number, parent: THREE.Object3D): OrbSystem => {
         const particlesGeometry = new THREE.BufferGeometry();
@@ -456,43 +534,6 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
             waypointsRef.current[info.name] = destination;
         }
     });
-    
-    if (hasInteracted) {
-      const orderedSphereGroups = [
-          sphereScaleMap.orange,
-          sphereScaleMap.blue,
-          sphereScaleMap.red,
-          sphereScaleMap.black,
-          sphereScaleMap.green
-      ];
-
-      let delay = 0;
-      const animationDuration = 500;
-      const delayIncrement = 200; 
-
-      orderedSphereGroups.forEach((group) => {
-            if(group) {
-              setTimeout(() => {
-                  const startTime = Date.now();
-                  const animateScale = () => {
-                      const elapsedTime = Date.now() - startTime;
-                      const progress = Math.min(elapsedTime / animationDuration, 1);
-                      const currentScale = progress;
-
-                      group.forEach(mesh => {
-                          mesh.scale.set(currentScale, currentScale, currentScale);
-                      });
-
-                      if (progress < 1) {
-                          requestAnimationFrame(animateScale);
-                      }
-                  };
-                  requestAnimationFrame(animateScale);
-              }, delay);
-              delay += delayIncrement;
-          }
-      });
-    }
 
     const labelMap: { [key: string]: string } = {
         orangeBall: 'scene.support',
@@ -511,56 +552,7 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
         blackBall: new THREE.Color(0x404040),
         greenBall: new THREE.Color(0x00ff00),
     };
-
-    const playGrassScanAnimation = (isClosing: boolean = false) => {
-        if (grassScanAnimationRef.current) {
-            grassScanAnimationRef.current.kill();
-        }
-        const uniforms = scanUniformsRef.current;
-        const tl = gsap.timeline({
-            onComplete: () => {
-                if (!isClosing) {
-                  // Don't reset if we are just opening on hover
-                } else {
-                  uniforms.u_scan_radius.value = -1;
-                }
-                grassScanAnimationRef.current = null;
-            }
-        });
     
-        if (isClosing) {
-            tl.set(uniforms.u_is_closing, { value: 1.0 });
-            tl.fromTo(uniforms.u_scan_radius, {value: uniforms.u_scan_radius.value}, { value: 0, duration: 0.75, ease: "power2.inOut" });
-        } else {
-            tl.set(uniforms.u_is_closing, { value: 0.0 });
-            tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 1.5, ease: "power2.inOut" });
-        }
-    
-        grassScanAnimationRef.current = tl;
-    };
-    
-    const playFullGrassScanAnimation = () => {
-        if (grassScanAnimationRef.current) {
-            grassScanAnimationRef.current.kill();
-        }
-        const uniforms = scanUniformsRef.current;
-        const tl = gsap.timeline({
-            onComplete: () => {
-                uniforms.u_scan_radius.value = -1;
-                grassScanAnimationRef.current = null;
-            }
-        });
-
-        tl.set(uniforms.u_is_closing, { value: 0.0 });
-        tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 1.5, ease: "power2.inOut" });
-        
-        tl.set(uniforms.u_is_closing, { value: 1.0 }, "+=0.2");
-        tl.fromTo(uniforms.u_scan_radius, { value: 0.0 }, { value: 30, duration: 0.75, ease: "power2.inOut" });
-        
-        grassScanAnimationRef.current = tl;
-    };
-
-
     const onMouseMove = (event: MouseEvent) => {
       if (currentMount) {
         const rect = currentMount.getBoundingClientRect();
@@ -577,13 +569,10 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
 
         if (intersects.length > 0) {
             const firstIntersected = intersects[0].object as THREE.Mesh;
-            const parent = firstIntersected.parent;
+            const parent = sphereToParentMap.get(firstIntersected);
             
             if (parent) {
-                const hoverColor = sphereColorMap[parent.name as keyof typeof sphereColorMap];
-                if (hoverColor) {
-                    scanUniformsRef.current.u_scan_color.value.set(hoverColor);
-                }
+                scanUniformsRef.current.u_scan_color.value.set(0x6EAA43);
                 playFullGrassScanAnimation();
 
                 setZoomedTarget(parent);
@@ -638,9 +627,9 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
 
       if (intersects.length > 0) {
         firstIntersected = intersects[0].object as THREE.Mesh;
-        parentObject = firstIntersected.parent;
-
-        if (parentObject) {
+        const foundParent = sphereToParentMap.get(firstIntersected);
+        if (foundParent) {
+          parentObject = foundParent;
           currentHoveredName = parentObject.name;
         }
       }
@@ -649,8 +638,9 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
         // HIDE OLD
         if (hoveredMeshRef.current) {
           const { mesh, orbSystem } = hoveredMeshRef.current;
+          const oldParent = sphereToParentMap.get(mesh);
           
-          if(mesh.parent) gsap.to(mesh.parent.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+          if(oldParent) gsap.to(oldParent.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
           
           const materials = mesh.material;
             if (Array.isArray(materials)) {
@@ -831,12 +821,40 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
         }
     });
     };
-  }, [assets, isSaoEnabled, hasInteracted]);
+  }, [assets, isSaoEnabled, hasInteracted, playFullGrassScanAnimation, playGrassScanAnimation]);
+
+  useEffect(() => {
+    if (startIntroAnimation && cameraRef.current) {
+      const currentTarget = new THREE.Vector3().copy(introCameraTarget);
+  
+      gsap.to(cameraRef.current.position, {
+        x: initialCameraPosition.x,
+        y: initialCameraPosition.y,
+        z: initialCameraPosition.z,
+        duration: 1.5,
+        ease: 'power3.inOut',
+        onUpdate: () => {
+          if (cameraRef.current) {
+            cameraRef.current.lookAt(currentTarget);
+          }
+        },
+      });
+  
+      gsap.to(currentTarget, {
+        x: initialCameraTarget.x,
+        y: initialCameraTarget.y,
+        z: initialCameraTarget.z,
+        duration: 1.5,
+        ease: 'power3.inOut',
+      });
+    }
+  }, [startIntroAnimation]);
 
 
   const handleReturn = () => {
     if (cameraRef.current) {
         setShowContentContainer(false);
+        playGrassScanAnimation(true);
         gsap.to(cameraRef.current.position, {
             x: initialCameraPosition.x,
             y: initialCameraPosition.y,
@@ -901,18 +919,33 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
         </div>
       </div>
 
-      <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${showContentContainer ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto p-8 overflow-auto" id="content-container">
+      {showContentContainer && (
+        <>
+          <div 
+            className="absolute inset-0 z-10 bg-black/30 backdrop-blur-[10px] pointer-events-auto transition-opacity duration-500"
+            onClick={handleReturn}
+          />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto overflow-auto z-20" id="content-container">
+            <Button 
+                onClick={handleReturn}
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 z-30"
+              >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+              </Button>
             {contentMap[getLabelKey() as keyof typeof contentMap]}
           </div>
           <Button 
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-auto"
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-auto z-20"
             onClick={handleReturn}
             variant="outline"
           >
             {t('scene.return')}
           </Button>
-      </div>
+        </>
+      )}
     </>
   );
 };
@@ -920,19 +953,16 @@ const Scene = ({ assets, hasInteracted }: SceneProps) => {
 interface AppSceneProps {
     assets: any;
     hasInteracted: boolean;
+    startIntroAnimation: boolean;
 }
 
-const AppScene = ({ assets, hasInteracted }: AppSceneProps) => (
+const AppScene = ({ assets, hasInteracted, startIntroAnimation }: AppSceneProps) => (
   <Suspense fallback={<div className="w-full h-screen flex items-center justify-center bg-background text-foreground">Loading Scene...</div>}>
-    <Scene assets={assets} hasInteracted={hasInteracted} />
+    <Scene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntroAnimation}/>
   </Suspense>
 );
 
 const MemoizedScene = memo(AppScene);
 export default MemoizedScene;
-
-    
-
-    
 
     
