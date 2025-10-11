@@ -118,8 +118,12 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
       });
   
       if (isClosing) {
-          tl.to(uniforms.u_scan_radius, { value: 0, duration: 0.75, ease: "power2.inOut" });
+          uniforms.u_is_closing.value = 1.0;
+          uniforms.u_closing_radius.value = 0;
+          tl.to(uniforms.u_closing_radius, { value: 30, duration: 1.5, ease: "power2.out" });
+
       } else {
+          uniforms.u_is_closing.value = 0.0;
           uniforms.u_scan_radius.value = 0;
           tl.to(uniforms.u_scan_radius, { value: 30, duration: 1.5, ease: "power2.out" });
       }
@@ -204,7 +208,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
     composer.addPass(saoPass);
 
     saoPass.params.saoBias = 0.01; 
-    saoPass.params.saoIntensity = 0.0005;
+    saoPass.params.saoIntensity = 0.0008;
     saoPass.params.saoScale = 0.7; 
     saoPass.params.saoKernelRadius = 60;
     saoPass.params.saoMinResolution = 0;
@@ -215,12 +219,12 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
 
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
     bloomPass.threshold = 15;
-    bloomPass.strength = 1;
-    bloomPass.radius = 0.1;
+    bloomPass.strength = 12;
+    bloomPass.radius = 0.5;
     composer.addPass(bloomPass);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xdcdcdc, 2);
+    const ambientLight = new THREE.AmbientLight(0xdcdcdc,4.5);
     scene.add(ambientLight);
     const directionalLight = new THREE.DirectionalLight(0xdcdcdc, 1);
     directionalLight.position.set(0, 1, 7.5);
@@ -321,6 +325,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
                 uniform float u_scan_radius;
                 uniform float u_wave_width;
                 uniform vec3 u_scan_color;
+                uniform float u_is_closing;
                 uniform float u_closing_radius;
 
                 float random(vec2 st) {
@@ -334,28 +339,30 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
                 float dist = distance(vWorldPosition.xz, vec2(0.0));
                 
                 // Visibility Logic
-                bool isVisible = dist < u_scan_radius && dist > u_closing_radius;
+                bool isVisible = dist < u_scan_radius;
+                if (u_is_closing > 0.5) {
+                    isVisible = isVisible && dist > u_closing_radius;
+                }
                 if (!isVisible) {
                     discard;
                 }
-
+                
                 // Wave Edge Effect for revealing wave
                 float wave_edge_reveal = u_scan_radius;
                 float wave_trail_reveal = wave_edge_reveal - u_wave_width;
                 float noise = (random(vWorldPosition.xz * 0.5 + u_time * 0.1) - 0.5) * 0.2;
                 wave_edge_reveal += noise;
-                
-                float waveFactorReveal = smoothstep(wave_trail_reveal, wave_edge_reveal, dist);
+                float waveFactorReveal = 1.0 - smoothstep(wave_trail_reveal, wave_edge_reveal, dist);
 
                 // Wave Edge Effect for closing wave
                 float wave_edge_close = u_closing_radius + u_wave_width;
                 float wave_trail_close = u_closing_radius;
                 float waveFactorClose = 1.0 - smoothstep(wave_trail_close, wave_edge_close, dist);
-
-                float waveFactor = max(1.0 - waveFactorReveal, waveFactorClose);
+                
+                float waveFactor = max(waveFactorReveal, waveFactorClose);
 
                 if (waveFactor > 0.01) {
-                    outgoingLight = mix(outgoingLight, u_scan_color, waveFactor) * (1.0 + waveFactor * 4.0);
+                    outgoingLight = mix(outgoingLight, u_scan_color, waveFactor) * (1.0 + waveFactor * 14.0);
                 }
                 `
               )}
@@ -378,7 +385,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
             if (child.name === 'SKY_SPHERE' && child.material instanceof THREE.MeshStandardMaterial && child.material.name === 'TREE_LIGHT') {
                 treeLightMaterialRef.current = child.material;
                 child.material.emissive = child.material.color;
-                child.material.emissiveIntensity = 23;
+                child.material.emissiveIntensity = 60;
             }
 
             const material = child.material as THREE.MeshStandardMaterial;
@@ -502,7 +509,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
             color: color,
             size: 0.25,
             transparent: true,
-            depthWrite: true,
+            depthWrite: false, // Prevents artifacts with SAO
         });
 
         const particles = new THREE.Points(particlesGeometry, particlesMaterial);
@@ -853,7 +860,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
   const handleReturn = () => {
     if (cameraRef.current) {
         setShowContentContainer(false);
-        playGrassScanAnimation(true);
+        
         gsap.to(cameraRef.current.position, {
             x: initialCameraPosition.x,
             y: initialCameraPosition.y,
@@ -861,6 +868,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation }: SceneProps) => {
             duration: 1.5,
             ease: 'power3.inOut',
             onComplete: () => {
+                playGrassScanAnimation(true);
                 setViewState('default');
                 setZoomedTarget(null);
                 if (cameraRef.current) {
@@ -966,3 +974,6 @@ export default MemoizedScene;
 
     
 
+
+
+    

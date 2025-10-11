@@ -87,7 +87,7 @@ export default function Loader({ onLoaded }: LoaderProps) {
   }, [onLoaded]);
 
   return (
-    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-background z-20">
+    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-background z-50">
       <div className="w-1/2">
         <div className="h-[1px] w-full bg-muted-foreground/20">
           <div className="h-full bg-foreground transition-all duration-150" style={{ width: `${progress}%` }} />

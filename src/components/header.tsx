@@ -25,7 +25,6 @@ import { AudioContext } from '@/context/AudioContext';
 export default function Header() {
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [theme, setTheme] = useState<string | null>(null);
-  const [isTitleHovered, setIsTitleHovered] = useState(false);
 
   const { t, setLocale, locale } = useTranslation();
   const { toast } = useToast();
@@ -148,13 +147,14 @@ export default function Header() {
         </Sheet>
         
         {/* Center: Title */}
-        <div 
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-fit"
-          onMouseEnter={() => setIsTitleHovered(true)}
-          onMouseLeave={() => setIsTitleHovered(false)}
-        >
-          <Link href="/" className="text-sm max-[500px]:text-lg sm:text-2xl font-bold tracking-wider flex items-center justify-center w-auto h-full">
-            {isTitleHovered ? <Home className="h-8 w-8" /> : "CHRISTIANITATIS"}
+        <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <Link href="/" className="relative text-sm max-[500px]:text-lg sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
+            <span className="transition-opacity duration-300 group-hover:opacity-0">
+              CHRISTIANITATIS
+            </span>
+            <span className="absolute transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+              <Home className="h-8 w-8" />
+            </span>
           </Link>
         </div>
 
