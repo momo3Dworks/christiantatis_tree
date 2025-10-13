@@ -4,17 +4,33 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import Header from '@/components/header';
 import { TranslationProvider } from '@/context/TranslationContext';
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { SAOProvider } from '@/context/SAOContext';
 import { AudioProvider } from '@/context/AudioContext';
+import Header from '@/components/header';
+import { usePathname } from 'next/navigation';
 
 // This metadata is static and will not be translated
 // export const metadata: Metadata = {
 //   title: 'Christianitatis',
 //   description: 'A minimalist Three.js 3D scene.',
 // };
+
+function RootLayoutContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+  
+  const showHeader = !isHomePage;
+
+  return (
+    <>
+      {showHeader && <Header />}
+      {children}
+    </>
+  );
+}
+
 
 export default function RootLayout({
   children,
@@ -36,9 +52,8 @@ export default function RootLayout({
           <AudioProvider>
             <TranslationProvider>
               <Suspense fallback={<div>Loading...</div>}>
-                <Header />
+                <RootLayoutContent>{children}</RootLayoutContent>
               </Suspense>
-              {children}
               <Toaster />
             </TranslationProvider>
           </AudioProvider>

@@ -19,7 +19,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isPlaying, setIsPlaying] = useState(false);
 
   const play = useCallback(() => {
-    if (audioElement && audioElement.paused) {
+    if (audioElement) {
+       if (audioElement.muted) {
+        audioElement.muted = false;
+      }
       audioElement.play().then(() => {
         setIsPlaying(true);
       }).catch(error => console.error("Audio play failed:", error));
@@ -27,7 +30,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [audioElement]);
 
   const pause = useCallback(() => {
-    if (audioElement && !audioElement.paused) {
+    if (audioElement) {
       audioElement.pause();
       setIsPlaying(false);
     }
@@ -43,6 +46,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const handleSetAudioElement = useCallback((element: HTMLAudioElement) => {
     setAudioElement(element);
+    setIsPlaying(!element.paused && !element.muted);
   }, []);
 
   const value = useMemo(() => ({

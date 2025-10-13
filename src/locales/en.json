@@ -131,11 +131,11 @@
       "donate": "Donate",
       "bankDetails": "Bank Transfer Details",
       "bankDescription": "Use the details below to make a direct bank transfer.",
-      "bankName": "Bank Name",
-      "bankHolder": "Account Holder",
-      "accountNumber": "Account Number",
-      "routingNumber": "Routing Number",
-      "swift": "SWIFT Code (for international)",
+      "bankName": "Faithful Trust Bank",
+      "bankHolder": "CHRISTIANITATIS MOVEMENT",
+      "accountNumber": "123-456-7890",
+      "routingNumber": "0987654321",
+      "swift": "FTBXXXX",
       "memo": "Please include \"General Donation\" in the memo or reference field of your transfer.",
       "pixTransfer": "PIX Transfer",
       "pixDescription": "Scan the QR code or use the PIX key below for an instant transfer.",
@@ -204,5 +204,11 @@
       "relatedVideosTitle": "Related Videos",
       "videoPlaceholder": "YouTube Video"
     }
+  },
+  "footer": {
+    "copyright": "Christianitatis© 2025. All rights reserved",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookies"
   }
 }

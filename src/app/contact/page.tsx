@@ -72,12 +72,6 @@ export default function ContactPage() {
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <div className="relative flex items-center justify-center">
-             <Link href="/" passHref className="absolute left-0">
-                <Button variant="ghost" size="icon">
-                    <Home className="h-6 w-6" />
-                    <span className="sr-only">Home</span>
-                </Button>
-            </Link>
             <CardTitle className="text-center text-3xl">{t('contact.title')}</CardTitle>
           </div>
         </CardHeader>

@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { TextureAnimator } from "@/lib/texture-animator";
 import TWEEN from '@tweenjs/tween.js';
 import { Button } from "@/components/ui/button";
+import { useSAO } from "@/context/SAOContext";
 
 type MaterialRefs = {
   [materialName: string]: THREE.MeshStandardMaterial | null;
@@ -47,8 +48,9 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
   const materialRefs = useRef<MaterialRefs>({});
   const sphereMeshesRef = useRef<THREE.Mesh[]>([]);
+  const saoPassRef = useRef<SAOPass | null>(null);
+  const { isSaoEnabled } = useSAO();
 
-  // ... (material state variables remain the same)
     // =================================================================
   // CONTROLES DE MATERIALES (Modificar aquí los valores)
   // =================================================================
@@ -65,69 +67,36 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
   const [treeLight_color, setTreeLight_color] = useState("#ffffff");
   const [treeLight_roughness, setTreeLight_roughness] = useState(1);
   const [treeLight_metalness, setTreeLight_metalness] = useState(0);
-
-  const [barkCrhistiantatis_emissionIntensity, setBarkCrhistiantatis_emissionIntensity] = useState(1);
   
   // orangeBall
-  const [fireTexIntensity, setFireTexIntensity] = useState(0.3);
-  const [fireTex2Intensity, setFireTex2Intensity] = useState(5);
-  const [orangeBall_color, setOrangeBall_color] = useState("#ffffff");
+  const [orangeBall_color, setOrangeBall_color] = useState("#D1A300");
   const [orangeBall_opacity, setOrangeBall_opacity] = useState(1);
 
 
   // blueBall
-  const [blueTextIntensity, setBlueTextIntensity] = useState(0.8);
-  const [blueText2Intensity, setBlueText2Intensity] = useState(5);
-  const [ballBall_color, setBallBall_color] = useState("#ffffff");
-  const [ballBall_opacity, setBallBall_opacity] = useState(1);
+  const [blueBall_color, setBlueBall_color] = useState("#3257C7");
+  const [blueBall_opacity, setBlueBall_opacity] = useState(1);
 
   // redBall
-  const [redText01Intensity, setRedText01Intensity] = useState(2);
-  const [redText02Intensity, setRedText02Intensity] = useState(3);
-  const [redBallGlass_color, setRedBallGlass_color] = useState("#ffffff");
+  const [redBallGlass_color, setRedBallGlass_color] = useState("#990D11");
   const [redBallGlass_opacity, setRedBallGlass_opacity] = useState(1);
 
   // blackBall
-  const [blackText01Intensity, setBlackText01Intensity] = useState(0.3);
-  const [blackText02Intensity, setBlackText02Intensity] = useState(3);
-  const [blackBallGlass_color, setBlackBallGlass_color] = useState("#ffffff");
+  const [blackBallGlass_color, setBlackBallGlass_color] = useState("#303030");
   const [blackBallGlass_opacity, setBlackBallGlass_opacity] = useState(1);
 
   // greenBall
-  const [greenText01Intensity, setGreenText01Intensity] = useState(0.3);
-  const [greenText02Intensity, setGreenText02Intensity] = useState(3);
-  const [GreenBallGlass_color, setGreenBallGlass_color] = useState("#ffffff");
+  const [GreenBallGlass_color, setGreenBallGlass_color] = useState("#2D8D31");
   const [GreenBallGlass_opacity, setGreenBallGlass_opacity] = useState(1);
   // =================================================================
 
   const { toast } = useToast();
 
-  const emissionIntensityConfig: { [key: string]: number } = {
-    FireTex: fireTexIntensity,
-    FireTex2: fireTex2Intensity,
-    BlueText: blueTextIntensity,
-    BlueText2: blueText2Intensity,
-    RedText01: redText01Intensity,
-    RedText02: redText02Intensity,
-    BlackText01: blackText01Intensity,
-    BlackText02: blackText02Intensity,
-    GreenText01: greenText01Intensity,
-    GreenText02: greenText02Intensity,
-    BarkCrhistiantatis: barkCrhistiantatis_emissionIntensity,
-  };
-
   useEffect(() => {
-    Object.entries(emissionIntensityConfig).forEach(([matName, intensity]) => {
-      const material = materialRefs.current[matName];
-      if (material) {
-        material.emissiveIntensity = intensity;
-      }
-    });
-  }, [
-      fireTexIntensity, fireTex2Intensity, blueTextIntensity, blueText2Intensity,
-      redText01Intensity, redText02Intensity, blackText01Intensity, blackText02Intensity,
-      greenText01Intensity, greenText02Intensity, barkCrhistiantatis_emissionIntensity
-  ]);
+    if (saoPassRef.current) {
+        saoPassRef.current.enabled = isSaoEnabled;
+    }
+  }, [isSaoEnabled]);
 
   useEffect(() => {
       const skyMaterial = materialRefs.current['SKY_SPHERE'];
@@ -161,18 +130,19 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       if (material) {
         material.color.set(color);
         material.opacity = opacity;
+        material.transparent = opacity < 1;
       }
     };
     updateMaterial('orangeBall', orangeBall_color, orangeBall_opacity);
-    updateMaterial('ballBall', ballBall_color, ballBall_opacity);
+    updateMaterial('blueBall', blueBall_color, blueBall_opacity);
     updateMaterial('RedBallGlass', redBallGlass_color, redBallGlass_opacity);
     updateMaterial('BlackBallGlass', blackBallGlass_color, blackBallGlass_opacity);
     updateMaterial('GreenBallGlass', GreenBallGlass_color, GreenBallGlass_opacity);
   }, [
     orangeBall_color,
     orangeBall_opacity,
-    ballBall_color,
-    ballBall_opacity,
+    blueBall_color,
+    blueBall_opacity,
     redBallGlass_color,
     redBallGlass_opacity,
     blackBallGlass_color,
@@ -229,7 +199,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     rendererRef.current = renderer;
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.3);
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xdcdcdc, 1);
@@ -239,18 +209,17 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
     scene.add(directionalLight);
     
     let composer: EffectComposer;
-    let saoPass: SAOPass;
 
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
     loader.setDRACOLoader(dracoLoader);
     
     loader.load('/models/CHRISTIANTATIS_TREE.glb', 
     (gltf) => {
       gltfRef.current = gltf;
       const newModel = gltf.scene;
-      const sphereMaterials = ['orangeBall', 'ballBall', 'RedBallGlass', 'BlackBallGlass', 'GreenBallGlass'];
+      const sphereMaterials = ['orangeBall', 'blueBall', 'RedBallGlass', 'BlackBallGlass', 'GreenBallGlass'];
 
       newModel.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -274,11 +243,17 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
                     }
 
                     if (sphereMaterials.includes(mat.name)) {
-                      mat.transparent = true;
-                    }
-
-                    if (emissionIntensityConfig[mat.name] !== undefined) {
-                        mat.emissiveIntensity = emissionIntensityConfig[mat.name];
+                        const opacity = 
+                          mat.name === 'orangeBall' ? orangeBall_opacity :
+                          mat.name === 'blueBall' ? blueBall_opacity :
+                          mat.name === 'RedBallGlass' ? redBallGlass_opacity :
+                          mat.name === 'BlackBallGlass' ? blackBallGlass_opacity :
+                          mat.name === 'GreenBallGlass' ? GreenBallGlass_opacity : 1;
+                        
+                        if (opacity < 1) {
+                          mat.transparent = true;
+                          mat.opacity = opacity;
+                        }
                     }
 
                     if (mat.name === 'SKY_SPHERE') {
@@ -315,7 +290,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
                     
                     const isSphereMaterial = INTERACTIVE_MESH_NAMES.some(name => child.name.includes(name));
 
-                    if (texturesToAnimate.length > 0 && (isSphereMaterial || mat.name.toLowerCase().includes('tex') || mat.name.toLowerCase().includes('text'))) {
+                    if (texturesToAnimate.length > 0 && isSphereMaterial) {
                          const animator = new TextureAnimator(texturesToAnimate, { offsetXSpeed: 0.5, offsetYSpeed: 0.0, rotationSpeed: 0.2 });
                          textureAnimatorsRef.current.push(animator);
                     }
@@ -327,13 +302,6 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
             } else if (child.material) {
                 processMaterial(child.material);
             }
-        }
-      });
-      
-      Object.entries(emissionIntensityConfig).forEach(([matName, intensity]) => {
-        const material = materialRefs.current[matName];
-        if (material) {
-          material.emissiveIntensity = intensity;
         }
       });
       
@@ -400,27 +368,29 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.screenSpacePanning = false;
+      controls.enableZoom = false;
       controls.minDistance = 15;
       controls.maxDistance = 50;
-      controls.maxPolarAngle = Math.PI;
+      controls.maxPolarAngle = Math.PI / 2 + (0.5 * Math.PI / 250);
+      controls.minPolarAngle = Math.PI / 2 - (0.5 * Math.PI / 160);
 
       composer = new EffectComposer(renderer);
       const renderPass = new RenderPass(scene, camera);
       composer.addPass(renderPass);
 
-      saoPass = new SAOPass(scene, camera, false, true);
-      saoPass.params.saoIntensity = 0.0005;
-      saoPass.params.saoBias = 0.008;
-      saoPass.params.saoScale = 0.07;
-      saoPass.params.saoKernelRadius = 10;
-      composer.addPass(saoPass);
+      saoPassRef.current = new SAOPass(scene, camera, false, true);
+      saoPassRef.current.params.saoIntensity = 0.0005;
+      saoPassRef.current.params.saoBias = 0.008;
+      saoPassRef.current.params.saoScale = 0.07;
+      saoPassRef.current.params.saoKernelRadius = 10;
+      composer.addPass(saoPassRef.current);
 
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(currentMount.clientWidth, currentMount.clientHeight),
         2,
-        3,
-        15.0
+        3
       );
+      bloomPass.threshold = 15.0;
       composer.addPass(bloomPass);
       
       controls.addEventListener('start', () => {
@@ -523,7 +493,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
               .easing(TWEEN.Easing.Cubic.Out);
 
             const zoomTween = new TWEEN.Tween(camera.position)
-              .to(finalTargetPosition, 1500)
+              .to(finalTargetPosition, 2500)
               .easing(TWEEN.Easing.Cubic.InOut)
               .onComplete(() => {
                 setShowReturnButton(true);
@@ -532,7 +502,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
             windupTween.chain(zoomTween).start();
 
             new TWEEN.Tween(fadeOverlayOpacity)
-              .to({ value: 1 }, 1900) // 400ms + 1500ms
+              .to({ value: 1 }, 2900) // 400ms + 2500ms
               .easing(TWEEN.Easing.Cubic.InOut)
               .start();
 
@@ -558,10 +528,10 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
       if (controlsRef.current) controlsRef.current.update();
       
-      if (saoPass) {
+      if (saoPassRef.current) {
         const targetIntensity = isMoving.current ? 0 : 0.0001;
-        saoPass.params.saoIntensity = THREE.MathUtils.lerp(
-          saoPass.params.saoIntensity,
+        saoPassRef.current.params.saoIntensity = THREE.MathUtils.lerp(
+          saoPassRef.current.params.saoIntensity,
           targetIntensity,
           0.1
         );
@@ -665,3 +635,6 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 });
 
 export default GlbSceneViewer;
+
+    
+    

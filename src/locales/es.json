@@ -204,5 +204,11 @@
       "relatedVideosTitle": "Videos Relacionados",
       "videoPlaceholder": "Video de YouTube"
     }
+  },
+  "footer": {
+    "copyright": "Christianitatis© 2025. Todos los derechos reservados",
+    "terms": "Condiciones de Servicio",
+    "privacy": "Políticas de Privacidad",
+    "cookies": "Cookies"
   }
 }

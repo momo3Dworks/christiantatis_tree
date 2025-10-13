@@ -16,11 +16,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from '@/hooks/useTranslation';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Switch } from './ui/switch';
-import { Label } from './ui/label';
-import { useSAO } from '@/context/SAOContext';
+import { usePathname } from 'next/navigation';
 import { AudioContext } from '@/context/AudioContext';
+import { Label } from '@/components/ui/label';
 
 export default function Header() {
   const [isSheetOpen, setSheetOpen] = useState(false);
@@ -28,10 +26,7 @@ export default function Header() {
 
   const { t, setLocale, locale } = useTranslation();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
-  const { isSaoEnabled, toggleSAO } = useSAO();
   const audioContext = useContext(AudioContext);
 
 
@@ -44,6 +39,9 @@ export default function Header() {
     { href: '/forum', label: t('header.forum') },
     { href: '/contact', label: t('header.contactUs') },
   ];
+
+  const pagesWithHomeIcon = ['/events', '/bible', '/content', '/faq', '/forum', '/contact'];
+  const showHomeIconInsteadOfText = pagesWithHomeIcon.includes(pathname);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -105,7 +103,7 @@ export default function Header() {
           </SheetTrigger>
           <SheetContent side="left">
             <SheetHeader>
-              <SheetTitle><span className="sr-only">Navigation</span></SheetTitle>
+              <SheetTitle className="font-black text-2xl text-left">CHRISTIANITATIS</SheetTitle>
             </SheetHeader>
             <nav className="flex flex-col gap-4 mt-8">
               {navItems.map((item) => (
@@ -120,14 +118,6 @@ export default function Header() {
               ))}
             </nav>
             <div className="absolute bottom-8 left-0 right-0 p-4 space-y-4">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <Label htmlFor="sao-toggle">Ambient Occlusion</Label>
-                <Switch
-                  id="sao-toggle"
-                  checked={isSaoEnabled}
-                  onCheckedChange={toggleSAO}
-                />
-              </div>
               {audioContext && audioContext.audioElement && (
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <Label htmlFor="audio-toggle">Music</Label>
@@ -147,14 +137,20 @@ export default function Header() {
         </Sheet>
         
         {/* Center: Title */}
-        <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-[650px]:hidden">
           <Link href="/" className="relative text-sm max-[500px]:text-lg sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
-            <span className="transition-opacity duration-300 group-hover:opacity-0">
-              CHRISTIANITATIS
-            </span>
-            <span className="absolute transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            {showHomeIconInsteadOfText ? (
               <Home className="h-8 w-8" />
-            </span>
+            ) : (
+              <>
+                <span className="transition-opacity duration-300 group-hover:opacity-0">
+                  CHRISTIANITATIS
+                </span>
+                <span className="absolute transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+                  <Home className="h-8 w-8" />
+                </span>
+              </>
+            )}
           </Link>
         </div>
 

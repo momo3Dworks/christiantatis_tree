@@ -16,6 +16,7 @@ const assetsToLoad = [
   { path: '/assets/SparkVideo.webm', type: 'video', id: 'sparkVideo' },
   { path: '/assets/BallNormal.webp', type: 'texture', id: 'ballNormal' },
   { path: '/assets/SurfaceImperfection01.webp', type: 'texture', id: 'imperfection' },
+  { path: '/assets/SkySphere_Albedo.webp', type: 'texture', id: 'skyAlbedo' },
   { path: '/assets/TreeOfTrust.mp3', type: 'audio', id: 'audio' },
 ];
 
@@ -62,10 +63,6 @@ export default function Loader({ onLoaded }: LoaderProps) {
             video.preload = 'auto';
             
             const onCanPlay = () => {
-                const playPromise = video.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => video.pause()).catch(() => {});
-                }
                 video.removeEventListener('canplaythrough', onCanPlay);
             };
     
@@ -76,7 +73,6 @@ export default function Loader({ onLoaded }: LoaderProps) {
         case 'audio':
           const audio = new Audio(asset.path);
           audio.preload = 'auto';
-          audio.loop = true;
           loadedAssets.current[asset.id] = audio;
           // Audio doesn't play nice with loading manager progress, so we handle it simply.
           // A more robust solution might need to track canplaythrough events for all media.

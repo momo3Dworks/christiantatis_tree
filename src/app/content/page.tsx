@@ -16,12 +16,6 @@ export default function ContentPage() {
         {/* YouTube Section */}
         <section>
             <div className="relative flex items-center justify-center mb-8">
-                <Link href="/" passHref className="absolute left-0">
-                    <Button variant="ghost" size="icon">
-                        <Home className="h-6 w-6" />
-                        <span className="sr-only">Home</span>
-                    </Button>
-                </Link>
                 <h2 className="text-3xl font-bold text-center">{t('content.youtubeTitle')}</h2>
             </div>
           <div className="text-center p-8 border rounded-lg">
