@@ -243,56 +243,59 @@ body {
   margin-right: 1em !important;
 }
 
-.jumbo-background::before {
-  content: "";
-  position: absolute;
-  inset: -10px;
-  opacity: 50%;
-  background-size: 300%, 200%;
-  background-position: center;
-  filter: blur(10px) opacity(50%) saturate(200%);
-  mask-image: radial-gradient(ellipse at 100% 0%, black 40%, transparent 70%);
-  pointer-events: none;
-  animation: jumbo 60s linear infinite;
-  mix-blend-mode: difference;
-}
 
-.jumbo-orange.jumbo-background::before {
-    background-image: 
-    repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
-    repeating-linear-gradient(100deg, #D1A300 10%, #FFC700 15%, #FFA500 20%, #FF8C00 25%, #D1A300 30%);
-}
+@media (min-width: 650px) {
+  .jumbo-background::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    opacity: 50%;
+    background-size: 300%, 200%;
+    background-position: center;
+    filter: blur(10px) opacity(50%) saturate(200%);
+    mask-image: radial-gradient(ellipse at 100% 0%, black 40%, transparent 70%);
+    pointer-events: none;
+    animation: jumbo 60s linear infinite;
+    mix-blend-mode: difference;
+  }
 
-.jumbo-blue.jumbo-background::before {
-    background-image: 
-    repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
-    repeating-linear-gradient(100deg, #3257C7 10%, #4169E1 15%, #0000FF 20%, #00008B 25%, #3257C7 30%);
-}
+  .jumbo-orange.jumbo-background::before {
+      background-image: 
+      repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
+      repeating-linear-gradient(100deg, #D1A300 10%, #FFC700 15%, #FFA500 20%, #FF8C00 25%, #D1A300 30%);
+  }
 
-.jumbo-red.jumbo-background::before {
-    background-image: 
-    repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
-    repeating-linear-gradient(100deg, #990D11 10%, #B22222 15%, #FF0000 20%, #8B0000 25%, #990D11 30%);
-}
+  .jumbo-blue.jumbo-background::before {
+      background-image: 
+      repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
+      repeating-linear-gradient(100deg, #3257C7 10%, #4169E1 15%, #0000FF 20%, #00008B 25%, #3257C7 30%);
+  }
 
-.jumbo-black.jumbo-background::before {
-    background-image: 
-    repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
-    repeating-linear-gradient(100deg, #303030 10%, #404040 15%, #505050 20%, #606060 25%, #303030 30%);
-}
+  .jumbo-red.jumbo-background::before {
+      background-image: 
+      repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
+      repeating-linear-gradient(100deg, #990D11 10%, #B22222 15%, #FF0000 20%, #8B0000 25%, #990D11 30%);
+  }
 
-.jumbo-green.jumbo-background::before {
-    background-image: 
-    repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
-    repeating-linear-gradient(100deg, #2D8D31 10%, #3CB371 15%, #00FF00 20%, #006400 25%, #2D8D31 30%);
-}
+  .jumbo-black.jumbo-background::before {
+      background-image: 
+      repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
+      repeating-linear-gradient(100deg, #303030 10%, #404040 15%, #505050 20%, #606060 25%, #303030 30%);
+  }
+
+  .jumbo-green.jumbo-background::before {
+      background-image: 
+      repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), 
+      repeating-linear-gradient(100deg, #2D8D31 10%, #3CB371 15%, #00FF00 20%, #006400 25%, #2D8D31 30%);
+  }
 
 
-@keyframes jumbo {
-    from {
-        background-position: center;
-    }
-    to {
-        background-position: 350% center;
-    }
+  @keyframes jumbo {
+      from {
+          background-position: center;
+      }
+      to {
+          background-position: 350% center;
+      }
+  }
 }
