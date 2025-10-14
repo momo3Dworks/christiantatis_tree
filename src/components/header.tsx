@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Menu, X, Sun, Moon, Home, Globe, Play, Pause } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -136,9 +137,9 @@ export default function Header() {
           </SheetContent>
         </Sheet>
         
-        {/* Center: Title */}
-        <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-[650px]:hidden">
-          <Link href="/" className="relative text-sm max-[500px]:text-lg sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
+        {/* Center: Title for Desktop */}
+        <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-[767px]:hidden">
+          <Link href="/" className="relative text-sm sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
             {showHomeIconInsteadOfText ? (
               <Home className="h-8 w-8" />
             ) : (
@@ -152,6 +153,13 @@ export default function Header() {
               </>
             )}
           </Link>
+        </div>
+
+        {/* Center: Logo for Mobile */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden">
+            <Link href="/">
+                <Image src="/assets/Logo_Christianitatis.png" alt="Christianitatis Logo" width={40} height={40} />
+            </Link>
         </div>
 
         {/* Right Side: Theme and Language Toggles */}

@@ -22,6 +22,7 @@ import { X } from 'lucide-react';
 import Footer from './Footer';
 import { AudioContext } from '@/context/AudioContext';
 import { cn } from "@/lib/utils";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 gsap.registerPlugin(MotionPathPlugin);
@@ -80,6 +81,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
   const [zoomedTarget, setZoomedTarget] = useState<THREE.Object3D | null>(null);
   const [hoveredLabel, setHoveredLabel] = useState('');
   const [theme, setTheme] = useState('light');
+  const isMobile = useIsMobile();
 
   const hoveredMeshRef = useRef<{mesh: THREE.Mesh, name: string, orbSystem: OrbSystem | null } | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -238,7 +240,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
         if (!hasInteracted || showContentContainer || !cameraRef.current) return;
         
         const isAtInitialPosition = cameraRef.current.position.distanceTo(initialCameraPosition) < 0.1;
-        if (!isAtInitialPosition) return;
+        if (!isMobile && !isAtInitialPosition) return;
         
         if (inactivityTimerRef.current) {
             clearTimeout(inactivityTimerRef.current);
@@ -255,6 +257,10 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
             const parent = sphereToParentMapRef.current.get(firstIntersected);
             
             if (parent) {
+                if (isMobile) {
+                    playFullGrassScanAnimation();
+                }
+
                 if (audioContext && !isAudioUnmuted && audioContext.audioElement) {
                     const audioElement = audioContext.audioElement;
                     audioElement.currentTime = 0;
@@ -304,7 +310,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
                 }
             }
         }
-    }, [hasInteracted, showContentContainer, setViewState, assets.sparkVideo, freeCameraOrbit, audioContext, isAudioUnmuted]);
+    }, [hasInteracted, showContentContainer, setViewState, assets.sparkVideo, freeCameraOrbit, audioContext, isAudioUnmuted, isMobile, playFullGrassScanAnimation]);
     
     const onMouseClickRef = useRef(onMouseClick);
     useEffect(() => {
@@ -694,7 +700,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
 
 
         const checkIntersections = () => {
-            if (!cameraRef.current || showContentContainer) return;
+            if (isMobile || !cameraRef.current || showContentContainer) return;
             
             const isAtInitialPosition = cameraRef.current.position.distanceTo(initialCameraPosition) < 0.1;
             if (!isAtInitialPosition) {

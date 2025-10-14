@@ -16,8 +16,10 @@ const assetsToLoad = [
   { path: '/assets/SparkVideo.webm', type: 'video', id: 'sparkVideo' },
   { path: '/assets/BallNormal.webp', type: 'texture', id: 'ballNormal' },
   { path: '/assets/SurfaceImperfection01.webp', type: 'texture', id: 'imperfection' },
-  { path: '/assets/SkySphere_Albedo.webp', type: 'texture', id: 'skyAlbedo' },
+  { path: '/assets/SkySphere_Albedo.webp', type: 'texture', id: 'skyAlbedoDesktop' },
+  { path: '/assets/SkySphere_2K.webp', type: 'texture', id: 'skyAlbedoMobile' },
   { path: '/assets/TreeOfTrust.mp3', type: 'audio', id: 'audio' },
+  { path: '/assets/Logo_Christianitatis.png', type: 'image', id: 'logo' },
 ];
 
 export default function Loader({ onLoaded }: LoaderProps) {
@@ -28,6 +30,7 @@ export default function Loader({ onLoaded }: LoaderProps) {
     const manager = new THREE.LoadingManager();
     const textureLoader = new THREE.TextureLoader(manager);
     const audioLoader = new THREE.AudioLoader(manager);
+    const imageLoader = new THREE.ImageLoader(manager);
 
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
@@ -51,9 +54,15 @@ export default function Loader({ onLoaded }: LoaderProps) {
           break;
         case 'texture':
           textureLoader.load(asset.path, (texture) => {
+            texture.flipY = false;
             loadedAssets.current[asset.id] = texture;
           });
           break;
+        case 'image':
+            imageLoader.load(asset.path, (image) => {
+                loadedAssets.current[asset.id] = image;
+            });
+            break;
         case 'video':
             const video = document.createElement('video');
             video.src = asset.path;
