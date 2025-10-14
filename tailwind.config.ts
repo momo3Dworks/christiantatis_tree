@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -13,6 +14,13 @@ export default {
         body: ['Forum', 'serif'],
         headline: ['Forum', 'serif'],
         code: ['monospace'],
+      },
+      boxShadow: {
+        'glow-orange': '0 0 30px 8px rgba(209, 163, 0, 0.4)',
+        'glow-blue': '0 0 30px 8px rgba(50, 87, 199, 0.4)',
+        'glow-red': '0 0 30px 8px rgba(153, 13, 17, 0.4)',
+        'glow-black': '0 0 30px 8px rgba(48, 48, 48, 0.4)',
+        'glow-green': '0 0 30px 8px rgba(45, 141, 49, 0.4)',
       },
       colors: {
         background: 'hsl(var(--background))',

@@ -387,8 +387,8 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
 
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(currentMount.clientWidth, currentMount.clientHeight),
-        2,
-        3
+        1,
+        2
       );
       bloomPass.threshold = 15.0;
       composer.addPass(bloomPass);

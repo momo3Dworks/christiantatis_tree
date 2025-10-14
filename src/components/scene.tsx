@@ -21,6 +21,8 @@ import { useSearchParams } from 'next/navigation';
 import { X } from 'lucide-react';
 import Footer from './Footer';
 import { AudioContext } from '@/context/AudioContext';
+import { cn } from "@/lib/utils";
+
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -62,6 +64,7 @@ interface SceneProps {
     ballNormal: THREE.Texture;
     imperfection: THREE.Texture;
     skyAlbedo: THREE.Texture;
+    audio: HTMLAudioElement;
   };
   hasInteracted: boolean;
   startIntroAnimation: boolean;
@@ -352,8 +355,8 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
 
         const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
         bloomPass.threshold = 15;
-        bloomPass.strength = 12;
-        bloomPass.radius = 0.5;
+        bloomPass.strength = 10;
+        bloomPass.radius = 0.01;
         composer.addPass(bloomPass);
 
         // Controls
@@ -626,6 +629,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
                 size: 0.25,
                 transparent: true,
                 depthWrite: false, // Prevents artifacts with SAO
+                depthTest: false,
             });
 
             const particles = new THREE.Points(particlesGeometry, particlesMaterial);
@@ -989,16 +993,41 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
   const handleReturn = () => {
     if (cameraRef.current && controlsRef.current) {
         setShowContentContainer(false);
-        resetCameraPosition();
         playGrassScanAnimation(true);
         setViewState('default');
         setZoomedTarget(null);
-        setTimeout(() => {
-          if (controlsRef.current) {
-            controlsRef.current.enabled = true;
+        
+        const camera = cameraRef.current;
+        const controls = controlsRef.current;
+        
+        const currentTarget = controls.target.clone();
+        const lookAtTarget = currentTarget.clone();
+
+        gsap.to(camera.position, {
+          duration: 1.5,
+          x: initialCameraPosition.x,
+          y: initialCameraPosition.y,
+          z: initialCameraPosition.z,
+          ease: 'power3.inOut',
+        });
+
+        gsap.to(lookAtTarget, {
+          duration: 1.5,
+          x: initialCameraTarget.x,
+          y: initialCameraTarget.y,
+          z: initialCameraTarget.z,
+          ease: 'power3.inOut',
+          onUpdate: () => {
+            camera.lookAt(lookAtTarget);
+            controls.target.copy(lookAtTarget);
+          },
+          onComplete: () => {
+            controls.target.copy(initialCameraTarget);
+            controls.saveState();
+            controls.enabled = true;
             limitCameraOrbit();
-          }
-        }, 1500)
+          },
+        });
     }
   };
   
@@ -1020,6 +1049,39 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
     if (key.includes('greenBall')) return t('scene.aboutUs');
     return '';
   }
+
+  const sphereBorderColorMap: { [key: string]: string } = {
+    orangeBall: "border-[#D1A300]",
+    blueBall: "border-[#3257C7]",
+    redBall: "border-[#990D11]",
+    blackBall: "border-[#303030]",
+    greenBall: "border-[#2D8D31]",
+  };
+
+  const getBorderColorClass = () => {
+    if (!zoomedTarget) return "border-border";
+    const key = zoomedTarget.name;
+    
+    const sphereKey = Object.keys(sphereBorderColorMap).find(sphereKey => key.includes(sphereKey));
+    return sphereKey ? sphereBorderColorMap[sphereKey] : "border-border";
+  };
+
+  const sphereShadowColorMap: { [key: string]: string } = {
+    orangeBall: "shadow-glow-orange",
+    blueBall: "shadow-glow-blue",
+    redBall: "shadow-glow-red",
+    blackBall: "shadow-glow-black",
+    greenBall: "shadow-glow-green",
+  };
+
+  const getShadowColorClass = () => {
+    if (!zoomedTarget) return "";
+    const key = zoomedTarget.name;
+    
+    const sphereKey = Object.keys(sphereShadowColorMap).find(sphereKey => key.includes(sphereKey));
+    return sphereKey ? sphereShadowColorMap[sphereKey] : "";
+  };
+
 
   return (
     <>
@@ -1055,7 +1117,12 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
             className="absolute inset-0 z-10 bg-black/30 backdrop-blur-[10px] pointer-events-auto transition-opacity duration-500"
             onClick={(e) => { e.stopPropagation(); handleReturn(); }}
           />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto overflow-auto z-20" id="content-container">
+          <div className={cn(
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto overflow-auto z-20 border-2", 
+              getBorderColorClass(),
+              getShadowColorClass()
+            )} 
+            id="content-container">
             <Button 
                 onClick={handleReturn}
                 variant="ghost"

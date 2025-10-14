@@ -212,3 +212,33 @@ body {
 .box5{
   animation-name: quiet;
 }
+::-webkit-scrollbar-track {
+  background: #000000;
+  border-radius: 1em !important ;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  margin-right: 0.5rem !important;
+
+}
+
+::-webkit-scrollbar-thumb {
+  background: #adadad  !important;
+  width: 80%;
+  border-radius: 1em !important ;
+  margin-top: 1em !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: #e2d4e1 !important;
+}
+
+
+::-webkit-scrollbar {
+  width: 10px;
+  margin-right: 1em !important;
+}
