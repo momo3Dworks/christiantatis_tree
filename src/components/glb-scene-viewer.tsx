@@ -390,7 +390,7 @@ const GlbSceneViewer = React.memo(function GlbSceneViewer() {
         1,
         2
       );
-      bloomPass.threshold = 15.0;
+      bloomPass.threshold = 18.0;
       composer.addPass(bloomPass);
       
       controls.addEventListener('start', () => {

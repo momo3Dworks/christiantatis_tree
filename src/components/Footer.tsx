@@ -1,10 +1,14 @@
 
 "use client";
 
-import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import TermsContent from "./legal/TermsContent";
+import PrivacyContent from "./legal/PrivacyContent";
+import CookiesContent from "./legal/CookiesContent";
 
 type FooterProps = {
   viewState: 'default' | 'zoomed';
@@ -15,9 +19,9 @@ const Footer = ({ viewState, show }: FooterProps) => {
   const { t } = useTranslation();
 
   const menuItems = [
-    { href: "/terms", label: t('footer.terms') },
-    { href: "/privacy", label: t('footer.privacy') },
-    { href: "/cookies", label: t('footer.cookies') },
+    { label: t('footer.terms'), content: <TermsContent /> },
+    { label: t('footer.privacy'), content: <PrivacyContent /> },
+    { label: t('footer.cookies'), content: <CookiesContent /> },
   ];
 
   return (
@@ -35,14 +39,23 @@ const Footer = ({ viewState, show }: FooterProps) => {
           <span>{t('footer.copyright')}</span>
           <nav className="flex items-center space-x-2">
             {menuItems.map((item, index) => (
-              <React.Fragment key={item.href}>
-                <Link
-                  href={item.href}
-                  className="group relative text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {item.label}
-                  <span className="absolute bottom-0 left-0 h-[1px] w-full bg-current transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left"></span>
-                </Link>
+              <React.Fragment key={item.label}>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="group relative text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none p-0 cursor-pointer">
+                      {item.label}
+                      <span className="absolute bottom-0 left-0 h-[1px] w-full bg-current transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left"></span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[80vw] h-[80vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl">{item.label}</DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="flex-grow pr-6">
+                      {item.content}
+                    </ScrollArea>
+                  </DialogContent>
+                </Dialog>
                 {index < menuItems.length - 1 && <span>|</span>}
               </React.Fragment>
             ))}

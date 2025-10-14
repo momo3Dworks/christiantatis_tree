@@ -354,8 +354,8 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
         composer.addPass(new RenderPass(scene, camera));
 
         const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloomPass.threshold = 15;
-        bloomPass.strength = 10;
+        bloomPass.threshold = 18;
+        bloomPass.strength = 7;
         bloomPass.radius = 0.01;
         composer.addPass(bloomPass);
 
@@ -1082,6 +1082,21 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
     return sphereKey ? sphereShadowColorMap[sphereKey] : "";
   };
 
+  const sphereJumboClassMap: { [key: string]: string } = {
+    orangeBall: "jumbo-orange",
+    blueBall: "jumbo-blue",
+    redBall: "jumbo-red",
+    blackBall: "jumbo-black",
+    greenBall: "jumbo-green",
+  };
+
+  const getJumboClass = () => {
+    if (!zoomedTarget) return "";
+    const key = zoomedTarget.name;
+    const sphereKey = Object.keys(sphereJumboClassMap).find(sphereKey => key.includes(sphereKey));
+    return sphereKey ? sphereJumboClassMap[sphereKey] : "";
+  };
+
 
   return (
     <>
@@ -1113,15 +1128,18 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
 
       {showContentContainer && (
         <>
-          <div 
-            className="absolute inset-0 z-10 bg-black/30 backdrop-blur-[10px] pointer-events-auto transition-opacity duration-500"
+          <div
+            className={cn(
+              "absolute inset-0 z-10 bg-black/30 backdrop-blur-[10px] pointer-events-auto jumbo-background",
+              getJumboClass()
+            )}
             onClick={(e) => { e.stopPropagation(); handleReturn(); }}
           />
           <div className={cn(
               "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto overflow-auto z-20 border-2", 
               getBorderColorClass(),
               getShadowColorClass()
-            )} 
+            )}
             id="content-container">
             <Button 
                 onClick={handleReturn}
