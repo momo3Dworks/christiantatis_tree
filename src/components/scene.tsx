@@ -23,6 +23,7 @@ import Footer from './Footer';
 import { AudioContext } from '@/context/AudioContext';
 import { cn } from "@/lib/utils";
 import { useIsMobile } from '@/hooks/use-mobile';
+import FloatingParticles from './FloatingParticles';
 
 
 gsap.registerPlugin(MotionPathPlugin);
@@ -1080,6 +1081,22 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
     greenBall: "shadow-glow-green",
   };
 
+  const sphereTintColorMap: { [key: string]: string } = {
+    orangeBall: "sepia(1) saturate(5) hue-rotate(330deg)",
+    blueBall: "sepia(1) saturate(4) hue-rotate(190deg)",
+    redBall: "sepia(1) saturate(6) hue-rotate(320deg)",
+    blackBall: "grayscale(1) brightness(0.5)",
+    greenBall: "sepia(1) saturate(3) hue-rotate(60deg)",
+  };
+  
+  const getTintColor = () => {
+    if (!zoomedTarget) return "";
+    const key = zoomedTarget.name;
+    const sphereKey = Object.keys(sphereTintColorMap).find(sphereKey => key.includes(sphereKey));
+    return sphereKey ? sphereTintColorMap[sphereKey] : "";
+  };
+
+
   const getShadowColorClass = () => {
     if (!zoomedTarget) return "";
     const key = zoomedTarget.name;
@@ -1141,6 +1158,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
             )}
             onClick={(e) => { e.stopPropagation(); handleReturn(); }}
           />
+           <FloatingParticles tintColor={getTintColor()} />
           <div className={cn(
               "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[1350px] h-3/4 bg-card/80 backdrop-blur-md rounded-lg pointer-events-auto overflow-auto z-20 border-2", 
               getBorderColorClass(),

@@ -299,3 +299,80 @@ body {
       }
   }
 }
+
+.particle-layer {
+  position: absolute;
+  top: -8500px;
+  left: -8000px;
+  width: 100000px;
+  height: 100000px;
+  animation-timing-function: cubic-bezier(0.25, 0.25, 0.75, 0.75);
+  animation-name: float;
+  animation-iteration-count: infinite;
+  background-repeat: repeat;
+  pointer-events: none;
+}
+
+#particle-layer-1 {
+  opacity: 0.25;
+  background-image: url('https://image.ibb.co/jcTvpv/dust1.jpg');
+  animation-duration: 600s;
+}
+
+#particle-layer-2 {
+  opacity: 0.2;
+  background-image: url('https://image.ibb.co/goU1Uv/dust2.jpg');
+  animation-duration: 450s;
+}
+
+#particle-layer-3 {
+  opacity: 0.15;
+  background-image: url('https://image.ibb.co/cymRwa/dust3.jpg');
+  animation-duration: 350s;
+}
+
+.speck-container {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    height: 100vh;
+    width: 100vw;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.speck {
+  opacity: 0;
+  height: 8px;
+  width: 8px;
+  background-image: url('http://i1272.photobucket.com/albums/y391/matthew_williams10/speck_zpsu9xym9zl.png');
+  background-size: cover;
+  position: absolute;
+  border-radius: 10px;
+}
+
+@keyframes twinkle {
+  0% {
+    transform: translate(0px, 0px);
+    opacity: 0;
+  }
+  20% {
+    opacity: var(--initial-opacity, 0.75);
+  }
+  80% {
+    opacity: var(--initial-opacity, 0.75);
+  }
+  100% {
+    transform: translate(100px, 50px);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  100% {
+    transform: translate(8000px, 4000px);
+  }
+}
