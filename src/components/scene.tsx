@@ -258,6 +258,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
             const parent = sphereToParentMapRef.current.get(firstIntersected);
             
             if (parent) {
+                setHoveredLabel('');
                 if (isMobile) {
                     playFullGrassScanAnimation();
                 }
@@ -1207,3 +1208,5 @@ const AppScene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimation
 
 const MemoizedScene = memo(AppScene);
 export default MemoizedScene;
+
+    

@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation';
 // This metadata is static and will not be translated
 // export const metadata: Metadata = {
 //   title: 'Christianitatis',
-//   description: 'A minimalist Three.js 3D scene.',
+//   description: 'Christianitatis',
 // };
 
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
