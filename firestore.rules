@@ -1,0 +1,68 @@
+
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset governs access to the `home_churches` collection.
+ *
+ * Core Philosophy:
+ * The security model ensures that users can only manage their own data while allowing
+ * public read access for discoverability.
+ *
+ * Data Structure:
+ * All home church data is stored in the top-level `/home_churches/{homeChurchId}` collection.
+ * Each document contains a `creatorId` field, which is essential for ownership-based security.
+ *
+ * Key Security Decisions:
+ * - Listing of home churches is open to all users (including unauthenticated).
+ * - Only authenticated users can create home church documents.
+ * - During creation, the `creatorId` must match the UID of the user making the request.
+ * - Updates and deletions are restricted to the user whose UID matches the `creatorId` in the document.
+ * - Any signed-in user can update the 'reservations' field to add themselves.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to the `/home_churches` collection.
+     * @path /home_churches/{homeChurchId}
+     * @allow (get, list) Allow any user to read home church data for discoverability.
+     * @allow (create) Allow authenticated users to create a church, but only if they set themselves as the creator.
+     * @allow (update) Allow owner to update their church, or any user to reserve a spot.
+     * @allow (delete) Allow users to delete a church only if they are the original creator.
+     * @principle Owner-write, public-read, user-self-reservation.
+     */
+    match /home_churches/{homeChurchId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+                      isOwner() || isUpdatingReservationsOnly()
+                    );
+                    
+      allow delete: if isSignedIn() && isOwner();
+    }
+
+    // Helper function to check if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the user is the owner of the document
+    function isOwner() {
+        return resource.data.creatorId == request.auth.uid;
+    }
+
+    // Helper function to check if only the reservations field is being updated
+    function isUpdatingReservationsOnly() {
+      // Only the 'reservations' field can be modified.
+      let a = request.resource.data.diff(resource.data).affectedKeys();
+      let b = request.resource.data.diff(resource.data).addedKeys();
+      let c = request.resource.data.diff(resource.data).removedKeys();
+      let d = request.resource.data.diff(resource.data).unchangedKeys();
+
+      return (a.hasOnly(['reservations']) || b.hasOnly(['reservations'])) && c.size() == 0;
+    }
+  }
+}

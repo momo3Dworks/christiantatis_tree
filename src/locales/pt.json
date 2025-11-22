@@ -99,7 +99,7 @@
     "aboutUs": {
       "title": "Sobre Nós",
       "missionTitle": "Nossa Missão",
-      "missionDescription": "Espalhar a mensagem de fé, esperança e amor, fomentando uma comunidade global de crentes dedicados ao crescimento espiritual и ao serviço. Nosso objetivo é tornar os ensinamentos da Bíblia acessíveis a todos, em todos os lugares, capacitando os indivíduos a construir um relacionamento pessoal com Deus.",
+      "missionDescription": "Espalhar a mensagem de fé, esperança e amor, fomentando uma comunidade global de crentes dedicados ao crescimento espiritual e ao serviço. Nosso objetivo é tornar os ensinamentos da Bíblia acessíveis a todos, em todos os lugares, capacitando os indivíduos a construir um relacionamento pessoal com Deus.",
       "valuesTitle": "Nossos Valores",
       "faith": "Fé",
       "faithDesc": "Enraizados nos ensinamentos de Jesus Cristo e na Sagrada Escritura.",
@@ -158,42 +158,54 @@
       "closestPlaceholder": "Pesquisar áreas próximas",
       "applyFilters": "Aplicar Filtros",
       "results": "Resultados",
-      "resultsPlaceholder": "Os resultados da pesquisa aparecerão aqui. As informações do anfitrião могут incluir o bairro, mas o nome do anfitrião é restrito por privacidade."
+      "resultsPlaceholder": "Os resultados da pesquisa aparecerão aqui. As informações do anfitrião podem incluir o bairro, mas o nome do anfitrião é restrito por privacidade."
     },
     "registerChurch": {
+      "name": "Nome da Igreja em Casa",
+      "namePlaceholder": "Ex: Comunidade da Graça",
       "title": "Registrar uma Igreja em Casa",
       "phone": "Telefone (com código do país) *",
-      "phonePlaceholder": "+1 555-555-5555",
+      "phonePlaceholder": "+55 11 99999-9999",
       "sessionInfo": "Informações da Sessão/Reunião (pelo menos 1 necessário)",
       "email": "E-mail",
       "emailPlaceholder": "contato@igreja.com",
       "whatsapp": "WhatsApp",
-      "whatsappPlaceholder": "+1 555-555-5555",
+      "whatsappPlaceholder": "+55 11 99999-9999",
       "website": "Site",
       "websitePlaceholder": "https://minhaigreja.org",
       "neighborhood": "Bairro",
       "neighborhoodPlaceholder": "Centro",
       "tags": "Tags",
-      "tagsPlaceholder": "#bairro #data #cidade",
-      "tagsDescription": "Adicione tags para ajudar as pessoas a encontrar sua igreja.",
+      "tagsPlaceholder": "#bairro, #data, #cidade",
+      "tagsDescription": "Adicione tags para ajudar as pessoas a encontrar sua igreja (separadas por vírgula).",
       "peopleLimit": "Limite de Pessoas",
       "peopleLimitPlaceholder": "20",
-      "markAsFull": "Marcar como Cheio",
       "schedule": "Horário da Reunião",
       "schedulePlaceholder": "ex: Toda sexta-feira às 19:00",
+      "scheduleTitle": "Horário da Reunião",
+      "pickDate": "Escolha uma data",
+      "recurringMeeting": "Reunião recorrente (semanal)",
+      "recurringDescription": "Se não for marcado, a reunião será um evento único.",
+      "recurringSchedule": "Toda {{day}} às {{time}}",
+      "oneTimeSchedule": "Em {{date}} às {{time}}",
       "status": "Status",
       "statusPlaceholder": "Selecione o status da igreja",
       "statusOptions": {
         "open": "Aberta",
+        "full": "Cheia",
         "closed": "Fechada",
         "tempClosed": "Fechada Temporariamente",
         "suspended": "Suspensa"
       },
-      "upcomingMeetings": "Próximas Reuniões Perto de Você",
+      "upcomingMeetings": "Encontrar uma Igreja em Casa",
       "locationFeaturePlaceholder": "Recurso baseado em localização em breve.",
       "submitButton": "Enviar para Validação",
       "toastTitle": "Solicitação de Registro Enviada!",
-      "toastDescription": "Você receberá um e-mail de confirmação em breve. Seu registro será validado por nossa equipe."
+      "toastDescription": "Você receberá um e-mail de confirmação em breve. Seu registro será validado por nossa equipe.",
+      "bookSpotButton": "Reservar Vaga",
+      "attendTab": "Visitar uma Igreja",
+      "createTab": "Criar uma Igreja",
+      "loginPrompt": "Por favor, faça login para registrar uma igreja."
     },
     "startMeeting": {
       "title": "Iniciar uma Reunião Bíblica",
@@ -210,5 +222,11 @@
     "terms": "Condições de Serviço",
     "privacy": "Políticas de Privacidade",
     "cookies": "Cookies"
+  },
+  "cookies": {
+    "message": "Usamos cookies e solicitamos sua localização para aprimorar sua experiência. Ao continuar a usar este site, você concorda com nosso uso de cookies e geolocalização.",
+    "accept": "Aceitar"
   }
 }
+
+    

@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Sun, Moon, Home, Globe, Play, Pause } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, Globe, Play, Pause, User } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,8 +19,10 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { AudioContext } from '@/context/AudioContext';
 import { Label } from '@/components/ui/label';
+import { useFirebase } from '@/firebase';
+import LoginDialog from './auth/LoginDialog';
 
-export default function Header() {
+export default function Header({ setLoginDialogOpen, isLoginDialogOpen }: { setLoginDialogOpen: (open: boolean) => void, isLoginDialogOpen: boolean }) {
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [theme, setTheme] = useState<string | null>(null);
 
@@ -29,6 +30,7 @@ export default function Header() {
   const { toast } = useToast();
   const pathname = usePathname();
   const audioContext = useContext(AudioContext);
+  const { user, isUserLoading, auth } = useFirebase();
 
 
   const navItems = [
@@ -41,7 +43,7 @@ export default function Header() {
     { href: '/contact', label: t('header.contactUs') },
   ];
 
-  const pagesWithHomeIcon = ['/events', '/bible', '/content', '/faq', '/forum', '/contact'];
+  const pagesWithHomeIcon = ['/events', '/bible', '/content', '/faq', '/forum', '/contact', '/profile'];
   const showHomeIconInsteadOfText = pagesWithHomeIcon.includes(pathname);
 
   useEffect(() => {
@@ -164,12 +166,30 @@ export default function Header() {
 
         {/* Right Side: Theme and Language Toggles */}
         <div className="flex items-center max-[630px]:gap-0 gap-2">
-          {theme && (
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {theme === 'light' ? <Moon className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" /> : <Sun className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />}
-              <span className="sr-only">Toggle theme</span>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user.email || 'Profile'}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Perfil</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => auth.signOut()}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <LoginDialog open={isLoginDialogOpen} onOpenChange={setLoginDialogOpen}>
+              <Button variant="ghost" size="icon" disabled={isUserLoading} onClick={() => setLoginDialogOpen(true)}>
+                <User className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
               </Button>
+            </LoginDialog>
           )}
+
           {locale && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

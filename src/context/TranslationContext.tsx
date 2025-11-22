@@ -14,7 +14,7 @@ const translations: { [key: string]: Translations } = { en, es, pt, fr };
 type TranslationContextType = {
   locale: string | null;
   setLocale: (locale: string) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: { [key: string]: string | number }) => string;
 };
 
 export const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
@@ -43,27 +43,40 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const t = useCallback((key: string): string => {
+  const t = useCallback((key: string, options?: { [key: string]: string | number }): string => {
     const currentLocale = locale || 'pt';
     const keys = key.split('.');
-    let result = translations[currentLocale];
-    for (const k of keys) {
-      if (result && typeof result === 'object' && k in result) {
-        result = result[k];
-      } else {
-        // Fallback to English if key not found in current locale
-        result = translations['en'];
-        for (const fk of keys) {
-            if (result && typeof result === 'object' && fk in result) {
-                result = result[fk];
+    
+    const findTranslation = (localeToTry: string): string | null => {
+        let result = translations[localeToTry];
+        for (const k of keys) {
+            if (result && typeof result === 'object' && k in result) {
+                result = result[k];
             } else {
-                return key; // Return the key itself if not found in fallback
+                return null;
             }
         }
-        break;
-      }
+        return typeof result === 'string' ? result : null;
+    };
+    
+    let translationString = findTranslation(currentLocale);
+
+    if (translationString === null) {
+        translationString = findTranslation('en'); // Fallback to English
     }
-    return typeof result === 'string' ? result : key;
+
+    if (translationString === null) {
+        return key; // Return the key itself if not found
+    }
+
+    if (options) {
+      Object.keys(options).forEach(optionKey => {
+        const regex = new RegExp(`{{${optionKey}}}`, 'g');
+        translationString = (translationString as string).replace(regex, String(options[optionKey]));
+      });
+    }
+
+    return translationString;
   }, [locale]);
 
   if (!locale) {
