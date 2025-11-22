@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, Suspense, useContext, useEffect, useCallback } from 'react';
@@ -17,7 +18,6 @@ function App() {
   const { t } = useTranslation();
   const [viewState, setViewState] = useState<'default' | 'zoomed'>('default');
   const [introAnimationComplete, setIntroAnimationComplete] = useState(false);
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const handleIntroAnimationComplete = useCallback(() => {
     setIntroAnimationComplete(true);
@@ -41,9 +41,9 @@ function App() {
     <main className="relative w-screen h-screen overflow-hidden">
       {loading && <Loader onLoaded={handleLoaded} />}
       
-      {!loading && hasInteracted && <Header setLoginDialogOpen={setLoginDialogOpen} isLoginDialogOpen={isLoginDialogOpen} />}
+      {!loading && hasInteracted && <Header />}
 
-      {assets && !isLoginDialogOpen && <MemoizedScene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntro} onIntroAnimationComplete={handleIntroAnimationComplete} setViewState={setViewState} viewState={viewState} isLoginDialogOpen={isLoginDialogOpen} />}
+      {assets && <MemoizedScene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntro} onIntroAnimationComplete={handleIntroAnimationComplete} setViewState={setViewState} viewState={viewState} />}
       {hasInteracted && <SoundwaveButton />}
     </main>
   );

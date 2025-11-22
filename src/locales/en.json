@@ -161,8 +161,6 @@
       "resultsPlaceholder": "Search results will appear here. Host information may include neighborhood, but host name is restricted for privacy."
     },
     "registerChurch": {
-      "name": "Home Church Name",
-      "namePlaceholder": "e.g., Grace Community",
       "title": "Register a Home Church",
       "phone": "Phone (with country code) *",
       "phonePlaceholder": "+1 555-555-5555",
@@ -176,36 +174,26 @@
       "neighborhood": "Neighborhood",
       "neighborhoodPlaceholder": "Downtown",
       "tags": "Tags",
-      "tagsPlaceholder": "#neighborhood, #date, #city",
-      "tagsDescription": "Add tags to help people find your church (comma separated).",
+      "tagsPlaceholder": "#neighborhood #date #city",
+      "tagsDescription": "Add tags to help people find your church.",
       "peopleLimit": "People Limit",
       "peopleLimitPlaceholder": "20",
+      "markAsFull": "Mark as Full",
       "schedule": "Meeting Schedule",
       "schedulePlaceholder": "e.g., Every Friday at 7:00 PM",
-      "scheduleTitle": "Meeting Schedule",
-      "pickDate": "Pick a date",
-      "recurringMeeting": "Recurring Meeting (Weekly)",
-      "recurringDescription": "If unchecked, the meeting will be a one-time event.",
-      "recurringSchedule": "Every {{day}} at {{time}}",
-      "oneTimeSchedule": "On {{date}} at {{time}}",
       "status": "Status",
       "statusPlaceholder": "Select the church status",
       "statusOptions": {
         "open": "Open",
-        "full": "Full",
         "closed": "Closed",
         "tempClosed": "Temporarily Closed",
         "suspended": "Suspended"
       },
-      "upcomingMeetings": "Find a Home Church",
+      "upcomingMeetings": "Upcoming Meetings Near You",
       "locationFeaturePlaceholder": "Location-based feature coming soon.",
       "submitButton": "Submit for Validation",
       "toastTitle": "Registration Request Sent!",
-      "toastDescription": "You will receive a confirmation email shortly. Your registration will be validated by our team.",
-      "bookSpotButton": "Book a Spot",
-      "attendTab": "Attend a Church",
-      "createTab": "Create a Church",
-      "loginPrompt": "Please log in to register a church."
+      "toastDescription": "You will receive a confirmation email shortly. Your registration will be validated by our team."
     },
     "startMeeting": {
       "title": "Start a Bible Meeting",
@@ -222,11 +210,5 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "cookies": "Cookies"
-  },
-  "cookies": {
-    "message": "We use cookies and request your location to enhance your experience. By continuing to use this site, you agree to our use of cookies and geolocation.",
-    "accept": "Accept"
   }
 }
-
-    

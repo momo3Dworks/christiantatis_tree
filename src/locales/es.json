@@ -161,8 +161,6 @@
       "resultsPlaceholder": "Los resultados de la búsqueda aparecerán aquí. La información del anfitrión puede incluir el barrio, pero el nombre del anfitrión está restringido por privacidad."
     },
     "registerChurch": {
-      "name": "Nombre de la Iglesia en Casa",
-      "namePlaceholder": "Ej: Comunidad de Gracia",
       "title": "Registrar una Iglesia en Casa",
       "phone": "Teléfono (con código de país) *",
       "phonePlaceholder": "+1 555-555-5555",
@@ -176,36 +174,26 @@
       "neighborhood": "Barrio",
       "neighborhoodPlaceholder": "Centro",
       "tags": "Etiquetas",
-      "tagsPlaceholder": "#barrio, #fecha, #ciudad",
-      "tagsDescription": "Añade etiquetas para ayudar a la gente a encontrar tu iglesia (separadas por comas).",
+      "tagsPlaceholder": "#barrio #fecha #ciudad",
+      "tagsDescription": "Añade etiquetas para ayudar a la gente a encontrar tu iglesia.",
       "peopleLimit": "Límite de Personas",
       "peopleLimitPlaceholder": "20",
+      "markAsFull": "Marcar como Lleno",
       "schedule": "Horario de Reuniones",
       "schedulePlaceholder": "p.ej., Todos los viernes a las 7:00 PM",
-      "scheduleTitle": "Horario de Reuniones",
-      "pickDate": "Elige una fecha",
-      "recurringMeeting": "Reunión recurrente (semanal)",
-      "recurringDescription": "Si no está marcado, la reunión será un evento único.",
-      "recurringSchedule": "Todos los {{day}} a las {{time}}",
-      "oneTimeSchedule": "El {{date}} a las {{time}}",
       "status": "Estado",
       "statusPlaceholder": "Selecciona el estado de la iglesia",
       "statusOptions": {
         "open": "Abierta",
-        "full": "Llena",
         "closed": "Cerrada",
         "tempClosed": "Cerrada Temporalmente",
         "suspended": "Suspendida"
       },
-      "upcomingMeetings": "Encontrar una Iglesia en Casa",
+      "upcomingMeetings": "Próximas Reuniones Cerca de Ti",
       "locationFeaturePlaceholder": "La función basada en la ubicación llegará pronto.",
       "submitButton": "Enviar para Validación",
       "toastTitle": "¡Solicitud de Registro Enviada!",
-      "toastDescription": "Recibirás un correo de confirmación en breve. Tu registro será validado por nuestro equipo.",
-      "bookSpotButton": "Reservar un Lugar",
-      "attendTab": "Asistir a una Iglesia",
-      "createTab": "Crear una Iglesia",
-      "loginPrompt": "Por favor, inicia sesión para registrar una iglesia."
+      "toastDescription": "Recibirás un correo de confirmación en breve. Tu registro será validado por nuestro equipo."
     },
     "startMeeting": {
       "title": "Iniciar una Reunión Bíblica",
@@ -222,11 +210,5 @@
     "terms": "Condiciones de Servicio",
     "privacy": "Políticas de Privacidad",
     "cookies": "Cookies"
-  },
-  "cookies": {
-    "message": "Usamos cookies y solicitamos tu ubicación para mejorar tu experiencia. Al continuar usando este sitio, aceptas nuestro uso de cookies y geolocalización.",
-    "accept": "Aceptar"
   }
 }
-
-    

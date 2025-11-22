@@ -1,7 +1,6 @@
 
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,27 +11,6 @@ import { MapPin } from "lucide-react";
 
 export default function FindHomeChurchContent() {
   const { t } = useTranslation();
-
-  const [country, setCountry] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [closest, setClosest] = useState("");
-  
-  const [mapUrl, setMapUrl] = useState("https://maps.google.com/maps?q=churches&output=embed");
-
-  const handleApplyFilters = () => {
-    const queryParts = ["churches"];
-    if (closest) queryParts.push(closest);
-    if (neighborhood) queryParts.push(neighborhood);
-    if (city) queryParts.push(city);
-    if (state) queryParts.push(state);
-    if (country) queryParts.push(country);
-    
-    const queryString = queryParts.join(", ");
-    setMapUrl(`https://maps.google.com/maps?q=${encodeURIComponent(queryString)}&output=embed`);
-  };
-
 
   return (
     <div className="PreviewContent flex flex-col items-center justify-center p-4 md:p-8 text-foreground h-full">
@@ -48,15 +26,10 @@ export default function FindHomeChurchContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5"/> {t('contentPreview.findChurch.mapTitle')}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <iframe
-                  src={mapUrl}
-                  className="w-full h-full border-0 rounded-lg min-h-[450px]"
-                  allowFullScreen={false}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Google Maps Find Churches"
-                ></iframe>
+              <CardContent className="h-full">
+                <div className="bg-muted rounded-lg h-full flex items-center justify-center">
+                  <p className="text-muted-foreground">{t('contentPreview.findChurch.mapPlaceholder')}</p>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -70,7 +43,7 @@ export default function FindHomeChurchContent() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="country">{t('contentPreview.findChurch.country')}</Label>
-                  <Select onValueChange={setCountry} value={country}>
+                  <Select>
                     <SelectTrigger id="country">
                       <SelectValue placeholder={t('contentPreview.findChurch.countryPlaceholder')} />
                     </SelectTrigger>
@@ -83,21 +56,21 @@ export default function FindHomeChurchContent() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">{t('contentPreview.findChurch.state')}</Label>
-                  <Input id="state" placeholder={t('contentPreview.findChurch.statePlaceholder')} value={state} onChange={(e) => setState(e.target.value)} />
+                  <Input id="state" placeholder={t('contentPreview.findChurch.statePlaceholder')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="city">{t('contentPreview.findChurch.city')}</Label>
-                  <Input id="city" placeholder={t('contentPreview.findChurch.cityPlaceholder')} value={city} onChange={(e) => setCity(e.target.value)} />
+                  <Input id="city" placeholder={t('contentPreview.findChurch.cityPlaceholder')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="neighborhood">{t('contentPreview.findChurch.neighborhood')}</Label>
-                  <Input id="neighborhood" placeholder={t('contentPreview.findChurch.neighborhoodPlaceholder')} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
+                  <Input id="neighborhood" placeholder={t('contentPreview.findChurch.neighborhoodPlaceholder')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="closest">{t('contentPreview.findChurch.closest')}</Label>
-                   <Input id="closest" placeholder={t('contentPreview.findChurch.closestPlaceholder')} value={closest} onChange={(e) => setClosest(e.target.value)} />
+                   <Input id="closest" placeholder={t('contentPreview.findChurch.closestPlaceholder')} />
                 </div>
-                <Button className="w-full" onClick={handleApplyFilters}>{t('contentPreview.findChurch.applyFilters')}</Button>
+                <Button className="w-full">{t('contentPreview.findChurch.applyFilters')}</Button>
               </CardContent>
             </Card>
           </div>

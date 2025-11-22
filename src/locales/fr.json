@@ -158,11 +158,9 @@
       "closestPlaceholder": "Rechercher les zones à proximité",
       "applyFilters": "Appliquer les Filtres",
       "results": "Résultats",
-      "resultsPlaceholder": "Les résultats de la recherche apparaîtront ici. Les informations sur l'hôte могут inclure le quartier, mais le nom de l'hôte est restreint pour des raisons de confidentialité."
+      "resultsPlaceholder": "Les résultats de la recherche apparaîtront ici. Les informations sur l'hôte peuvent inclure le quartier, mais le nom de l'hôte est restreint pour des raisons de confidentialité."
     },
     "registerChurch": {
-      "name": "Nom de l'Église de Maison",
-      "namePlaceholder": "Ex: Communauté de la Grâce",
       "title": "Enregistrer une Église de Maison",
       "phone": "Téléphone (avec code pays) *",
       "phonePlaceholder": "+1 555-555-5555",
@@ -176,36 +174,26 @@
       "neighborhood": "Quartier",
       "neighborhoodPlaceholder": "Centre-ville",
       "tags": "Tags",
-      "tagsPlaceholder": "#quartier, #date, #ville",
-      "tagsDescription": "Ajoutez des tags pour aider les gens à trouver votre église (séparés par des virgules).",
+      "tagsPlaceholder": "#quartier #date #ville",
+      "tagsDescription": "Ajoutez des tags pour aider les gens à trouver votre église.",
       "peopleLimit": "Limite de Personnes",
       "peopleLimitPlaceholder": "20",
+      "markAsFull": "Marquer comme Complet",
       "schedule": "Horaire des Réunions",
       "schedulePlaceholder": "ex: Tous les vendredis à 19h00",
-      "scheduleTitle": "Horaire de la Réunion",
-      "pickDate": "Choisissez une date",
-      "recurringMeeting": "Réunion récurrente (hebdomadaire)",
-      "recurringDescription": "Si non coché, la réunion sera un événement unique.",
-      "recurringSchedule": "Tous les {{day}} à {{time}}",
-      "oneTimeSchedule": "Le {{date}} à {{time}}",
       "status": "Statut",
       "statusPlaceholder": "Sélectionnez le statut de l'église",
       "statusOptions": {
         "open": "Ouverte",
-        "full": "Pleine",
         "closed": "Fermée",
         "tempClosed": "Fermée Temporairement",
         "suspended": "Suspendue"
       },
-      "upcomingMeetings": "Trouver une Église de Maison",
+      "upcomingMeetings": "Prochaines Réunions près de chez vous",
       "locationFeaturePlaceholder": "La fonctionnalité basée sur la localisation sera bientôt disponible.",
       "submitButton": "Soumettre pour Validation",
       "toastTitle": "Demande d'Enregistrement Envoyée !",
-      "toastDescription": "Vous recevrez un e-mail de confirmation sous peu. Votre enregistrement sera validé par notre équipe.",
-      "bookSpotButton": "Réserver une Place",
-      "attendTab": "Assister à une Église",
-      "createTab": "Créer une Église",
-      "loginPrompt": "Veuillez vous connecter pour enregistrer une église."
+      "toastDescription": "Vous recevrez un e-mail de confirmation sous peu. Votre enregistrement sera validé par notre équipe."
     },
     "startMeeting": {
       "title": "Commencer une Réunion Biblique",
@@ -222,11 +210,5 @@
     "terms": "Conditions de Service",
     "privacy": "Politiques de Confidentialité",
     "cookies": "Cookies"
-  },
-  "cookies": {
-    "message": "Nous utilisons des cookies et demandons votre emplacement pour améliorer votre expérience. En continuant à utiliser ce site, vous acceptez notre utilisation des cookies et de la géolocalisation.",
-    "accept": "Accepter"
   }
 }
-
-    

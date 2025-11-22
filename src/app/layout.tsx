@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -9,11 +10,6 @@ import { SAOProvider } from '@/context/SAOContext';
 import { AudioProvider } from '@/context/AudioContext';
 import Header from '@/components/header';
 import { usePathname } from 'next/navigation';
-import { FirebaseClientProvider } from '@/firebase';
-import CookieConsent from '@/components/cookie-consent';
-import Cookies from 'js-cookie';
-import { GeolocationProvider } from '@/context/GeolocationContext';
-
 
 // This metadata is static and will not be translated
 // export const metadata: Metadata = {
@@ -24,14 +20,12 @@ import { GeolocationProvider } from '@/context/GeolocationContext';
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
   
-  // On the homepage, the Header is rendered inside the App component, not here.
   const showHeader = !isHomePage;
 
   return (
     <>
-      {showHeader && <Header setLoginDialogOpen={setLoginDialogOpen} isLoginDialogOpen={isLoginDialogOpen} />}
+      {showHeader && <Header />}
       {children}
     </>
   );
@@ -54,21 +48,16 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          <SAOProvider>
-            <AudioProvider>
-              <TranslationProvider>
-                <GeolocationProvider>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <RootLayoutContent>{children}</RootLayoutContent>
-                  </Suspense>
-                  <Toaster />
-                  <CookieConsent />
-                </GeolocationProvider>
-              </TranslationProvider>
-            </AudioProvider>
-          </SAOProvider>
-        </FirebaseClientProvider>
+        <SAOProvider>
+          <AudioProvider>
+            <TranslationProvider>
+              <Suspense fallback={<div>Loading...</div>}>
+                <RootLayoutContent>{children}</RootLayoutContent>
+              </Suspense>
+              <Toaster />
+            </TranslationProvider>
+          </AudioProvider>
+        </SAOProvider>
       </body>
     </html>
   );

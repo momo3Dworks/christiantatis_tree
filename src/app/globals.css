@@ -376,13 +376,3 @@ body {
     transform: translate(8000px, 4000px);
   }
 }
-
-.MapRegistered {
-  max-height: 90%;
-  
-}
-
-.fullHeight {
-  height: 90% !important;
-  
-}
