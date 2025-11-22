@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState, memo, Suspense, useCallback, useContext } from 'react';
@@ -73,9 +72,10 @@ interface SceneProps {
   onIntroAnimationComplete: () => void;
   setViewState: (state: ViewState) => void;
   viewState: ViewState;
+  isLoginDialogOpen: boolean;
 }
 
-const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState }: SceneProps) => {
+const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState, isLoginDialogOpen }: SceneProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [showContentContainer, setShowContentContainer] = useState(false);
@@ -238,7 +238,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
   }, []);
 
     const onMouseClick = useCallback((event: MouseEvent) => {
-        if (!hasInteracted || showContentContainer || !cameraRef.current) return;
+        if (!hasInteracted || showContentContainer || !cameraRef.current || isLoginDialogOpen) return;
         
         const isAtInitialPosition = cameraRef.current.position.distanceTo(initialCameraPosition) < 0.1;
         if (!isMobile && !isAtInitialPosition) return;
@@ -312,7 +312,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
                 }
             }
         }
-    }, [hasInteracted, showContentContainer, setViewState, assets.sparkVideo, freeCameraOrbit, audioContext, isAudioUnmuted, isMobile, playFullGrassScanAnimation]);
+    }, [hasInteracted, showContentContainer, setViewState, assets.sparkVideo, freeCameraOrbit, audioContext, isAudioUnmuted, isMobile, playFullGrassScanAnimation, isLoginDialogOpen]);
     
     const onMouseClickRef = useRef(onMouseClick);
     useEffect(() => {
@@ -702,7 +702,7 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
 
 
         const checkIntersections = () => {
-            if (isMobile || !cameraRef.current || showContentContainer) return;
+            if (isMobile || !cameraRef.current || showContentContainer || isLoginDialogOpen) return;
             
             const isAtInitialPosition = cameraRef.current.position.distanceTo(initialCameraPosition) < 0.1;
             if (!isAtInitialPosition) {
@@ -1198,15 +1198,14 @@ interface AppSceneProps {
     onIntroAnimationComplete: () => void;
     setViewState: (state: ViewState) => void;
     viewState: ViewState;
+    isLoginDialogOpen: boolean;
 }
 
-const AppScene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState }: AppSceneProps) => (
+const AppScene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState, isLoginDialogOpen }: AppSceneProps) => (
   <Suspense fallback={<div className="w-full h-screen flex items-center justify-center bg-background text-foreground">Loading Scene...</div>}>
-    <Scene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntroAnimation} onIntroAnimationComplete={onIntroAnimationComplete} setViewState={setViewState} viewState={viewState} />
+    <Scene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntroAnimation} onIntroAnimationComplete={onIntroAnimationComplete} setViewState={setViewState} viewState={viewState} isLoginDialogOpen={isLoginDialogOpen}/>
   </Suspense>
 );
 
 const MemoizedScene = memo(AppScene);
 export default MemoizedScene;
-
-    

@@ -5,3 +5,8 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+secretEnvironmentVariables:
+  - key: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    secret: GOOGLE_MAPS_API_KEY
+  - key: NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID
+    secret: GOOGLE_MAPS_MAP_ID
