@@ -121,6 +121,18 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen }: { setL
               ))}
             </nav>
             <div className="absolute bottom-8 left-0 right-0 p-4 space-y-4">
+               <div className="flex items-center justify-between rounded-lg border p-3">
+                <Label htmlFor="theme-toggle">Theme</Label>
+                <Button
+                  id="theme-toggle"
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                >
+                  {theme === 'light' ? <Moon /> : <Sun />}
+                  <span className="sr-only">Toggle Theme</span>
+                </Button>
+              </div>
               {audioContext && audioContext.audioElement && (
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   <Label htmlFor="audio-toggle">Music</Label>
