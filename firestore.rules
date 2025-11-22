@@ -16,7 +16,7 @@
  * - Only authenticated users can create home church documents.
  * - During creation, the `creatorId` must match the UID of the user making the request.
  * - Updates and deletions are restricted to the user whose UID matches the `creatorId` in the document.
- * - Any signed-in user can update the 'reservations' field to add themselves.
+ * - Any signed-in user can update the 'reservations' field to add or remove themselves.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -27,7 +27,7 @@ service cloud.firestore {
      * @path /home_churches/{homeChurchId}
      * @allow (get, list) Allow any user to read home church data for discoverability.
      * @allow (create) Allow authenticated users to create a church, but only if they set themselves as the creator.
-     * @allow (update) Allow owner to update their church, or any user to reserve a spot.
+     * @allow (update) Allow owner to update their church, or any user to reserve/cancel a spot.
      * @allow (delete) Allow users to delete a church only if they are the original creator.
      * @principle Owner-write, public-read, user-self-reservation.
      */
@@ -38,7 +38,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
       
       allow update: if isSignedIn() && (
-                      isOwner() || isUpdatingReservationsOnly()
+                      isOwner() || isManagingOwnReservation()
                     );
                     
       allow delete: if isSignedIn() && isOwner();
@@ -54,15 +54,39 @@ service cloud.firestore {
         return resource.data.creatorId == request.auth.uid;
     }
 
-    // Helper function to check if only the reservations field is being updated
-    function isUpdatingReservationsOnly() {
-      // Only the 'reservations' field can be modified.
-      let a = request.resource.data.diff(resource.data).affectedKeys();
-      let b = request.resource.data.diff(resource.data).addedKeys();
-      let c = request.resource.data.diff(resource.data).removedKeys();
-      let d = request.resource.data.diff(resource.data).unchangedKeys();
+    // Helper function to check if the user is only adding or removing themselves from the reservations list.
+    function isManagingOwnReservation() {
+      // Ensure only the 'reservations' field is being modified.
+      let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      if (!affectedKeys.hasOnly(['reservations'])) {
+        return false;
+      }
 
-      return (a.hasOnly(['reservations']) || b.hasOnly(['reservations'])) && c.size() == 0;
+      // Check if the user is adding themselves
+      let isAddingSelf = request.resource.data.reservations.hasAny([request.auth.uid]) &&
+                         !resource.data.reservations.hasAny([request.auth.uid]);
+                         
+      // Check if the user is removing themselves
+      let isRemovingSelf = !request.resource.data.reservations.hasAny([request.auth.uid]) &&
+                           resource.data.reservations.hasAny([request.auth.uid]);
+
+      // The entire change must be either adding themselves or removing themselves, and nothing else.
+      let newReservations = request.resource.data.reservations;
+      let oldReservations = resource.data.reservations;
+
+      // When adding, the new list must be the old list plus the user's UID.
+      if (isAddingSelf) {
+        return newReservations.size() == oldReservations.size() + 1;
+      }
+      
+      // When removing, the new list must be the old list minus the user's UID.
+      if (isRemovingSelf) {
+        return newReservations.size() == oldReservations.size() - 1;
+      }
+      
+      return false;
     }
   }
 }
+
+    

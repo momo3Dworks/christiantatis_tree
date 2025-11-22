@@ -12,7 +12,7 @@ import { sendEmailVerification } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { collection, query, where, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, doc, deleteDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -41,6 +41,8 @@ export default function ProfilePage() {
   const [isReloading, setIsReloading] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [churchToDelete, setChurchToDelete] = useState<string | null>(null);
+  const [showCancelAlert, setShowCancelAlert] = useState(false);
+  const [reservationToCancel, setReservationToCancel] = useState<string | null>(null);
   const { t, locale } = useTranslation();
   const dateLocales: { [key: string]: any } = { es, fr, pt };
 
@@ -128,6 +130,32 @@ export default function ProfilePage() {
     } finally {
         setShowDeleteAlert(false);
         setChurchToDelete(null);
+    }
+  };
+
+  const handleCancelReservation = async () => {
+    if (!reservationToCancel || !firestore || !user) return;
+
+    const churchRef = doc(firestore, 'home_churches', reservationToCancel);
+
+    try {
+      await updateDoc(churchRef, {
+        reservations: arrayRemove(user.uid)
+      });
+      toast({
+        title: 'Reserva Cancelada',
+        description: 'Tu reserva ha sido cancelada exitosamente.',
+      });
+    } catch (error) {
+      console.error("Error cancelling reservation: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error al Cancelar',
+        description: 'No se pudo cancelar la reserva. Inténtalo de nuevo más tarde.',
+      });
+    } finally {
+      setShowCancelAlert(false);
+      setReservationToCancel(null);
     }
   };
 
@@ -332,7 +360,10 @@ export default function ProfilePage() {
                                     <p className="text-muted-foreground">{formatSchedule(church)}</p>
                                 </div>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => toast({ title: "Próximamente", description: "La cancelación de reservas estará disponible pronto."})}>
+                                <Button variant="outline" size="sm" onClick={() => {
+                                    setReservationToCancel(church.id);
+                                    setShowCancelAlert(true);
+                                }}>
                                     Cancelar Reserva
                                 </Button>
                             </li>
@@ -361,6 +392,22 @@ export default function ProfilePage() {
             </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
+    <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar Reserva?</AlertDialogTitle>
+            <AlertDialogDescription>
+                Esta acción no se puede deshacer. Liberarás tu lugar en esta iglesia.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setReservationToCancel(null)}>No, mantener</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelReservation}>Sí, cancelar</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
+
+    
