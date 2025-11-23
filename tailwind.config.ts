@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -10,9 +11,16 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['Forum', 'serif'],
+        headline: ['Forum', 'serif'],
         code: ['monospace'],
+      },
+      boxShadow: {
+        'glow-orange': '0 0 30px 8px rgba(209, 163, 0, 0.4)',
+        'glow-blue': '0 0 30px 8px rgba(50, 87, 199, 0.4)',
+        'glow-red': '0 0 30px 8px rgba(153, 13, 17, 0.4)',
+        'glow-black': '0 0 30px 8px rgba(48, 48, 48, 0.4)',
+        'glow-green': '0 0 30px 8px rgba(45, 141, 49, 0.4)',
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -88,20 +96,10 @@ export default {
             height: '0',
           },
         },
-        'gradient-shift': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
-        'slide-in-down': {
-          'from': { transform: 'translateY(-20px)', opacity: '0' },
-          'to': { transform: 'translateY(0)', opacity: '1' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'gradient-shift': 'gradient-shift 6s ease infinite',
-        'slide-in-down': 'slide-in-down 0.5s ease-out forwards',
       },
     },
   },

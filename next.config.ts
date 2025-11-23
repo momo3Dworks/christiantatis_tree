@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -9,6 +10,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    domains: [''],
     remotePatterns: [
       {
         protocol: 'https',
@@ -29,35 +31,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
-   webpack: (config, { isServer }) => {
-    // Prevent shaders from being server-side rendered
-    if (isServer) {
-        config.module.rules.push({
-            test: /\.(glsl|vs|fs|vert|frag)$/,
-            use: ['raw-loader', 'glslify-loader'],
-        });
-    }
-    
-    config.module.rules.push({
-      test: /\.(ogg|mp3|wav|mpe?g)$/i,
-      exclude: config.exclude,
-      use: [
-        {
-          loader: require.resolve('url-loader'),
-          options: {
-            limit: config.inlineImageLimit,
-            fallback: require.resolve('file-loader'),
-            publicPath: `${config.assetPrefix}/_next/static/images/`,
-            outputPath: `${isServer ? '../' : ''}static/images/`,
-            name: '[name]-[hash].[ext]',
-            esModule: config.esModule || false,
-          },
-        },
-      ],
-    });
-
-    return config;
   },
 };
 
