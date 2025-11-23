@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
@@ -16,9 +15,9 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant }) {
+      {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
-          <Toast key={id} variant={variant}>
+          <Toast key={id} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -30,7 +29,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className="top-20 sm:items-end" />
+      <ToastViewport />
     </ToastProvider>
   )
 }
