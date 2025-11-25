@@ -131,11 +131,12 @@
       "donate": "Donar",
       "bankDetails": "Datos de Transferencia Bancaria",
       "bankDescription": "Usa los siguientes datos para hacer una transferencia bancaria directa.",
-      "bankName": "Nombre del Banco",
-      "bankHolder": "Titular de la Cuenta",
-      "accountNumber": "Número de Cuenta",
-      "routingNumber": "Número de Ruta",
-      "swift": "Código SWIFT (para internacional)",
+      "bankInfo": {
+        "bank": "Banco",
+        "name": "Nombre",
+        "agency": "Agencia",
+        "account": "Cuenta"
+      },
       "memo": "Por favor, incluye \"Donación General\" en el campo de concepto o referencia de tu transferencia.",
       "pixTransfer": "Transferencia PIX",
       "pixDescription": "Escanea el código QR o usa la clave PIX a continuación para una transferencia instantánea.",
@@ -228,5 +229,3 @@
     "accept": "Aceptar"
   }
 }
-
-    

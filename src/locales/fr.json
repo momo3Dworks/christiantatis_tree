@@ -131,11 +131,12 @@
       "donate": "Faire un don",
       "bankDetails": "Détails du Virement Bancaire",
       "bankDescription": "Utilisez les détails ci-dessous pour effectuer un virement bancaire direct.",
-      "bankName": "Nom de la Banque",
-      "bankHolder": "Titulaire du Compte",
-      "accountNumber": "Numéro de Compte",
-      "routingNumber": "Numéro de Routage",
-      "swift": "Code SWIFT (pour l'international)",
+      "bankInfo": {
+        "bank": "Banque",
+        "name": "Nom",
+        "agency": "Agence",
+        "account": "Compte"
+      },
       "memo": "Veuillez inclure \"Don Général\" dans le champ mémo ou référence de votre virement.",
       "pixTransfer": "Virement PIX",
       "pixDescription": "Scannez le code QR ou utilisez la clé PIX ci-dessous pour un virement instantané.",
@@ -228,5 +229,3 @@
     "accept": "Accepter"
   }
 }
-
-    

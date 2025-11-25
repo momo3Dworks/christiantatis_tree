@@ -131,11 +131,12 @@
       "donate": "Doar",
       "bankDetails": "Detalhes da Transferência Bancária",
       "bankDescription": "Use os detalhes abaixo para fazer uma transferência bancária direta.",
-      "bankName": "Nome do Banco",
-      "bankHolder": "Titular da Conta",
-      "accountNumber": "Número da Conta",
-      "routingNumber": "Número de Roteamento",
-      "swift": "Código SWIFT (para internacional)",
+      "bankInfo": {
+        "bank": "Banco",
+        "name": "Nome",
+        "agency": "Agência",
+        "account": "Conta"
+      },
       "memo": "Por favor, inclua \"Doação Geral\" no campo de memorando ou referência de sua transferência.",
       "pixTransfer": "Transferência PIX",
       "pixDescription": "Digitalize o código QR ou use a chave PIX abaixo para uma transferência instantânea.",
@@ -228,5 +229,3 @@
     "accept": "Aceitar"
   }
 }
-
-    

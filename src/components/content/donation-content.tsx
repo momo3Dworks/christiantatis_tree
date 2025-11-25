@@ -24,7 +24,7 @@ export default function DonationContent() {
 
         <main>
           <Tabs defaultValue="card" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 h-auto">
+            <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 h-auto md:h-10">
               <TabsTrigger value="card" className="py-2.5">
                 <CreditCard className="mr-2" />
                 {t('contentPreview.donation.card')}
@@ -56,7 +56,7 @@ export default function DonationContent() {
                     <Label htmlFor="cardNumber">{t('contentPreview.donation.cardNumber')}</Label>
                     <Input id="cardNumber" placeholder="•••• •••• •••• ••••" />
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="expiry">{t('contentPreview.donation.expiry')}</Label>
                       <Input id="expiry" placeholder="MM/YY" />
@@ -89,24 +89,20 @@ export default function DonationContent() {
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('contentPreview.donation.bankName')}:</span>
-                    <span>Faithful Trust Bank</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.bankInfo.bank')}:</span>
+                    <span>BTG Pactual S.A. (208)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('contentPreview.donation.bankHolder')}:</span>
-                    <span>CHRISTIANITATIS MOVEMENT</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.bankInfo.name')}:</span>
+                    <span>ASSOCIACAO CHRISTIANITATIS</span>
+                  </div>
+                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('contentPreview.donation.bankInfo.agency')}:</span>
+                    <span>0050</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('contentPreview.donation.accountNumber')}:</span>
-                    <span>123-456-7890</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('contentPreview.donation.routingNumber')}:</span>
-                    <span>0987654321</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('contentPreview.donation.swift')}:</span>
-                    <span>FTBXXXX</span>
+                    <span className="text-muted-foreground">{t('contentPreview.donation.bankInfo.account')}:</span>
+                    <span>1847778-6</span>
                   </div>
                   <p className="text-xs text-muted-foreground pt-4">
                     {t('contentPreview.donation.memo')}
@@ -125,13 +121,10 @@ export default function DonationContent() {
                 </CardHeader>
                 <CardContent className="flex flex-col items-center space-y-4">
                   <div className="bg-white p-4 rounded-lg">
-                    {/* Placeholder for QR Code Image */}
-                    <div className="w-48 h-48 bg-gray-300 flex items-center justify-center">
-                      <p className="text-gray-500">QR Code</p>
-                    </div>
+                    <img src="/assets/Chirstianitatis_BankTransfer.png" alt="Donation QR Code" className="w-48 h-48" />
                   </div>
                   <p className="text-muted-foreground">{t('contentPreview.donation.pixKey')}</p>
-                  <p className="font-mono bg-muted p-2 rounded-md">donations@christianitatis.org</p>
+                  <p className="font-mono bg-muted p-2 rounded-md">18.900.689/0001-76</p>
                 </CardContent>
               </Card>
             </TabsContent>
