@@ -44,15 +44,17 @@ import { Checkbox } from "../ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 
+// Sanitize function to remove HTML tags
+const sanitize = (str: string) => str.replace(/<[^>]*>?/gm, '');
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  phoneNumber: z.string().min(10, { message: "Phone number must be at least 10 digits." }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }).transform(sanitize),
+  phoneNumber: z.string().min(10, { message: "Phone number must be at least 10 digits." }).transform(sanitize),
   email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
-  whatsappNumber: z.string().optional(),
+  whatsappNumber: z.string().optional().transform(val => val ? sanitize(val) : val),
   websiteUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  neighborhood: z.string().optional(),
-  tags: z.string().optional(),
+  neighborhood: z.string().optional().transform(val => val ? sanitize(val) : val),
+  tags: z.string().optional().transform(val => val ? sanitize(val) : val),
   personLimit: z.coerce.number().min(1, "Limit must be at least 1.").optional(),
   status: z.string().min(1, { message: "Please select a status." }),
   meetingDate: z.date({ required_error: "A date is required." }),
@@ -129,6 +131,8 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
           reservations: arrayUnion(user.uid)
         });
       });
+
+      console.log(`[SIMULACION] Enviando correo de confirmación de reserva a ${user.email} para la iglesia ${churchId}`);
 
       toast({
         title: "Reservation Successful!",
@@ -383,6 +387,8 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
 
     addDocumentNonBlocking(homeChurchesCollection, dataToSave);
     
+    console.log(`[SIMULACION] Enviando correo de confirmación de creación de iglesia a ${user.email} para la iglesia "${dataToSave.name}"`);
+
     toast({
       title: t('contentPreview.registerChurch.toastTitle'),
       description: t('contentPreview.registerChurch.toastDescription'),
@@ -670,3 +676,5 @@ export default function RegisterHomeChurchContent() {
     </div>
   );
 }
+
+    

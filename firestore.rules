@@ -5,7 +5,8 @@
  *
  * Core Philosophy:
  * The security model ensures that users can only manage their own data while allowing
- * public read access for discoverability.
+ * public read access for discoverability. Data validation is enforced at the rule level
+ * to ensure data integrity and prevent malicious inputs.
  *
  * Data Structure:
  * All home church data is stored in the top-level `/home_churches/{homeChurchId}` collection.
@@ -14,9 +15,10 @@
  * Key Security Decisions:
  * - Listing of home churches is open to all users (including unauthenticated).
  * - Only authenticated users can create home church documents.
- * - During creation, the `creatorId` must match the UID of the user making the request.
- * - Updates and deletions are restricted to the user whose UID matches the `creatorId` in the document.
- * - Any signed-in user can update the 'reservations' field to add or remove themselves.
+ * - During creation, the `creatorId` must match the UID of the user making the request, and incoming data must be of the correct type.
+ * - Updates are restricted to the owner for most fields, with strict data type validation.
+ * - Any signed-in user can update only the 'reservations' field to add or remove themselves.
+ * - Deletions are restricted to the document owner.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -26,22 +28,25 @@ service cloud.firestore {
      * @description Controls access to the `/home_churches` collection.
      * @path /home_churches/{homeChurchId}
      * @allow (get, list) Allow any user to read home church data for discoverability.
-     * @allow (create) Allow authenticated users to create a church, but only if they set themselves as the creator.
-     * @allow (update) Allow owner to update their church, or any user to reserve/cancel a spot.
+     * @allow (create) Allow authenticated users to create a church, but only if they set themselves as the creator and data is valid.
+     * @allow (update) Allow owner to update their church with valid data, or any user to reserve/cancel a spot.
      * @allow (delete) Allow users to delete a church only if they are the original creator.
-     * @principle Owner-write, public-read, user-self-reservation.
+     * @principle Owner-write, public-read, user-self-reservation, strict-validation.
      */
     match /home_churches/{homeChurchId} {
       allow get: if true;
       allow list: if true;
 
-      allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+      allow create: if isSignedIn() 
+                      && isOwner(request.resource.data)
+                      && isValidHomeChurchData(request.resource.data);
       
       allow update: if isSignedIn() && (
-                      isOwner() || isManagingOwnReservation()
+                      (isOwner(resource.data) && isNotModifyingReservations() && isValidHomeChurchData(request.resource.data)) || 
+                      isManagingOwnReservation()
                     );
                     
-      allow delete: if isSignedIn() && isOwner();
+      allow delete: if isSignedIn() && isOwner(resource.data);
     }
 
     // Helper function to check if the user is signed in
@@ -50,8 +55,30 @@ service cloud.firestore {
     }
     
     // Helper function to check if the user is the owner of the document
-    function isOwner() {
-        return resource.data.creatorId == request.auth.uid;
+    function isOwner(docData) {
+        return docData.creatorId == request.auth.uid;
+    }
+
+    // Helper to validate the data for a HomeChurch document
+    function isValidHomeChurchData(data) {
+      return data.name is string && data.name.size() > 1
+          && data.phoneNumber is string && data.phoneNumber.size() > 9
+          && (data.email == null || (data.email is string && data.email.matches('.*@.*\\..*')))
+          && (data.websiteUrl == null || (data.websiteUrl is string && data.websiteUrl.matches('https?://.*')))
+          && (data.neighborhood == null || data.neighborhood is string)
+          && (data.personLimit == null || data.personLimit is number)
+          && data.status is string
+          && data.meetingSchedule is string
+          && data.meetingDate is timestamp
+          && data.isRecurring is bool
+          && data.latitude is number
+          && data.longitude is number
+          && data.creatorId == request.auth.uid; // Ensure creatorId is always the current user
+    }
+
+    // Helper to ensure that only the owner can modify fields other than 'reservations'
+    function isNotModifyingReservations() {
+      return !('reservations' in request.resource.data.diff(resource.data).affectedKeys());
     }
 
     // Helper function to check if the user is only adding or removing themselves from the reservations list.
@@ -88,5 +115,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

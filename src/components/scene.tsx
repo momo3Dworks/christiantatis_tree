@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState, memo, Suspense, useCallback, useContext } from 'react';
@@ -73,9 +74,10 @@ interface SceneProps {
   setViewState: (state: ViewState) => void;
   viewState: ViewState;
   isLoginDialogOpen: boolean;
+  setReturnHandler: (handler: () => void) => void;
 }
 
-const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState, isLoginDialogOpen }: SceneProps) => {
+const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState, isLoginDialogOpen, setReturnHandler }: SceneProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [showContentContainer, setShowContentContainer] = useState(false);
@@ -237,6 +239,48 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
     }
   }, []);
 
+  const handleReturn = useCallback(() => {
+    if (cameraRef.current && controlsRef.current) {
+        setShowContentContainer(false);
+        playGrassScanAnimation(true);
+        setViewState('default');
+        setZoomedTarget(null);
+        
+        const camera = cameraRef.current;
+        const controls = controlsRef.current;
+        
+        const currentTarget = controls.target.clone();
+        const lookAtTarget = currentTarget.clone();
+
+        gsap.to(camera.position, {
+          duration: 1.5,
+          x: initialCameraPosition.x,
+          y: initialCameraPosition.y,
+          z: initialCameraPosition.z,
+          ease: 'power3.inOut',
+        });
+
+        gsap.to(lookAtTarget, {
+          duration: 1.5,
+          x: initialCameraTarget.x,
+          y: initialCameraTarget.y,
+          z: initialCameraTarget.z,
+          ease: 'power3.inOut',
+          onUpdate: () => {
+            camera.lookAt(lookAtTarget);
+            controls.target.copy(lookAtTarget);
+          },
+          onComplete: () => {
+            controls.target.copy(initialCameraTarget);
+            controls.saveState();
+            controls.enabled = true;
+            limitCameraOrbit();
+          },
+        });
+    }
+  }, [setViewState, playGrassScanAnimation, limitCameraOrbit]);
+
+
     const onMouseClick = useCallback((event: MouseEvent) => {
         if (!hasInteracted || showContentContainer || !cameraRef.current || isLoginDialogOpen) return;
         
@@ -326,6 +370,8 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
         
         const currentMount = mountRef.current;
         if (!currentMount) return;
+
+        setReturnHandler(handleReturn);
 
         // Scene
         const scene = new THREE.Scene();
@@ -996,48 +1042,6 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
              controlsRef.current.enabled = true;
         }
     }, [viewState, hasInteracted]);
-
-
-  const handleReturn = () => {
-    if (cameraRef.current && controlsRef.current) {
-        setShowContentContainer(false);
-        playGrassScanAnimation(true);
-        setViewState('default');
-        setZoomedTarget(null);
-        
-        const camera = cameraRef.current;
-        const controls = controlsRef.current;
-        
-        const currentTarget = controls.target.clone();
-        const lookAtTarget = currentTarget.clone();
-
-        gsap.to(camera.position, {
-          duration: 1.5,
-          x: initialCameraPosition.x,
-          y: initialCameraPosition.y,
-          z: initialCameraPosition.z,
-          ease: 'power3.inOut',
-        });
-
-        gsap.to(lookAtTarget, {
-          duration: 1.5,
-          x: initialCameraTarget.x,
-          y: initialCameraTarget.y,
-          z: initialCameraTarget.z,
-          ease: 'power3.inOut',
-          onUpdate: () => {
-            camera.lookAt(lookAtTarget);
-            controls.target.copy(lookAtTarget);
-          },
-          onComplete: () => {
-            controls.target.copy(initialCameraTarget);
-            controls.saveState();
-            controls.enabled = true;
-            limitCameraOrbit();
-          },
-        });
-    }
-  };
   
   const contentMap: { [key: string]: React.ReactNode } = {
     [t('scene.support')]: <DonationContent />,
@@ -1199,11 +1203,12 @@ interface AppSceneProps {
     setViewState: (state: ViewState) => void;
     viewState: ViewState;
     isLoginDialogOpen: boolean;
+    setReturnHandler: (handler: () => void) => void;
 }
 
-const AppScene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState, isLoginDialogOpen }: AppSceneProps) => (
+const AppScene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationComplete, setViewState, viewState, isLoginDialogOpen, setReturnHandler }: AppSceneProps) => (
   <Suspense fallback={<div className="w-full h-screen flex items-center justify-center bg-background text-foreground">Loading Scene...</div>}>
-    <Scene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntroAnimation} onIntroAnimationComplete={onIntroAnimationComplete} setViewState={setViewState} viewState={viewState} isLoginDialogOpen={isLoginDialogOpen}/>
+    <Scene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntroAnimation} onIntroAnimationComplete={onIntroAnimationComplete} setViewState={setViewState} viewState={viewState} isLoginDialogOpen={isLoginDialogOpen} setReturnHandler={setReturnHandler}/>
   </Suspense>
 );
 

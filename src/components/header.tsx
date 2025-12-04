@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useContext } from 'react';
@@ -22,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { useFirebase } from '@/firebase';
 import LoginDialog from './auth/LoginDialog';
 
-export default function Header({ setLoginDialogOpen, isLoginDialogOpen }: { setLoginDialogOpen: (open: boolean) => void, isLoginDialogOpen: boolean }) {
+export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleClick }: { setLoginDialogOpen: (open: boolean) => void, isLoginDialogOpen: boolean, onTitleClick?: () => void }) {
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [theme, setTheme] = useState<string | null>(null);
 
@@ -84,6 +85,13 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen }: { setL
     toast({
       title: `${t('header.languageSelected')} ${getLanguageName(newLocale)}`,
     });
+  };
+
+  const handleTitleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (onTitleClick) {
+      e.preventDefault(); // Prevent navigation if it's acting as a return button
+      onTitleClick();
+    }
   };
 
   return (
@@ -153,7 +161,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen }: { setL
         
         {/* Center: Title for Desktop */}
         <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-[767px]:hidden">
-          <Link href="/" className="relative text-sm sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
+          <Link href="/" onClick={handleTitleClick} className="relative text-sm sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
             {showHomeIconInsteadOfText ? (
               <Home className="h-8 w-8" />
             ) : (
@@ -171,7 +179,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen }: { setL
 
         {/* Center: Logo for Mobile */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden">
-            <Link href="/">
+            <Link href="/" onClick={handleTitleClick}>
                 <Image src="/assets/Logo_Christianitatis.png" alt="Christianitatis Logo" width={40} height={40} />
             </Link>
         </div>

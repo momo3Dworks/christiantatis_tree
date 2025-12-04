@@ -28,11 +28,14 @@ import { useTranslation } from "@/hooks/useTranslation";
 import Link from "next/link";
 import { Home } from "lucide-react";
 
+// Sanitize function to remove HTML tags
+const sanitize = (str: string) => str.replace(/<[^>]*>?/gm, '');
+
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }).transform(sanitize),
   email: z.string().email({ message: "Please enter a valid email address." }),
   subject: z.string().min(1, { message: "Please select a subject." }),
-  message: z.string().min(10, { message: "Message must be at least 10 characters." }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters." }).transform(sanitize),
 });
 
 export default function ContactPage() {

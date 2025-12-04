@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, Suspense, useContext, useEffect, useCallback } from 'react';
+import { useState, Suspense, useContext, useEffect, useCallback, useRef } from 'react';
 import MemoizedScene from '@/components/scene';
 import Loader from '@/components/Loader';
 import { AudioContext } from '@/context/AudioContext';
@@ -19,6 +20,9 @@ function App() {
   const [introAnimationComplete, setIntroAnimationComplete] = useState(false);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
 
+  // A ref to hold the scene's handleReturn function
+  const returnHandlerRef = useRef<(() => void) | null>(null);
+
   const handleIntroAnimationComplete = useCallback(() => {
     setIntroAnimationComplete(true);
   }, []);
@@ -36,14 +40,20 @@ function App() {
     setHasInteracted(true);
     setStartIntro(true);
   };
+
+  const handleTitleClick = () => {
+    if (returnHandlerRef.current) {
+      returnHandlerRef.current();
+    }
+  }
   
   return (
     <main className="relative w-screen h-screen overflow-hidden">
       {loading && <Loader onLoaded={handleLoaded} />}
       
-      {!loading && hasInteracted && <Header setLoginDialogOpen={setLoginDialogOpen} isLoginDialogOpen={isLoginDialogOpen} />}
+      {!loading && hasInteracted && <Header setLoginDialogOpen={setLoginDialogOpen} isLoginDialogOpen={isLoginDialogOpen} onTitleClick={handleTitleClick} />}
 
-      {assets && !isLoginDialogOpen && <MemoizedScene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntro} onIntroAnimationComplete={handleIntroAnimationComplete} setViewState={setViewState} viewState={viewState} isLoginDialogOpen={isLoginDialogOpen} />}
+      {assets && !isLoginDialogOpen && <MemoizedScene assets={assets} hasInteracted={hasInteracted} startIntroAnimation={startIntro} onIntroAnimationComplete={handleIntroAnimationComplete} setViewState={setViewState} viewState={viewState} isLoginDialogOpen={isLoginDialogOpen} setReturnHandler={(handler) => returnHandlerRef.current = handler} />}
       {hasInteracted && <SoundwaveButton />}
     </main>
   );
