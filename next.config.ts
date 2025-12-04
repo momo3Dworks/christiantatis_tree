@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: [''],
     remotePatterns: [
       {
         protocol: 'https',
@@ -25,11 +24,17 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
+        protocol: 'https' ,
+        hostname: 'picsum.photos' ,
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
