@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,9 +17,9 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useFirebase } from '@/firebase';
-import { initiateEmailSignIn, initiateEmailSignUp, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { Chrome } from 'lucide-react';
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -33,7 +32,8 @@ const signUpSchema = z.object({
 });
 
 export default function LoginDialog({ children, open, onOpenChange }: { children: React.ReactNode, open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { auth } = useFirebase();
+  const { supabase } = useSupabase();
+  const { toast } = useToast();
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -43,22 +43,62 @@ export default function LoginDialog({ children, open, onOpenChange }: { children
     resolver: zodResolver(signUpSchema),
   });
 
-  const handleLogin = (values: z.infer<typeof loginSchema>) => {
-    if (!auth) return;
-    initiateEmailSignIn(auth, values.email, values.password);
-    onOpenChange(false);
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error de inicio de sesión",
+        description: error.message,
+      });
+    } else {
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "¡Bienvenido de nuevo!",
+      });
+      onOpenChange(false);
+    }
   };
 
-  const handleSignUp = (values: z.infer<typeof signUpSchema>) => {
-    if (!auth) return;
-    initiateEmailSignUp(auth, values.email, values.password);
-    onOpenChange(false);
+  const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
+    const { error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error de registro",
+        description: error.message,
+      });
+    } else {
+      toast({
+        title: "Registro exitoso",
+        description: "Por favor revisa tu correo para confirmar tu cuenta.",
+      });
+      onOpenChange(false);
+    }
   };
 
-  const handleGoogleSignIn = () => {
-    if (!auth) return;
-    initiateGoogleSignIn(auth);
-    onOpenChange(false);
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `http://localhost:3000/auth/callback`, // Better to use env var or window.location.origin
+      }
+    });
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error con Google",
+        description: error.message,
+      });
+    }
   };
 
   return (

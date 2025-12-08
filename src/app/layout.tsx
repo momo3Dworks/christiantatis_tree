@@ -9,7 +9,7 @@ import { SAOProvider } from '@/context/SAOContext';
 import { AudioProvider } from '@/context/AudioContext';
 import Header from '@/components/header';
 import { usePathname } from 'next/navigation';
-import { FirebaseClientProvider } from '@/firebase';
+import { SupabaseProvider } from '@/lib/supabase/provider';
 import CookieConsent from '@/components/cookie-consent';
 import Cookies from 'js-cookie';
 import { GeolocationProvider } from '@/context/GeolocationContext';
@@ -25,7 +25,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
-  
+
   // On the homepage, the Header is rendered inside the App component, not here.
   const showHeader = !isHomePage;
 
@@ -54,7 +54,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
+        <SupabaseProvider>
           <SAOProvider>
             <AudioProvider>
               <TranslationProvider>
@@ -68,7 +68,7 @@ export default function RootLayout({
               </TranslationProvider>
             </AudioProvider>
           </SAOProvider>
-        </FirebaseClientProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

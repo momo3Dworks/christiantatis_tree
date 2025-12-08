@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useContext } from 'react';
@@ -20,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { AudioContext } from '@/context/AudioContext';
 import { Label } from '@/components/ui/label';
-import { useFirebase } from '@/firebase';
+import { useSupabase } from '@/lib/supabase/provider';
 import LoginDialog from './auth/LoginDialog';
 
 export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleClick }: { setLoginDialogOpen: (open: boolean) => void, isLoginDialogOpen: boolean, onTitleClick?: () => void }) {
@@ -31,7 +30,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
   const { toast } = useToast();
   const pathname = usePathname();
   const audioContext = useContext(AudioContext);
-  const { user, isUserLoading, auth } = useFirebase();
+  const { user, isLoading: isUserLoading, supabase } = useSupabase();
 
 
   const navItems = [
@@ -69,7 +68,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
       document.documentElement.classList.remove('dark');
     }
   };
-  
+
   const getLanguageName = (locale: string | null) => {
     switch (locale) {
       case 'en': return 'English';
@@ -92,6 +91,14 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
       e.preventDefault(); // Prevent navigation if it's acting as a return button
       onTitleClick();
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Logged out",
+      description: "See you soon!"
+    });
   };
 
   return (
@@ -129,7 +136,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
               ))}
             </nav>
             <div className="absolute bottom-8 left-0 right-0 p-4 space-y-4">
-               <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center justify-between rounded-lg border p-3">
                 <Label htmlFor="theme-toggle">Theme</Label>
                 <Button
                   id="theme-toggle"
@@ -158,7 +165,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
             </div>
           </SheetContent>
         </Sheet>
-        
+
         {/* Center: Title for Desktop */}
         <div className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-[767px]:hidden">
           <Link href="/" onClick={handleTitleClick} className="relative text-sm sm:text-2xl font-bold tracking-wider flex items-center justify-center h-full min-h-[32px] min-w-[240px]">
@@ -179,9 +186,9 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
 
         {/* Center: Logo for Mobile */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden">
-            <Link href="/" onClick={handleTitleClick}>
-                <Image src="/assets/Logo_Christianitatis.png" alt="Christianitatis Logo" width={40} height={40} />
-            </Link>
+          <Link href="/" onClick={handleTitleClick}>
+            <Image src="/assets/Logo_Christianitatis.png" alt="Christianitatis Logo" width={40} height={40} />
+          </Link>
         </div>
 
         {/* Right Side: Theme and Language Toggles */}
@@ -199,7 +206,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
                 <DropdownMenuItem asChild>
                   <Link href="/profile">Perfil</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => auth.signOut()}>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
@@ -214,22 +221,22 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <div className="relative">
-                    <Button variant="ghost" size="icon">
-                        <Globe className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
-                        <span className="sr-only">Change language</span>
-                    </Button>
-                    <span className="absolute top-1 right-0.5 w-4 h-4 text-[10px] flex items-center justify-center bg-muted text-muted-foreground rounded-full font-bold">
-                        {locale.toUpperCase()}
-                    </span>
+                  <Button variant="ghost" size="icon">
+                    <Globe className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
+                    <span className="sr-only">Change language</span>
+                  </Button>
+                  <span className="absolute top-1 right-0.5 w-4 h-4 text-[10px] flex items-center justify-center bg-muted text-muted-foreground rounded-full font-bold">
+                    {locale.toUpperCase()}
+                  </span>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{t('header.currentLanguage')} {getLanguageName(locale)}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('en')}>English</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('es')}>Español</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('pt')}>Português</DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('fr')}>Français</DropdownMenuItem>
+                <DropdownMenuLabel>{t('header.currentLanguage')} {getLanguageName(locale)}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('es')}>Español</DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('pt')}>Português</DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-accent" onSelect={() => handleLanguageChange('fr')}>Français</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}

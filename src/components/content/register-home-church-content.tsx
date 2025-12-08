@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -25,15 +24,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useFirebase, useCollection } from "@/firebase";
-import { collection, User, doc, runTransaction, arrayUnion } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useSupabase, useUser } from "@/lib/supabase/provider";
+import { useSupabaseCollection } from "@/lib/supabase/hooks/use-collection";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useContext, useMemo, useState } from "react";
 import { GeolocationContext } from "@/context/GeolocationContext";
 import { APIProvider, Map, AdvancedMarker, InfoWindow } from "@vis.gl/react-google-maps";
-import { mapsConfig } from "@/firebase/maps-config";
+import { mapsConfig } from "@/lib/maps-config";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, CalendarIcon } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -63,10 +61,10 @@ const formSchema = z.object({
   ampm: z.string().optional(),
   isRecurring: z.boolean().default(true),
 }).refine(data => {
-    return !!data.email || !!data.whatsappNumber || !!data.websiteUrl || !!data.neighborhood;
+  return !!data.email || !!data.whatsappNumber || !!data.websiteUrl || !!data.neighborhood;
 }, {
-    message: "At least one contact method or the neighborhood must be provided.",
-    path: ["email"], 
+  message: "At least one contact method or the neighborhood must be provided.",
+  path: ["email"],
 });
 
 const FloatingLabelInput = ({ field, label, placeholder, type = "text" }: { field: any, label: string, placeholder: string, type?: string }) => (
@@ -80,16 +78,16 @@ const FloatingLabelInput = ({ field, label, placeholder, type = "text" }: { fiel
   </div>
 );
 
-const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[] | null, geolocation: any, user: User | null }) => {
+const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[] | null, geolocation: any, user: any }) => {
   const { t } = useTranslation();
-  const { firestore } = useFirebase();
+  const { supabase } = useSupabase();
   const { toast } = useToast();
   const [selectedChurch, setSelectedChurch] = useState<any | null>(null);
   const [hoveredChurch, setHoveredChurch] = useState<any | null>(null);
   const [confirmationChurchId, setConfirmationChurchId] = useState<string | null>(null);
 
   const handleReserveSpot = async (churchId: string) => {
-    if (!user || !firestore) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -98,39 +96,43 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
       return;
     }
 
-    const churchRef = doc(firestore, "home_churches", churchId);
-
     try {
-      await runTransaction(firestore, async (transaction) => {
-        const churchDoc = await transaction.get(churchRef);
-        if (!churchDoc.exists()) {
-          throw new Error("Church does not exist!");
-        }
+      // Fetch latest church data to check availability
+      const { data: church, error: fetchError } = await supabase
+        .from('home_churches')
+        .select('*')
+        .eq('id', churchId)
+        .single();
 
-        const churchData = churchDoc.data();
-        const reservations = churchData.reservations || [];
-        
-        if (reservations.includes(user.uid)) {
-          toast({
-            title: "Already Reserved",
-            description: "You have already reserved a spot in this church.",
-          });
-          return;
-        }
+      if (fetchError || !church) throw new Error("Church not found or error fetching data.");
 
-        if (churchData.personLimit && reservations.length >= churchData.personLimit) {
-          toast({
-            variant: "destructive",
-            title: "Church is Full",
-            description: "Sorry, there are no more spots available.",
-          });
-          return;
-        }
+      const reservations = church.reservations || [];
 
-        transaction.update(churchRef, {
-          reservations: arrayUnion(user.uid)
+      if (reservations.includes(user.id)) {
+        toast({
+          title: "Already Reserved",
+          description: "You have already reserved a spot in this church.",
         });
-      });
+        return;
+      }
+
+      if (church.personLimit && reservations.length >= church.personLimit) {
+        toast({
+          variant: "destructive",
+          title: "Church is Full",
+          description: "Sorry, there are no more spots available.",
+        });
+        return;
+      }
+
+      const updatedReservations = [...reservations, user.id];
+
+      const { error: updateError } = await supabase
+        .from('home_churches')
+        .update({ reservations: updatedReservations })
+        .eq('id', churchId);
+
+      if (updateError) throw updateError;
 
       console.log(`[SIMULACION] Enviando correo de confirmación de reserva a ${user.email} para la iglesia ${churchId}`);
 
@@ -138,7 +140,7 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
         title: "Reservation Successful!",
         description: "Your spot has been reserved.",
       });
-      
+
     } catch (error: any) {
       console.error("Reservation failed: ", error);
       toast({
@@ -147,11 +149,8 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
         description: error.message || "Could not reserve a spot. Please try again.",
       });
     } finally {
-        // Reset confirmation state regardless of outcome
-        setConfirmationChurchId(null);
-        // We might want to close the InfoWindow or update its content
-        // For now, let's just close it
-        setSelectedChurch(null);
+      setConfirmationChurchId(null);
+      setSelectedChurch(null);
     }
   };
 
@@ -211,22 +210,22 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
                   onMouseLeave={() => setHoveredChurch(null)}
                 >
                   <div className="relative flex items-center justify-center">
-                     {hoveredChurch?.id === church.id && (
-                        <svg
-                          width="80"
-                          height="80"
-                          viewBox="0 0 80 80"
-                          className="absolute"
-                        >
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r="20"
-                            fill="rgba(255,215,0,0.5)"
-                            className="pulse-animate"
-                          />
-                        </svg>
-                      )}
+                    {hoveredChurch?.id === church.id && (
+                      <svg
+                        width="80"
+                        height="80"
+                        viewBox="0 0 80 80"
+                        className="absolute"
+                      >
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="20"
+                          fill="rgba(255,215,0,0.5)"
+                          className="pulse-animate"
+                        />
+                      </svg>
+                    )}
                     <img
                       src="/assets/ping.svg"
                       width="30"
@@ -242,57 +241,57 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
                     />
                   </div>
                 </AdvancedMarker>
-            ))}
+              ))}
             {selectedChurch && (
-                <InfoWindow
-                    position={{ lat: selectedChurch.latitude, lng: selectedChurch.longitude }}
-                    onCloseClick={() => setSelectedChurch(null)}
-                >
-                    <div className="p-2 w-64">
-                        <h3 className="font-bold text-lg mb-1">{selectedChurch.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{selectedChurch.meetingSchedule}</p>
-                        
-                        <div className="flex justify-between items-center text-sm mb-3">
-                          <span className={cn("font-semibold", {
-                            "text-green-600": selectedChurch.status === 'Open',
-                            "text-red-600": selectedChurch.status !== 'Open',
-                          })}>{selectedChurch.status}</span>
-                          {selectedChurch.personLimit && (
-                            <span className="font-semibold">
-                                {selectedChurch.reservations?.length || 0} / {selectedChurch.personLimit} Spots
-                            </span>
-                          )}
-                        </div>
-                        
-                        {confirmationChurchId === selectedChurch.id ? (
-                            <div className="space-y-2">
-                                <p className="text-sm font-semibold text-center">Confirm Reservation?</p>
-                                <div className="flex justify-around">
-                                    <Button size="sm" onClick={() => handleReserveSpot(selectedChurch.id)}>Yes</Button>
-                                    <Button size="sm" variant="outline" onClick={() => setConfirmationChurchId(null)}>No</Button>
-                                </div>
-                            </div>
-                        ) : (
-                            <Button 
-                                className="w-full" 
-                                size="sm"
-                                onClick={() => setConfirmationChurchId(selectedChurch.id)}
-                                disabled={
-                                    !user ||
-                                    selectedChurch.status !== 'Open' ||
-                                    (selectedChurch.personLimit && (selectedChurch.reservations?.length || 0) >= selectedChurch.personLimit) ||
-                                    (selectedChurch.reservations?.includes(user.uid))
-                                }
-                            >
-                                { !user ? "Login to book"
-                                  : selectedChurch.reservations?.includes(user.uid) ? "Already Reserved"
-                                  : (selectedChurch.personLimit && (selectedChurch.reservations?.length || 0) >= selectedChurch.personLimit) ? "No spots available"
-                                  : t('contentPreview.registerChurch.bookSpotButton')
-                                }
-                            </Button>
-                        )}
+              <InfoWindow
+                position={{ lat: selectedChurch.latitude, lng: selectedChurch.longitude }}
+                onCloseClick={() => setSelectedChurch(null)}
+              >
+                <div className="p-2 w-64">
+                  <h3 className="font-bold text-lg mb-1">{selectedChurch.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{selectedChurch.meetingSchedule}</p>
+
+                  <div className="flex justify-between items-center text-sm mb-3">
+                    <span className={cn("font-semibold", {
+                      "text-green-600": selectedChurch.status === 'Open',
+                      "text-red-600": selectedChurch.status !== 'Open',
+                    })}>{selectedChurch.status}</span>
+                    {selectedChurch.personLimit && (
+                      <span className="font-semibold">
+                        {selectedChurch.reservations?.length || 0} / {selectedChurch.personLimit} Spots
+                      </span>
+                    )}
+                  </div>
+
+                  {confirmationChurchId === selectedChurch.id ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-center">Confirm Reservation?</p>
+                      <div className="flex justify-around">
+                        <Button size="sm" onClick={() => handleReserveSpot(selectedChurch.id)}>Yes</Button>
+                        <Button size="sm" variant="outline" onClick={() => setConfirmationChurchId(null)}>No</Button>
+                      </div>
                     </div>
-                </InfoWindow>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      size="sm"
+                      onClick={() => setConfirmationChurchId(selectedChurch.id)}
+                      disabled={
+                        !user ||
+                        selectedChurch.status !== 'Open' ||
+                        (selectedChurch.personLimit && (selectedChurch.reservations?.length || 0) >= selectedChurch.personLimit) ||
+                        (selectedChurch.reservations?.includes(user?.id))
+                      }
+                    >
+                      {!user ? "Login to book"
+                        : selectedChurch.reservations?.includes(user?.id) ? "Already Reserved"
+                          : (selectedChurch.personLimit && (selectedChurch.reservations?.length || 0) >= selectedChurch.personLimit) ? "No spots available"
+                            : t('contentPreview.registerChurch.bookSpotButton')
+                      }
+                    </Button>
+                  )}
+                </div>
+              </InfoWindow>
             )}
           </Map>
         </APIProvider>
@@ -308,8 +307,9 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
 });
 ChurchMap.displayName = 'ChurchMap';
 
-const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }: { firestore: any, geolocation: any, toast: any, t: (key: string, options?: any) => string, user: User | null }) => {
+const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocation: any, toast: any, t: (key: string, options?: any) => string, user: any }) => {
   const { locale } = useTranslation();
+  const { supabase } = useSupabase();
   const dateLocales: { [key: string]: any } = { es, fr, pt };
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('24h');
 
@@ -320,7 +320,7 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
     t('contentPreview.registerChurch.statusOptions.tempClosed'),
     t('contentPreview.registerChurch.statusOptions.suspended'),
   ];
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -341,34 +341,32 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !geolocation?.location || !user) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!geolocation?.location || !user) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Firestore, location, or user not available. Please try again later.",
+        description: "Location or user not available. Please try again later.",
       });
       return;
     }
 
-    const homeChurchesCollection = collection(firestore, "home_churches");
-    
     const meetingTime = timeFormat === '12h'
       ? `${values.hour.padStart(2, '0')}:${values.minute.padStart(2, '0')} ${values.ampm}`
       : `${values.hour.padStart(2, '0')}:${values.minute.padStart(2, '0')}`;
 
     let scheduleString = "";
     if (values.isRecurring) {
-        const dayOfWeek = format(values.meetingDate, "EEEE", { locale: dateLocales[locale || 'en'] });
-        scheduleString = t('contentPreview.registerChurch.recurringSchedule', { day: dayOfWeek, time: meetingTime });
+      const dayOfWeek = format(values.meetingDate, "EEEE", { locale: dateLocales[locale || 'en'] });
+      scheduleString = t('contentPreview.registerChurch.recurringSchedule', { day: dayOfWeek, time: meetingTime });
     } else {
-        const formattedDate = format(values.meetingDate, "PPP", { locale: dateLocales[locale || 'en'] });
-        scheduleString = t('contentPreview.registerChurch.oneTimeSchedule', { date: formattedDate, time: meetingTime });
+      const formattedDate = format(values.meetingDate, "PPP", { locale: dateLocales[locale || 'en'] });
+      scheduleString = t('contentPreview.registerChurch.oneTimeSchedule', { date: formattedDate, time: meetingTime });
     }
 
     const dataToSave = {
       ...values,
-      creatorId: user.uid,
+      creatorId: user.id, // Supabase user.id
       personLimit: values.personLimit ? Number(values.personLimit) : null,
       tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
       latitude: Number(geolocation.location.latitude),
@@ -379,14 +377,25 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
       meetingTime: meetingTime,
       meetingDate: values.meetingDate,
     };
-    
+
+    // Remove form specific fields not needed in DB
     delete (dataToSave as any).hour;
     delete (dataToSave as any).minute;
     delete (dataToSave as any).ampm;
 
 
-    addDocumentNonBlocking(homeChurchesCollection, dataToSave);
-    
+    const { error } = await supabase.from('home_churches').insert([dataToSave]);
+
+    if (error) {
+      console.error("Error creating church: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create home church.",
+      });
+      return;
+    }
+
     console.log(`[SIMULACION] Enviando correo de confirmación de creación de iglesia a ${user.email} para la iglesia "${dataToSave.name}"`);
 
     toast({
@@ -421,7 +430,7 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FloatingLabelInput field={field} label={t('contentPreview.registerChurch.name')} placeholder=" "/>
+                    <FloatingLabelInput field={field} label={t('contentPreview.registerChurch.name')} placeholder=" " />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -431,29 +440,29 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FloatingLabelInput field={field} label={t('contentPreview.registerChurch.phone')} placeholder=" "/>
+                    <FloatingLabelInput field={field} label={t('contentPreview.registerChurch.phone')} placeholder=" " />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">{t('contentPreview.registerChurch.sessionInfo')}</p>
                 <div className="space-y-4 p-4 border rounded-lg">
-                    <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.email')} placeholder=" " /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="whatsappNumber" render={({ field }) => (
-                        <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.whatsapp')} placeholder=" " /></FormItem>
-                    )} />
-                      <FormField control={form.control} name="websiteUrl" render={({ field }) => (
-                        <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.website')} placeholder=" " /></FormItem>
-                    )} />
-                      <FormField control={form.control} name="neighborhood" render={({ field }) => (
-                        <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.neighborhood')} placeholder=" " /></FormItem>
-                    )} />
+                  <FormField control={form.control} name="email" render={({ field }) => (
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.email')} placeholder=" " /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="whatsappNumber" render={({ field }) => (
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.whatsapp')} placeholder=" " /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="websiteUrl" render={({ field }) => (
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.website')} placeholder=" " /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="neighborhood" render={({ field }) => (
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.neighborhood')} placeholder=" " /></FormItem>
+                  )} />
                 </div>
-                  <FormMessage className="mt-1">{form.formState.errors.email?.message}</FormMessage>
+                <FormMessage className="mt-1">{form.formState.errors.email?.message}</FormMessage>
               </div>
 
               <FormField
@@ -461,142 +470,142 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
                 name="tags"
                 render={({ field }) => (
                   <FormItem>
-                    <FloatingLabelInput field={field} label={t('contentPreview.registerChurch.tags')} placeholder=" "/>
-                      <FormDescription className="px-1">{t('contentPreview.registerChurch.tagsDescription')}</FormDescription>
+                    <FloatingLabelInput field={field} label={t('contentPreview.registerChurch.tags')} placeholder=" " />
+                    <FormDescription className="px-1">{t('contentPreview.registerChurch.tagsDescription')}</FormDescription>
                   </FormItem>
                 )}
               />
 
               <FormField
-                  control={form.control}
-                  name="personLimit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FloatingLabelInput type="number" field={{...field, value: field.value === 0 ? '' : field.value || '', onChange: (e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10)) }} label={t('contentPreview.registerChurch.peopleLimit')} placeholder=" " />
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                control={form.control}
+                name="personLimit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FloatingLabelInput type="number" field={{ ...field, value: field.value === 0 ? '' : field.value || '', onChange: (e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10)) }} label={t('contentPreview.registerChurch.peopleLimit')} placeholder=" " />
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              
+
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">{t('contentPreview.registerChurch.scheduleTitle')}</p>
                 <div className="space-y-4 p-4 border rounded-lg">
-                    <FormField
-                        control={form.control}
-                        name="meetingDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP", { locale: dateLocales[locale || 'en'] })
-                                    ) : (
-                                        <span>{t('contentPreview.registerChurch.pickDate')}</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => date < new Date()}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    
-                    <div className="space-y-2">
-                        <Label>Time Format</Label>
-                        <RadioGroup defaultValue="24h" onValueChange={(value: '12h' | '24h') => setTimeFormat(value)} className="flex space-x-4">
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="24h" id="r24h" />
-                                <Label htmlFor="r24h">24-hour</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="12h" id="r12h" />
-                                <Label htmlFor="r12h">12-hour</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <FormField control={form.control} name="hour" render={({ field }) => (
-                            <FormItem className="flex-1">
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Hour" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {Array.from({ length: timeFormat === '12h' ? 12 : 24 }, (_, i) => {
-                                            const hour = timeFormat === '12h' ? i + 1 : i;
-                                            return <SelectItem key={hour} value={String(hour)}>{String(hour).padStart(2, '0')}</SelectItem>
-                                        })}
-                                    </SelectContent>
-                                </Select>
-                            </FormItem>
-                        )} />
-                        <span>:</span>
-                        <FormField control={form.control} name="minute" render={({ field }) => (
-                            <FormItem className="flex-1">
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Minute" /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {Array.from({ length: 60 }, (_, i) => (
-                                            <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </FormItem>
-                        )} />
-                        {timeFormat === '12h' && (
-                            <FormField control={form.control} name="ampm" render={({ field }) => (
-                                <FormItem className="flex-1">
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl><SelectTrigger><SelectValue placeholder="AM/PM" /></SelectTrigger></FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="AM">AM</SelectItem>
-                                            <SelectItem value="PM">PM</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </FormItem>
-                            )} />
-                        )}
-                    </div>
-                     <FormField
-                        control={form.control}
-                        name="isRecurring"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-4">
+                  <FormField
+                    control={form.control}
+                    name="meetingDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                />
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: dateLocales[locale || 'en'] })
+                                ) : (
+                                  <span>{t('contentPreview.registerChurch.pickDate')}</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
                             </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel>
-                                {t('contentPreview.registerChurch.recurringMeeting')}
-                                </FormLabel>
-                                <FormDescription>
-                                {t('contentPreview.registerChurch.recurringDescription')}
-                                </FormDescription>
-                            </div>
-                            </FormItem>
-                        )}
-                        />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <Label>Time Format</Label>
+                    <RadioGroup defaultValue="24h" onValueChange={(value: '12h' | '24h') => setTimeFormat(value)} className="flex space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="24h" id="r24h" />
+                        <Label htmlFor="r24h">24-hour</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="12h" id="r12h" />
+                        <Label htmlFor="r12h">12-hour</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <FormField control={form.control} name="hour" render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Hour" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {Array.from({ length: timeFormat === '12h' ? 12 : 24 }, (_, i) => {
+                              const hour = timeFormat === '12h' ? i + 1 : i;
+                              return <SelectItem key={hour} value={String(hour)}>{String(hour).padStart(2, '0')}</SelectItem>
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )} />
+                    <span>:</span>
+                    <FormField control={form.control} name="minute" render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Minute" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {Array.from({ length: 60 }, (_, i) => (
+                              <SelectItem key={i} value={String(i)}>{String(i).padStart(2, '0')}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )} />
+                    {timeFormat === '12h' && (
+                      <FormField control={form.control} name="ampm" render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="AM/PM" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              <SelectItem value="AM">AM</SelectItem>
+                              <SelectItem value="PM">PM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )} />
+                    )}
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="isRecurring"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t('contentPreview.registerChurch.recurringMeeting')}
+                          </FormLabel>
+                          <FormDescription>
+                            {t('contentPreview.registerChurch.recurringDescription')}
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -621,7 +630,7 @@ const RegistrationForm = React.memo(({ firestore, geolocation, toast, t, user }:
                         ))}
                       </SelectContent>
                     </Select>
-                      <FormMessage />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -642,19 +651,14 @@ RegistrationForm.displayName = 'RegistrationForm';
 export default function RegisterHomeChurchContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { firestore, user } = useFirebase();
+  const { user } = useSupabase();
   const geolocation = useContext(GeolocationContext);
 
-  const homeChurchesCollection = useMemo(() => {
-    if (!firestore) return null;
-    return collection(firestore, 'home_churches');
-  }, [firestore]);
-  
-  const { data: churches } = useCollection(homeChurchesCollection);
+  const { data: churches } = useSupabaseCollection('home_churches');
 
   return (
     <div className="PreviewContent p-4 md:p-8 text-foreground h-full flex flex-col">
-       <Tabs defaultValue="attend" className="w-full flex-grow flex flex-col">
+      <Tabs defaultValue="attend" className="w-full flex-grow flex flex-col">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="attend">{t('contentPreview.registerChurch.attendTab')}</TabsTrigger>
           <TabsTrigger value="create">{t('contentPreview.registerChurch.createTab')}</TabsTrigger>
@@ -665,16 +669,14 @@ export default function RegisterHomeChurchContent() {
               <CardTitle className="text-center text-3xl">{t('contentPreview.registerChurch.upcomingMeetings')}</CardTitle>
             </CardHeader>
             <CardContent className="h-[calc(100%-4rem)] p-0">
-               <ChurchMap churches={churches} geolocation={geolocation} user={user} />
+              <ChurchMap churches={churches as any[]} geolocation={geolocation} user={user} />
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="create" className="flex-grow mt-4">
-           <RegistrationForm firestore={firestore} geolocation={geolocation} toast={toast} t={t} user={user} />
+          <RegistrationForm geolocation={geolocation} toast={toast} t={t} user={user} />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
-
-    
