@@ -477,14 +477,27 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
     // Send Email to Creator
     try {
       const emailHtml = generateEmailHtml(
-        '¡Tu iglesia ha sido creada!',
+        '¡Tu iglesia ya es parte de la comunidad!',
         `
-        <div class="info-box">
-          <p>Has creado exitosamente la iglesia <strong>${dataToSave.name}</strong>.</p>
-          <p><strong>Horario:</strong> ${scheduleString}</p>
+        <p>Hola,</p>
+        <p>¡Qué alegría! Has registrado exitosamente una nueva iglesia en casa en <strong>Christianitatis</strong>. Gracias por abrir tu hogar.</p>
+        
+        <div class="info-box" style="text-align: left;">
+          <h3 style="margin-top: 0; color: #1e293b;">Detalles de la Iglesia</h3>
+          <ul style="padding-left: 20px; color: #334155;">
+             <li><strong>Nombre:</strong> ${dataToSave.name}</li>
+             <li><strong>Horario:</strong> ${scheduleString}</li>
+             <li><strong>Límite de Personas:</strong> ${values.personLimit ? values.personLimit : 'Sin límite'}</li>
+          </ul>
         </div>
-        <p>Gracias por ser parte de Christianitatis. Ahora otros usuarios podrán encontrar tu iglesia y reservar una visita.</p>
-        <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Ver en mi Perfil</a>
+
+        <p>Tu iglesia ya está visible en el mapa para que otros usuarios puedan encontrarla y reservar una visita.</p>
+        
+        <p style="margin-bottom: 25px;">Recuerda revisar tu perfil para gestionar las reservas.</p>
+        
+        <div style="text-align: center;">
+          <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Gestionar mi Iglesia</a>
+        </div>
         `
       );
 
