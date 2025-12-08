@@ -89,7 +89,7 @@ export default function LoginDialog({ children, open, onOpenChange }: { children
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `http://localhost:3000/auth/callback`, // Better to use env var or window.location.origin
+        redirectTo: `${window.location.origin}/auth/callback`,
       }
     });
     if (error) {
