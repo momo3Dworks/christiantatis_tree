@@ -387,11 +387,11 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
     const { error } = await supabase.from('home_churches').insert([dataToSave]);
 
     if (error) {
-      console.error("Error creating church: ", error);
+      console.error("Error creating church details: ", JSON.stringify(error, null, 2));
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to create home church.",
+        title: "Error creating church",
+        description: error.message || error.details || "Failed to create home church. Check console for details.",
       });
       return;
     }
