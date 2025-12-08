@@ -31,6 +31,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -48,6 +51,8 @@ import { es, fr, pt } from 'date-fns/locale';
 import QRCode from 'qrcode';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+import { generateEmailHtml } from '@/lib/email-templates';
 
 export default function ProfilePage() {
   const { user, isLoading: isUserLoading, supabase } = useSupabase();
@@ -237,9 +242,16 @@ export default function ProfilePage() {
     }
 
     setMfaSecret(data.id);
-    QRCode.toDataURL(data.totp.qr_code, (err, url) => {
+
+    // Construct a simpler URI to avoid "data too big" errors
+    const issuer = "Christianitatis";
+    const account = user?.email || "User";
+    const secret = data.totp.secret;
+    const uri = `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+
+    QRCode.toDataURL(uri, { errorCorrectionLevel: 'L' }, (err: Error | null | undefined, url: string) => {
       if (err) {
-        console.error(err);
+        console.error("QR Generation Error", err);
         return;
       }
       setMfaQr(url);
@@ -279,6 +291,47 @@ export default function ProfilePage() {
     if (!churchToDelete) return;
 
     try {
+      // 1. Fetch church to check for reservations
+      const { data: churchToDeleteData, error: fetchError } = await supabase
+        .from('home_churches')
+        .select('name, reservations')
+        .eq('id', churchToDelete)
+        .single();
+
+      if (fetchError && !churchToDeleteData) {
+        console.error("Church not found to delete");
+      }
+
+      // 2. Notify Reservants if any
+      if (churchToDeleteData && churchToDeleteData.reservations && churchToDeleteData.reservations.length > 0) {
+        try {
+          const emailHtml = generateEmailHtml(
+            'Evento Cancelado',
+            `
+                 <p>Lo sentimos profundamente, pero el anfitrión de la iglesia <strong>${churchToDeleteData.name}</strong> ha eliminado el evento o la iglesia.</p>
+                 <p>Tu reserva ha sido cancelada automáticamente.</p>
+                 <div class="info-box">
+                    <p>Si tienes dudas, por favor busca otras iglesias disponibles en el mapa.</p>
+                 </div>
+                 <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/" class="button">Buscar Otras Iglesias</a>
+                 `
+          );
+
+          await fetch('/api/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userIds: churchToDeleteData.reservations, // Array of user IDs
+              subject: 'Importante: Iglesia Eliminada - Christianitatis',
+              html: emailHtml
+            })
+          });
+
+        } catch (e) {
+          console.error("Failed to send broadcast deletion email", e);
+        }
+      }
+
       const { error } = await supabase.from('home_churches').delete().eq('id', churchToDelete);
       if (error) throw error;
 
@@ -305,7 +358,7 @@ export default function ProfilePage() {
     try {
       const { data: church, error: fetchError } = await supabase
         .from('home_churches')
-        .select('reservations')
+        .select('name, creatorId, reservations')
         .eq('id', reservationToCancel)
         .single();
 
@@ -319,6 +372,31 @@ export default function ProfilePage() {
         .eq('id', reservationToCancel);
 
       if (updateError) throw updateError;
+
+      // Notify Creator of Cancellation
+      try {
+        const creatorEmailHtml = generateEmailHtml(
+          'Reserva Cancelada',
+          `
+            <p>El usuario <strong>${user.email}</strong> ha cancelado su reserva para tu iglesia <strong>${church.name}</strong>.</p>
+            <p>Se ha liberado un cupo.</p>
+            <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Ver Estado de Iglesia</a>
+            `
+        );
+
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: 'creator_lookup',
+            creatorId: church.creatorId,
+            subject: 'Reserva Cancelada - Christianitatis',
+            html: creatorEmailHtml
+          })
+        });
+      } catch (e) {
+        console.error("Failed to send cancellation email", e);
+      }
 
       toast({
         title: 'Reserva Cancelada',
@@ -335,6 +413,53 @@ export default function ProfilePage() {
     } finally {
       setShowCancelAlert(false);
       setReservationToCancel(null);
+    }
+  };
+
+  const handleUpdateStatus = async (churchId: string, newStatus: string) => {
+    try {
+      // 1. Update Status
+      const { error } = await supabase
+        .from('home_churches')
+        .update({ status: newStatus })
+        .eq('id', churchId);
+
+      if (error) throw error;
+
+      // 2. Fetch Church to notify reservants
+      const { data: church, error: fetchError } = await supabase
+        .from('home_churches')
+        .select('name, reservations')
+        .eq('id', churchId)
+        .single();
+
+      if (church && church.reservations && church.reservations.length > 0) {
+        const emailHtml = generateEmailHtml(
+          'Actualización de Estado',
+          `
+                <p>El estado de la iglesia <strong>${church.name}</strong> ha cambiado a: <strong>${newStatus}</strong>.</p>
+                <p>Por favor revisa si esto afecta tus planes.</p>
+                <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Ver Mi Reserva</a>
+                `
+        );
+
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userIds: church.reservations,
+            subject: `Actualización de Estado: ${church.name}`,
+            html: emailHtml
+          })
+        });
+      }
+
+      toast({ title: 'Estado Actualizado', description: `La iglesia ahora está: ${newStatus}` });
+      window.location.reload();
+
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo actualizar el estado.' });
     }
   };
 
@@ -601,9 +726,23 @@ export default function ProfilePage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => toast({ title: 'Próximamente', description: 'La edición estará disponible pronto.' })}>
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Cambiar Estado
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    {['Open', 'Full', 'Closed', 'Temporarily Closed', 'Suspended'].map((status) => (
+                                      <DropdownMenuItem key={status} onClick={() => handleUpdateStatus(church.id, status)}>
+                                        {status}
+                                        {church.status === status && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                                <DropdownMenuItem onClick={() => toast({ title: 'Próximamente', description: 'La edición completa estará disponible pronto.' })}>
                                   <Pencil className="mr-2 h-4 w-4" />
-                                  Editar
+                                  Editar Detalles
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
