@@ -1,13 +1,27 @@
 'use client';
 
-import { useSupabase, useUser } from '@/lib/supabase/provider';
+import { useSupabase } from '@/lib/supabase/provider';
 import { useSupabaseCollection } from '@/lib/supabase/hooks/use-collection';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Mail, AlertCircle, Upload, RefreshCw, Church, MoreHorizontal, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import {
+  CheckCircle,
+  Mail,
+  AlertCircle,
+  Upload,
+  RefreshCw,
+  Church,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  ArrowLeft,
+  Smartphone,
+  ShieldCheck,
+  QrCode
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
@@ -31,6 +45,9 @@ import {
 import { useTranslation } from '@/hooks/useTranslation';
 import { format } from 'date-fns';
 import { es, fr, pt } from 'date-fns/locale';
+import QRCode from 'qrcode';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function ProfilePage() {
   const { user, isLoading: isUserLoading, supabase } = useSupabase();
@@ -44,11 +61,75 @@ export default function ProfilePage() {
   const { t, locale } = useTranslation();
   const dateLocales: { [key: string]: any } = { es, fr, pt };
 
+  // Phone Verification State
+  const [phone, setPhone] = useState('');
+  const [verifyOtp, setVerifyOtp] = useState('');
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
+  const [whatsapp, setWhatsapp] = useState('');
+  const [address, setAddress] = useState('');
+
+  const handleUpdateWhatsapp = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { whatsapp: whatsapp }
+      });
+      if (error) throw error;
+      toast({ title: 'WhatsApp Guardado', description: 'Tu número de WhatsApp se ha guardado correctamente.' });
+      handleReloadUser();
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
+
+  const handleUpdateAddress = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { address: address }
+      });
+      if (error) throw error;
+      toast({ title: 'Dirección Guardada', description: 'Tu dirección se ha guardado correctamente.' });
+      handleReloadUser();
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
+
+  // MFA State
+  const [mfaQr, setMfaQr] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [isEnrollingMfa, setIsEnrollingMfa] = useState(false);
+  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      fetchMfaFactors();
+      if (user.phone) {
+        setPhone(user.phone);
+      }
+      if (user.user_metadata?.whatsapp) {
+        setWhatsapp(user.user_metadata.whatsapp);
+      }
+      if (user.user_metadata?.address) {
+        setAddress(user.user_metadata.address);
+      }
+    }
+  }, [user]);
+
+  const fetchMfaFactors = async () => {
+    const { data, error } = await supabase.auth.mfa.listFactors();
+    if (data) {
+      setMfaFactors(data.all);
+    }
+  };
 
   // Filters for My Churches
   const myChurchesFilters = useMemo(() => {
@@ -58,16 +139,17 @@ export default function ProfilePage() {
 
   const { data: createdChurches, isLoading: isLoadingChurches } = useSupabaseCollection('home_churches', myChurchesFilters);
 
-  // Filters for Reserved Churches (Assuming reservations is an array column)
+  // Filters for Reserved Churches
   const reservedChurchesFilters = useMemo(() => {
     if (!user) return undefined;
+    // Assuming 'reservations' is an array of UUIDs
     return [{ column: 'reservations', operator: 'cs', value: `{${user.id}}` }] as any;
   }, [user]);
 
   const { data: reservedChurches, isLoading: isLoadingReservations } = useSupabaseCollection('home_churches', reservedChurchesFilters);
 
   const handleSendVerificationEmail = async () => {
-    if (user && !user.email_confirmed_at) { // Supabase check
+    if (user && !user.email_confirmed_at) {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: user.email!,
@@ -96,10 +178,9 @@ export default function ProfilePage() {
         await supabase.auth.refreshSession();
         toast({
           title: 'Estado Actualizado',
-          description: 'Se ha comprobado el estado de verificación de tu correo.',
+          description: 'Se ha comprobado el estado del usuario.',
         });
       } catch (error) {
-        console.error('Error reloading user:', error);
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -110,6 +191,89 @@ export default function ProfilePage() {
       }
     }
   };
+
+  // Phone Logic
+  const handleUpdatePhone = async () => {
+    if (!phone) return;
+    try {
+      const { error } = await supabase.auth.updateUser({ phone: phone });
+      if (error) throw error;
+      setIsVerifyingPhone(true);
+      toast({ title: 'Código enviado', description: 'Revisa tu teléfono para el código de verificación.' });
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phone,
+        token: verifyOtp,
+        type: 'sms',
+      });
+      if (error) throw error;
+
+      setIsVerifyingPhone(false);
+      setVerifyOtp('');
+      toast({ title: 'Teléfono Verificado', description: 'Tu número ha sido guardado y verificado.' });
+      handleReloadUser();
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
+
+
+  // MFA Logic
+  const handleEnrollMfa = async () => {
+    setIsEnrollingMfa(true);
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      setIsEnrollingMfa(false);
+      return;
+    }
+
+    setMfaSecret(data.id);
+    QRCode.toDataURL(data.totp.qr_code, (err, url) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      setMfaQr(url);
+    });
+  };
+
+  const handleVerifyMfa = async () => {
+    if (!mfaSecret) return;
+
+    const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+      factorId: mfaSecret,
+      code: mfaCode,
+    });
+
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } else {
+      toast({ title: 'MFA Activado', description: 'Autenticación de dos pasos activada exitosamente.' });
+      setIsEnrollingMfa(false);
+      setMfaQr(null);
+      setMfaCode('');
+      fetchMfaFactors();
+    }
+  };
+
+  const handleUnenrollMfa = async (factorId: string) => {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    if (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } else {
+      toast({ title: 'MFA Desactivado', description: 'Autenticación de dos pasos eliminada.' });
+      fetchMfaFactors();
+    }
+  }
 
   const handleDeleteChurch = async () => {
     if (!churchToDelete) return;
@@ -122,15 +286,13 @@ export default function ProfilePage() {
         title: 'Iglesia Eliminada',
         description: 'La iglesia ha sido eliminada correctamente.',
       });
-      // The hook might rely on realtime or manual refresh. 
-      // For now, assume realtime or reload page.
       window.location.reload();
     } catch (error) {
       console.error("Error deleting church: ", error);
       toast({
         variant: 'destructive',
         title: 'Error al eliminar',
-        description: 'No se pudo eliminar la iglesia. Puede que no tengas los permisos necesarios.',
+        description: 'No se pudo eliminar la iglesia.',
       });
     } finally {
       setShowDeleteAlert(false);
@@ -140,9 +302,7 @@ export default function ProfilePage() {
 
   const handleCancelReservation = async () => {
     if (!reservationToCancel || !user) return;
-
     try {
-      // Fetch current church to get reservations
       const { data: church, error: fetchError } = await supabase
         .from('home_churches')
         .select('reservations')
@@ -170,7 +330,7 @@ export default function ProfilePage() {
       toast({
         variant: 'destructive',
         title: 'Error al Cancelar',
-        description: 'No se pudo cancelar la reserva. Inténtalo de nuevo más tarde.',
+        description: 'No se pudo cancelar la reserva.',
       });
     } finally {
       setShowCancelAlert(false);
@@ -182,10 +342,8 @@ export default function ProfilePage() {
     if (!church.meetingDate || !church.meetingTime) {
       return church.meetingSchedule;
     }
-
     const date = new Date(church.meetingDate);
     const time = church.meetingTime;
-
     if (church.isRecurring) {
       const dayOfWeek = format(date, "EEEE", { locale: dateLocales[locale || 'en'] });
       return t('contentPreview.registerChurch.recurringSchedule', { day: dayOfWeek, time: time });
@@ -241,59 +399,172 @@ export default function ProfilePage() {
         </header>
 
         <main className="space-y-12">
-          <Card>
-            <CardHeader>
-              <CardTitle>Verificación de Correo</CardTitle>
-              <CardDescription>
-                Verifica tu correo electrónico para asegurar tu cuenta y acceder a todas las funcionalidades.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user.email_confirmed_at ? (
-                <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-700 dark:text-green-300">
-                  <CheckCircle className="h-5 w-5" />
-                  <p className="font-medium">Tu correo electrónico ha sido verificado.</p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-start gap-4 rounded-lg border border-orange-500/30 bg-orange-500/10 p-4 text-orange-700 dark:text-orange-300 sm:flex-row sm:items-center">
-                  <div className="flex flex-grow items-center gap-3">
-                    <AlertCircle className="h-5 w-5" />
-                    <p className="font-medium">Tu correo electrónico no está verificado.</p>
-                  </div>
-                  <div className="flex w-full sm:w-auto sm:items-center gap-2">
-                    <Button
-                      onClick={handleSendVerificationEmail}
-                      variant="outline"
-                      className="w-full bg-transparent sm:w-auto flex-grow"
-                    >
-                      <Mail className="mr-2 h-4 w-4" />
-                      Reenviar Verificación
-                    </Button>
-                    <Button
-                      onClick={handleReloadUser}
-                      variant="outline"
-                      size="icon"
-                      className="bg-transparent"
-                      disabled={isReloading}
-                      title="Refrescar estado de verificación"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${isReloading ? 'animate-spin' : ''}`} />
-                      <span className="sr-only">Refrescar Estado</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
-          <Separator />
-
-          <Tabs defaultValue="created-churches">
+          <Tabs defaultValue="profile">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="created-churches">Mis Iglesias Creadas</TabsTrigger>
-              <TabsTrigger value="reserved-visits">Mis Reservas</TabsTrigger>
+              <TabsTrigger value="profile">Perfil y Seguridad</TabsTrigger>
+              <TabsTrigger value="churches">Mis Iglesias y Reservas</TabsTrigger>
             </TabsList>
-            <TabsContent value="created-churches" className="mt-6">
+
+            <TabsContent value="profile" className="space-y-8 mt-6">
+              {/* ID Verification Section (Email) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Verificación de Correo</CardTitle>
+                  <CardDescription>
+                    Estado de verificación de tu correo electrónico.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {user.email_confirmed_at ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-700 dark:text-green-300">
+                      <CheckCircle className="h-5 w-5" />
+                      <p className="font-medium">Tu correo electrónico ha sido verificado.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-start gap-4 rounded-lg border border-orange-500/30 bg-orange-500/10 p-4 text-orange-700 dark:text-orange-300 sm:flex-row sm:items-center">
+                      <div className="flex flex-grow items-center gap-3">
+                        <AlertCircle className="h-5 w-5" />
+                        <p className="font-medium">Tu correo electrónico no está verificado.</p>
+                      </div>
+                      <div className="flex w-full sm:w-auto sm:items-center gap-2">
+                        <Button onClick={handleSendVerificationEmail} variant="outline" className="w-full bg-transparent sm:w-auto flex-grow">
+                          Reenviar Verificación
+                        </Button>
+                        <Button onClick={handleReloadUser} variant="outline" size="icon" className="bg-transparent" disabled={isReloading} title="Refrescar estado" >
+                          <RefreshCw className={`h-4 w-4 ${isReloading ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Phone Verification */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Smartphone className="h-5 w-5" /> Verificación Telefónica</CardTitle>
+                  <CardDescription>Agrega un número de teléfono para asegurar tu cuenta y gestionar reservas.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {user.phone_confirmed_at ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-700 dark:text-green-300">
+                      <CheckCircle className="h-5 w-5" />
+                      <p className="font-medium">Tu número ({user.phone}) está verificado.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid w-full max-w-sm items-center gap-1.5">
+                        <Label htmlFor="phone">Número de Teléfono (con código de país, ej: +1...)</Label>
+                        <div className="flex gap-2">
+                          <Input type="tel" id="phone" placeholder="+1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isVerifyingPhone} />
+                          <Button onClick={handleUpdatePhone} disabled={isVerifyingPhone || !phone}>Enviar Código</Button>
+                        </div>
+                      </div>
+                      {isVerifyingPhone && (
+                        <div className="grid w-full max-w-sm items-center gap-1.5">
+                          <Label htmlFor="otp">Código de Verificación (SMS)</Label>
+                          <div className="flex gap-2">
+                            <Input type="text" id="otp" placeholder="123456" value={verifyOtp} onChange={(e) => setVerifyOtp(e.target.value)} />
+                            <Button onClick={handleVerifyPhone} disabled={!verifyOtp}>Verificar</Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* WhatsApp Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Smartphone className="h-5 w-5 text-green-600" /> WhatsApp de Contacto</CardTitle>
+                  <CardDescription>Agrega un número de WhatsApp para que el anfitrión pueda contactarte fácilmente (opcional).</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid w-full max-w-sm items-center gap-1.5">
+                      <Label htmlFor="whatsapp">Número de WhatsApp</Label>
+                      <div className="flex gap-2">
+                        <Input type="tel" id="whatsapp" placeholder="+1234567890" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+                        <Button onClick={handleUpdateWhatsapp} disabled={!whatsapp || whatsapp === user.user_metadata?.whatsapp}>Guardar</Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Este número se compartirá con el anfitrión cuando reserves.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Address Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">📍 Dirección</CardTitle>
+                  <CardDescription>Guarda tu dirección para facilitar la coordinación.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid w-full max-w-sm items-center gap-1.5">
+                      <Label htmlFor="address">Dirección Completa</Label>
+                      <div className="flex gap-2">
+                        <Input type="text" id="address" placeholder="Calle Ejemplo 123, Ciudad" value={address} onChange={(e) => setAddress(e.target.value)} />
+                        <Button onClick={handleUpdateAddress} disabled={!address || address === user.user_metadata?.address}>Guardar</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* MFA Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" /> Autenticación de Dos Pasos (MFA)</CardTitle>
+                  <CardDescription>Aumenta la seguridad de tu cuenta usando una aplicación autenticadora (ej: Google Authenticator).</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {mfaFactors.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-700 dark:text-green-300">
+                        <CheckCircle className="h-5 w-5" />
+                        <p className="font-medium">MFA está activado en tu cuenta.</p>
+                      </div>
+                      {mfaFactors.map(factor => (
+                        <div key={factor.id} className="flex justify-between items-center p-2 border rounded">
+                          <span>{factor.friendly_name || 'Authenticator App'} ({factor.factor_type})</span>
+                          <Button variant="destructive" size="sm" onClick={() => handleUnenrollMfa(factor.id)}>Desactivar</Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {!isEnrollingMfa ? (
+                        <Button onClick={handleEnrollMfa}><QrCode className="mr-2 h-4 w-4" /> Configurar App Autenticadora</Button>
+                      ) : (
+                        <div className="space-y-4 border p-4 rounded-lg">
+                          <h3 className="font-semibold">Escanea el código QR</h3>
+                          <p className="text-sm text-muted-foreground">Usa tu aplicación de autenticación para escanear este código.</p>
+                          {mfaQr && (
+                            <div className="flex justify-center bg-white p-4 rounded w-fit mx-auto">
+                              <img src={mfaQr} alt="QR Code for MFA" />
+                            </div>
+                          )}
+                          <div className="grid w-full max-w-sm items-center gap-1.5 mx-auto">
+                            <Label htmlFor="mfa-code">Introduce el código de la app</Label>
+                            <div className="flex gap-2">
+                              <Input type="text" id="mfa-code" placeholder="123456" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} />
+                              <Button onClick={handleVerifyMfa}>Activar</Button>
+                            </div>
+                          </div>
+                          <Button variant="ghost" onClick={() => setIsEnrollingMfa(false)} className="w-full">Cancelar</Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+            </TabsContent>
+
+            <TabsContent value="churches" className="mt-6 space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Iglesias que has creado</CardTitle>
@@ -355,8 +626,7 @@ export default function ProfilePage() {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
-            <TabsContent value="reserved-visits" className="mt-6">
+
               <Card>
                 <CardHeader>
                   <CardTitle>Visitas que has reservado</CardTitle>

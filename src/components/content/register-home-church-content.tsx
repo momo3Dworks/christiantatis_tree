@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { generateEmailHtml } from '@/lib/email-templates';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -96,6 +97,20 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
       return;
     }
 
+    // Verify Phone linked or metadata
+    // Verify Phone OR Whatsapp
+    const contactPhone = user.phone || user.user_metadata?.whatsapp;
+
+    if (!contactPhone) {
+      toast({
+        variant: "destructive",
+        title: "Contact Info Required",
+        description: "Please go to your profile and add a Phone or WhatsApp number so the host can contact you.",
+        action: <Button variant="outline" size="sm" onClick={() => window.location.href = '/profile'}>Go to Profile</Button>
+      });
+      return;
+    }
+
     try {
       // Fetch latest church data to check availability
       const { data: church, error: fetchError } = await supabase
@@ -134,7 +149,68 @@ const ChurchMap = React.memo(({ churches, geolocation, user }: { churches: any[]
 
       if (updateError) throw updateError;
 
-      console.log(`[SIMULACION] Enviando correo de confirmación de reserva a ${user.email} para la iglesia ${churchId}`);
+      // Send Email to Booker
+      try {
+        const bookerEmailHtml = generateEmailHtml(
+          'Confirmación de Reserva',
+          `
+            <div class="info-box">
+                <p>Se ha confirmado tu reserva en <strong>${church.name}</strong>.</p>
+                <p><strong>Horario:</strong> ${church.meetingSchedule}</p>
+            </div>
+            <p>¡Esperamos que disfrutes tu visita!</p>
+            <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Ver mis Reservas</a>
+            `
+        );
+
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: user.email,
+            subject: 'Confirmación de Reserva - Christianitatis',
+            html: bookerEmailHtml
+          })
+        });
+
+        // Send Email to Creator
+        const whatsappInfo = user.user_metadata?.whatsapp ? `<li><strong>WhatsApp:</strong> ${user.user_metadata.whatsapp}</li>` : '';
+        const phoneInfo = user.phone ? `<li><strong>Teléfono:</strong> ${user.phone}</li>` : '';
+        const addressInfo = user.user_metadata?.address ? `<li><strong>Dirección:</strong> ${user.user_metadata.address}</li>` : '';
+        const userName = user.user_metadata?.full_name || user.email;
+
+        const creatorEmailHtml = generateEmailHtml(
+          'Nueva Reserva Recibida',
+          `
+            <p>Has recibido una nueva reserva para tu iglesia <strong>${church.name}</strong>.</p>
+            <div class="info-box" style="text-align: left;">
+                <p style="margin-bottom: 10px;"><strong>Detalles del Reservante:</strong></p>
+                <ul style="padding-left: 20px; color: #334155;">
+                    <li><strong>Nombre:</strong> ${userName}</li>
+                    <li><strong>Email:</strong> ${user.email}</li>
+                    ${phoneInfo}
+                    ${whatsappInfo}
+                    ${addressInfo}
+                </ul>
+            </div>
+            <p>Puedes ver todas tus reservas en tu perfil.</p>
+            <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Gestionar Reservas</a>
+            `
+        );
+
+        await fetch('/api/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: 'creator_lookup',
+            creatorId: church.creatorId,
+            subject: 'Nueva Reserva - Christianitatis',
+            html: creatorEmailHtml
+          })
+        });
+      } catch (e) {
+        console.error("Email sending failed", e);
+      }
 
       toast({
         title: "Reservation Successful!",
@@ -396,7 +472,34 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
       return;
     }
 
-    console.log(`[SIMULACION] Enviando correo de confirmación de creación de iglesia a ${user.email} para la iglesia "${dataToSave.name}"`);
+
+
+    // Send Email to Creator
+    try {
+      const emailHtml = generateEmailHtml(
+        '¡Tu iglesia ha sido creada!',
+        `
+        <div class="info-box">
+          <p>Has creado exitosamente la iglesia <strong>${dataToSave.name}</strong>.</p>
+          <p><strong>Horario:</strong> ${scheduleString}</p>
+        </div>
+        <p>Gracias por ser parte de Christianitatis. Ahora otros usuarios podrán encontrar tu iglesia y reservar una visita.</p>
+        <a href="${typeof window !== 'undefined' ? window.location.origin : ''}/profile" class="button">Ver en mi Perfil</a>
+        `
+      );
+
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: user.email,
+          subject: 'Tu iglesia ha sido creada - Christianitatis',
+          html: emailHtml
+        })
+      });
+    } catch (e) {
+      console.error("Failed to send creation email", e);
+    }
 
     toast({
       title: t('contentPreview.registerChurch.toastTitle'),
