@@ -22,6 +22,7 @@ create table public.home_churches (
   longitude float,
   "creatorId" uuid references auth.users(id) on delete cascade,
   reservations text[], -- Array of user UUIDs
+  "isRecurring" boolean default true,
   "isFull" boolean default false
 );
 

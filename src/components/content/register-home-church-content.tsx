@@ -314,11 +314,11 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('24h');
 
   const statusOptions = [
-    t('contentPreview.registerChurch.statusOptions.open'),
-    t('contentPreview.registerChurch.statusOptions.full'),
-    t('contentPreview.registerChurch.statusOptions.closed'),
-    t('contentPreview.registerChurch.statusOptions.tempClosed'),
-    t('contentPreview.registerChurch.statusOptions.suspended'),
+    { value: 'Open', label: t('contentPreview.registerChurch.statusOptions.open') },
+    { value: 'Full', label: t('contentPreview.registerChurch.statusOptions.full') },
+    { value: 'Closed', label: t('contentPreview.registerChurch.statusOptions.closed') },
+    { value: 'Temporarily Closed', label: t('contentPreview.registerChurch.statusOptions.tempClosed') },
+    { value: 'Suspended', label: t('contentPreview.registerChurch.statusOptions.suspended') },
   ];
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -481,7 +481,7 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
                 name="personLimit"
                 render={({ field }) => (
                   <FormItem>
-                    <FloatingLabelInput type="number" field={{ ...field, value: field.value === 0 ? '' : field.value || '', onChange: (e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10)) }} label={t('contentPreview.registerChurch.peopleLimit')} placeholder=" " />
+                    <FloatingLabelInput type="number" field={{ ...field, value: field.value === 0 ? '' : field.value || '', onChange: (e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10)) }} label={t('contentPreview.registerChurch.peopleLimit')} placeholder=" " />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -624,8 +624,8 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
                       </FormControl>
                       <SelectContent>
                         {statusOptions.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
