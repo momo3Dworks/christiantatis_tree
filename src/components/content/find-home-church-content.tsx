@@ -70,6 +70,17 @@ const parseMeetingHour = (timeStr: string): number => {
   return hour;
 };
 
+const getTranslatedStatus = (status: string, t: any) => {
+  switch (status) {
+    case 'Open': return t('contentPreview.registerChurch.statusOptions.open');
+    case 'Full': return t('contentPreview.registerChurch.statusOptions.full');
+    case 'Closed': return t('contentPreview.registerChurch.statusOptions.closed');
+    case 'Temporarily Closed': return t('contentPreview.registerChurch.statusOptions.tempClosed');
+    case 'Suspended': return t('contentPreview.registerChurch.statusOptions.suspended');
+    default: return status;
+  }
+};
+
 const ChurchesListHUD = ({ churches, availableCountries, onChurchSelect, onFilterChange }: { churches: any[], availableCountries: string[], onChurchSelect: (church: any) => void, onFilterChange: (filters: { searchQuery: string, statusFilter: string, countryFilter: string, dayFilter: string, timeFilter: string }) => void }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,11 +112,19 @@ const ChurchesListHUD = ({ churches, availableCountries, onChurchSelect, onFilte
     { value: 'Suspended', label: t('contentPreview.registerChurch.statusOptions.suspended') },
   ];
 
-  const dayOptions = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayOptions = [
+    { value: 'Sunday', label: t('days.sunday') },
+    { value: 'Monday', label: t('days.monday') },
+    { value: 'Tuesday', label: t('days.tuesday') },
+    { value: 'Wednesday', label: t('days.wednesday') },
+    { value: 'Thursday', label: t('days.thursday') },
+    { value: 'Friday', label: t('days.friday') },
+    { value: 'Saturday', label: t('days.saturday') }
+  ];
   const timeOptions = [
-    { value: 'morning', label: 'Morning (6am-12pm)' },
-    { value: 'afternoon', label: 'Afternoon (1pm-5pm)' },
-    { value: 'evening', label: 'Evening (6pm-12am)' }
+    { value: 'morning', label: t('time.morning') },
+    { value: 'afternoon', label: t('time.afternoon') },
+    { value: 'evening', label: t('time.evening') }
   ];
 
   return (
@@ -126,12 +145,12 @@ const ChurchesListHUD = ({ churches, availableCountries, onChurchSelect, onFilte
 
             <div className="grid grid-cols-3 gap-1 w-full mb-2">
               <Select value={countryFilter} onValueChange={(value) => handleFilterChange(searchQuery, statusFilter, value, dayFilter, timeFilter)}>
-                <SelectTrigger className="px-1 justify-center h-8 bg-background/60 text-[10px]" title="Country">
+                <SelectTrigger className="px-1 justify-center h-8 bg-background/60 text-[10px]" title={t('contentPreview.registerChurch.country')}>
                   <Globe className="h-3 w-3 mr-1" />
-                  <span className="truncate">{countryFilter === 'all' ? 'Country' : countryFilter}</span>
+                  <span className="truncate">{countryFilter === 'all' ? t('contentPreview.registerChurch.country') : countryFilter}</span>
                 </SelectTrigger>
                 <SelectContent align="start">
-                  <SelectItem value="all">Any Country</SelectItem>
+                  <SelectItem value="all">{t('contentPreview.registerChurch.anyCountry')}</SelectItem>
                   {availableCountries && availableCountries.map(country => (
                     <SelectItem key={country} value={country}>{country}</SelectItem>
                   ))}
@@ -139,25 +158,25 @@ const ChurchesListHUD = ({ churches, availableCountries, onChurchSelect, onFilte
               </Select>
 
               <Select value={dayFilter} onValueChange={(value) => handleFilterChange(searchQuery, statusFilter, countryFilter, value, timeFilter)}>
-                <SelectTrigger className="px-1 justify-center h-8 bg-background/60 text-[10px]" title="Day">
+                <SelectTrigger className="px-1 justify-center h-8 bg-background/60 text-[10px]" title={t('contentPreview.registerChurch.day')}>
                   <Calendar className="h-3 w-3 mr-1" />
-                  <span className="truncate">{dayFilter === 'all' ? 'Day' : dayFilter.substring(0, 3)}</span>
+                  <span className="truncate">{dayFilter === 'all' ? t('contentPreview.registerChurch.day') : dayOptions.find(d => d.value === dayFilter)?.label.substring(0, 3)}</span>
                 </SelectTrigger>
                 <SelectContent align="center">
-                  <SelectItem value="all">Any Day</SelectItem>
+                  <SelectItem value="all">{t('contentPreview.registerChurch.anyDay')}</SelectItem>
                   {dayOptions.map(day => (
-                    <SelectItem key={day} value={day}>{day}</SelectItem>
+                    <SelectItem key={day.value} value={day.value}>{day.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={timeFilter} onValueChange={(value) => handleFilterChange(searchQuery, statusFilter, countryFilter, dayFilter, value)}>
-                <SelectTrigger className="px-1 justify-center h-8 bg-background/60 text-[10px]" title="Time">
+                <SelectTrigger className="px-1 justify-center h-8 bg-background/60 text-[10px]" title={t('contentPreview.registerChurch.time')}>
                   <Clock className="h-3 w-3 mr-1" />
-                  <span className="truncate">{timeFilter === 'all' ? 'Time' : timeFilter.charAt(0).toUpperCase() + timeFilter.slice(1)}</span>
+                  <span className="truncate">{timeFilter === 'all' ? t('contentPreview.registerChurch.time') : timeOptions.find(t => t.value === timeFilter)?.label}</span>
                 </SelectTrigger>
                 <SelectContent align="end">
-                  <SelectItem value="all">Any Time</SelectItem>
+                  <SelectItem value="all">{t('contentPreview.registerChurch.anyTime')}</SelectItem>
                   {timeOptions.map(opt => (
                     <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
@@ -166,9 +185,9 @@ const ChurchesListHUD = ({ churches, availableCountries, onChurchSelect, onFilte
             </div>
 
             <Select value={statusFilter} onValueChange={(value) => handleFilterChange(searchQuery, value, countryFilter, dayFilter, timeFilter)}>
-              <SelectTrigger className="w-full justify-between px-3 h-8 bg-background/60 text-xs" title="Status">
-                <div className="flex items-center"><Filter className="h-3 w-3 mr-2" /> <span className="opacity-70">Status:</span></div>
-                <span className="truncate font-medium">{statusFilter === 'all' ? 'All' : statusFilter}</span>
+              <SelectTrigger className="w-full justify-between px-3 h-8 bg-background/60 text-xs" title={t('contentPreview.registerChurch.status')}>
+                <div className="flex items-center"><Filter className="h-3 w-3 mr-2" /> <span className="opacity-70">{t('contentPreview.registerChurch.status')}:</span></div>
+                <span className="truncate font-medium">{statusFilter === 'all' ? t('events.all') : statusOptions.find(s => s.value === statusFilter)?.label}</span>
               </SelectTrigger>
               <SelectContent align="end">
                 {statusOptions.map(option => (
@@ -191,7 +210,7 @@ const ChurchesListHUD = ({ churches, availableCountries, onChurchSelect, onFilte
                     <p className="font-semibold truncate pr-2 text-sm">{church.name}</p>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <div className={cn("w-1.5 h-1.5 rounded-full", getStatusColor(church.status))} />
-                      <span className="text-[10px] text-muted-foreground">{church.status}</span>
+                      <span className="text-[10px] text-muted-foreground">{getTranslatedStatus(church.status, t)}</span>
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5">{church.meetingSchedule}</p>
@@ -429,25 +448,25 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
               <div className="flex items-center gap-3">
                 <Users className="h-4 w-4 flex-shrink-0" />
                 <span>
-                  {selectedChurchFromHud.reservations?.length || 0} / {selectedChurchFromHud.personLimit || '∞'} Spots
+                  {selectedChurchFromHud.reservations?.length || 0} / {selectedChurchFromHud.personLimit || '∞'} {t('contentPreview.registerChurch.spots')}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className={cn("w-2.5 h-2.5 rounded-full", getStatusColor(selectedChurchFromHud.status))} />
-                <span>{selectedChurchFromHud.status}</span>
+                <span>{getTranslatedStatus(selectedChurchFromHud.status, t)}</span>
               </div>
             </div>
 
             <div className="py-4 border-y my-4">
-              <p className="text-sm font-semibold mb-3">Host Information</p>
+              <p className="text-sm font-semibold mb-3">{t('contentPreview.registerChurch.hostInfo')}</p>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-3">
                   <UserIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedChurchFromHud.creatorName || 'Host'}</span>
+                  <span>{selectedChurchFromHud.creatorName || t('contentPreview.registerChurch.host')}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedChurchFromHud.creatorEmail || "No email provided"}</span>
+                  <span>{selectedChurchFromHud.creatorEmail || t('contentPreview.registerChurch.noEmail')}</span>
                 </div>
                 {selectedChurchFromHud.whatsappNumber && (
                   <div className="flex items-center gap-3">
@@ -461,10 +480,10 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
             <div className="mt-auto pt-6">
               {confirmationChurchId === selectedChurchFromHud.id ? (
                 <div className="space-y-2 text-center">
-                  <p className="text-sm font-semibold">Confirm Reservation?</p>
+                  <p className="text-sm font-semibold">{t('contentPreview.registerChurch.confirmReservation')}</p>
                   <div className="flex justify-around">
-                    <Button size="sm" onClick={() => handleReserveSpot(selectedChurchFromHud.id)}>Yes, Confirm</Button>
-                    <Button size="sm" variant="outline" onClick={() => setConfirmationChurchId(null)}>Cancel</Button>
+                    <Button size="sm" onClick={() => handleReserveSpot(selectedChurchFromHud.id)}>{t('contentPreview.registerChurch.yesConfirm')}</Button>
+                    <Button size="sm" variant="outline" onClick={() => setConfirmationChurchId(null)}>{t('contentPreview.registerChurch.cancel')}</Button>
                   </div>
                 </div>
               ) : (
@@ -478,13 +497,13 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
                     (selectedChurchFromHud.reservations?.includes(user?.id))
                   }
                 >
-                  {!user ? "Login to book"
+                  {!user ? t('contentPreview.registerChurch.loginToBook')
                     : selectedChurchFromHud.reservations?.includes(user?.id) ?
-                      <><CheckCircle className="mr-2" /> Reserved</>
+                      <><CheckCircle className="mr-2" /> {t('contentPreview.registerChurch.reserved')}</>
                       : (selectedChurchFromHud.personLimit && (selectedChurchFromHud.reservations?.length || 0) >= selectedChurchFromHud.personLimit) ?
-                        <><XCircle className="mr-2" /> No spots available</>
+                        <><XCircle className="mr-2" /> {t('contentPreview.registerChurch.noSpots')}</>
                         : selectedChurchFromHud.status !== 'Open' ?
-                          <><XCircle className="mr-2" /> Not Open</>
+                          <><XCircle className="mr-2" /> {t('contentPreview.registerChurch.notOpen')}</>
                           : t('contentPreview.registerChurch.bookSpotButton')
                   }
                 </Button>

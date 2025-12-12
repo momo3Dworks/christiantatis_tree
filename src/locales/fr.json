@@ -1,4 +1,3 @@
-
 {
   "header": {
     "events": "Événements",
@@ -10,6 +9,20 @@
     "home": "Accueil",
     "currentLanguage": "Actuelle:",
     "languageSelected": "Langue Sélectionnée:"
+  },
+  "days": {
+    "sunday": "Dimanche",
+    "monday": "Lundi",
+    "tuesday": "Mardi",
+    "wednesday": "Mercredi",
+    "thursday": "Jeudi",
+    "friday": "Vendredi",
+    "saturday": "Samedi"
+  },
+  "time": {
+    "morning": "Matin (6h-12h)",
+    "afternoon": "Après-midi (12h-18h)",
+    "evening": "Soir (18h-00h)"
   },
   "welcome": {
     "title": "Bienvenue à CHRISTIANITATIS"
@@ -206,7 +219,24 @@
       "bookSpotButton": "Réserver une Place",
       "attendTab": "Assister à une Église",
       "createTab": "Créer une Église",
-      "loginPrompt": "Veuillez vous connecter pour enregistrer une église."
+      "loginPrompt": "Veuillez vous connecter pour enregistrer une église.",
+      "country": "Pays",
+      "anyCountry": "Tout Pays",
+      "day": "Jour",
+      "anyDay": "Tout Jour",
+      "time": "Heure",
+      "anyTime": "Toute Heure",
+      "spots": "Places",
+      "hostInfo": "Informations sur l'Hôte",
+      "host": "Hôte",
+      "noEmail": "Aucun e-mail fourni",
+      "confirmReservation": "Confirmer la Réservation ?",
+      "yesConfirm": "Oui, Confirmer",
+      "cancel": "Annuler",
+      "loginToBook": "Connectez-vous pour réserver",
+      "reserved": "Réservé",
+      "noSpots": "Aucune place disponible",
+      "notOpen": "Pas Ouverte"
     },
     "startMeeting": {
       "title": "Église de Maison",

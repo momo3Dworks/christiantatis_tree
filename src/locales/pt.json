@@ -10,6 +10,20 @@
     "currentLanguage": "Atual:",
     "languageSelected": "Idioma Selecionado:"
   },
+  "days": {
+    "sunday": "Domingo",
+    "monday": "Segunda-feira",
+    "tuesday": "Terça-feira",
+    "wednesday": "Quarta-feira",
+    "thursday": "Quinta-feira",
+    "friday": "Sexta-feira",
+    "saturday": "Sábado"
+  },
+  "time": {
+    "morning": "Manhã (6am-12pm)",
+    "afternoon": "Tarde (12pm-6pm)",
+    "evening": "Noite (6pm-12am)"
+  },
   "welcome": {
     "title": "Bem-vindo a CHRISTIANITATIS"
   },
@@ -210,7 +224,24 @@
       "bookSpotButton": "Reservar Vaga",
       "attendTab": "Visitar uma Igreja",
       "createTab": "Criar uma Igreja",
-      "loginPrompt": "Por favor, faça login para registrar uma igreja."
+      "loginPrompt": "Por favor, faça login para registrar uma igreja.",
+      "country": "País",
+      "anyCountry": "Qualquer País",
+      "day": "Dia",
+      "anyDay": "Qualquer Dia",
+      "time": "Horário",
+      "anyTime": "Qualquer Horário",
+      "spots": "Vagas",
+      "hostInfo": "Informações do Anfitrião",
+      "host": "Anfitrião",
+      "noEmail": "Nenhum e-mail fornecido",
+      "confirmReservation": "Confirmar Reserva?",
+      "yesConfirm": "Sim, Confirmar",
+      "cancel": "Cancelar",
+      "loginToBook": "Faça login para reservar",
+      "reserved": "Reservado",
+      "noSpots": "Sem vagas disponíveis",
+      "notOpen": "Não Aberta"
     },
     "startMeeting": {
       "title": "Igreja no Lar",

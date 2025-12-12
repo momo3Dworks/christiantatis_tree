@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Sun, Moon, Home, Globe, Play, Pause, User, Youtube, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, Globe, Play, Pause, User, Youtube, Instagram, Facebook } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
@@ -164,10 +164,7 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm5.74-4.694a.968.968 0 0 0-1.339-1.401 2.661 2.661 0 0 1-3.456 0 .968.968 0 0 0-1.338 1.401 4.59 4.59 0 0 0 6.132 0zM5.742 12a4.017 4.017 0 0 0-3.3-2.164A4.018 4.018 0 0 0 5.742 12zM12 12a4.017 4.017 0 0 0-3.3-2.164A4.018 4.018 0 0 0 12 12zm0-7a3.99 3.99 0 0 1 2.214 7.334 3.99 3.99 0 1 1-2.214-7.334z" /></svg>
                 <span className="sr-only">Reddit</span>
               </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors cursor-not-allowed opacity-50">
-                <Twitter className="w-5 h-5" />
-                <span className="sr-only">X (Twitter)</span>
-              </a>
+
             </div>
             <div className="absolute bottom-8 left-0 right-0 p-4 space-y-4">
               <div className="flex items-center justify-between rounded-lg border p-3">

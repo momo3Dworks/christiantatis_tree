@@ -10,6 +10,20 @@
     "currentLanguage": "Current:",
     "languageSelected": "Language Selected:"
   },
+  "days": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
+  "time": {
+    "morning": "Morning (6am-12pm)",
+    "afternoon": "Afternoon (1pm-5pm)",
+    "evening": "Evening (6pm-12am)"
+  },
   "welcome": {
     "title": "Welcome to CHRISTIANITATIS"
   },
@@ -211,7 +225,34 @@
       "bookSpotButton": "Book a Spot",
       "attendTab": "Attend a Church",
       "createTab": "Create a Church",
-      "loginPrompt": "Please log in to register a church."
+      "loginPrompt": "Please log in to register a church.",
+      "country": "Country",
+      "anyCountry": "Any Country",
+      "day": "Day",
+      "anyDay": "Any Day",
+      "time": "Time",
+      "anyTime": "Any Time",
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "morning": "Morning (6am-12pm)",
+      "afternoon": "Afternoon (1pm-5pm)",
+      "evening": "Evening (6pm-12am)",
+      "spots": "Spots",
+      "hostInfo": "Host Information",
+      "host": "Host",
+      "noEmail": "No email provided",
+      "confirmReservation": "Confirm Reservation?",
+      "yesConfirm": "Yes, Confirm",
+      "cancel": "Cancel",
+      "loginToBook": "Login to book",
+      "reserved": "Reserved",
+      "noSpots": "No spots available",
+      "notOpen": "Not Open"
     },
     "startMeeting": {
       "title": "Home Church",
