@@ -1,13 +1,13 @@
 
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeAdminApp } from '@/firebase/admin';
+// import { getAuth } from 'firebase-admin/auth';
+// import { initializeAdminApp } from '@/firebase/admin';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_123456789'); // Valid key required for real sending
 
 // Ensure the admin app is initialized
-initializeAdminApp();
+// initializeAdminApp();
 
 export async function POST(req: Request) {
     try {
@@ -17,24 +17,26 @@ export async function POST(req: Request) {
 
         // 1. Handle Multiple User IDs (Broadcast)
         if (userIds && Array.isArray(userIds) && userIds.length > 0) {
-            const auth = getAuth();
-            const userRecords = await auth.getUsers(userIds.map(uid => ({ uid })));
-            targetEmails = userRecords.users
-                .map(user => user.email)
-                .filter((e): e is string => !!e);
+            // const auth = getAuth();
+            // const userRecords = await auth.getUsers(userIds.map(uid => ({ uid })));
+            // targetEmails = userRecords.users
+            //     .map(user => user.email)
+            //     .filter((e): e is string => !!e);
+            console.warn("Batch user lookup disabled (Firebase removed). Provide direct emails.");
         }
         // 2. Handle Creator Lookup
         else if (to === 'creator_lookup' && creatorId) {
-            const auth = getAuth();
-            try {
-                const userRecord = await auth.getUser(creatorId);
-                if (userRecord.email) {
-                    targetEmails.push(userRecord.email);
-                }
-            } catch (error) {
-                console.error('Creator lookup failed', error);
-                return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
-            }
+            // const auth = getAuth();
+            // try {
+            //     const userRecord = await auth.getUser(creatorId);
+            //     if (userRecord.email) {
+            //         targetEmails.push(userRecord.email);
+            //     }
+            // } catch (error) {
+            //     console.error('Creator lookup failed', error);
+            //     return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
+            // }
+            console.warn("Creator lookup disabled (Firebase removed). Provide direct email.");
         }
         // 3. Direct Email
         else if (to) {
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
         // Send logic
         for (const recipient of targetEmails) {
             if (process.env.RESEND_API_KEY && process.env.NODE_ENV === 'production') {
-                 const { data, error } = await resend.emails.send({
+                const { data, error } = await resend.emails.send({
                     from: 'Christianitatis <onboarding@resend.dev>',
                     to: [recipient],
                     subject: subject,
