@@ -139,7 +139,8 @@
         "bank": "Bank",
         "name": "Name",
         "agency": "Agency",
-        "account": "Account"
+        "account": "Account",
+        "emailInstruction": "Please send payment/transfer proofs to: info@christianitatis.org"
       },
       "memo": "Please include \"General Donation\" in the memo or reference field of your transfer.",
       "pixTransfer": "PIX Transfer",

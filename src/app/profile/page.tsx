@@ -95,8 +95,102 @@ export default function ProfilePage() {
     toast({ title: 'Address Saved (Simulated)', description: 'In a real app, this would be a secure backend operation.' });
   };
 
-  // MFA State - Not directly supported by Firebase Client SDK in this manner
-  const [mfaQr, setMfaQr] = useState<string | null>(null);
+  // MFA State
+  const [factors, setFactors] = useState<any[]>([]);
+  const [enrollData, setEnrollData] = useState<any>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [isMfaLoading, setIsMfaLoading] = useState(false);
+
+  const [mfaError, setMfaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user && supabase) {
+      supabase.auth.mfa.listFactors().then(({ data, error }) => {
+        if (error) {
+          console.error("MFA List Error:", error);
+          setMfaError(error.message);
+        } else if (data) {
+          const verified = data.totp.filter((f: any) => f.status === 'verified');
+          setFactors(verified);
+        }
+      });
+    }
+  }, [user, supabase]);
+
+  const handleStartMfa = async () => {
+    setIsMfaLoading(true);
+    try {
+      // Providing 'issuer' explicitly to prevent Supabase from defaulting to Site URL which might cause formatting errors.
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        issuer: 'Christianitatis'
+      });
+      if (error) throw error;
+
+      setEnrollData(data);
+
+      // Manually construct the URI to ensure it is properly formatted, avoiding issuer/siteURL issues from Supabase config.
+      const secret = data.totp.secret;
+      const issuer = "Christianitatis";
+      const accountName = user?.email || "User";
+      const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(accountName)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+
+      const url = await QRCode.toDataURL(uri);
+      setQrCodeUrl(url);
+    } catch (error: any) {
+      console.error("MFA Start Error:", error);
+      toast({ variant: 'destructive', title: 'Error', description: error.message || "Could not start MFA enrollment." });
+    } finally {
+      setIsMfaLoading(false);
+    }
+  };
+
+  const handleVerifyMfa = async () => {
+    if (!enrollData || !verifyCode) return;
+    setIsMfaLoading(true);
+    try {
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: enrollData.id });
+      if (challengeError) throw challengeError;
+
+      const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: enrollData.id,
+        challengeId: challengeData.id,
+        code: verifyCode
+      });
+      if (verifyError) throw verifyError;
+
+      toast({ title: 'MFA Enabled', description: 'Two-factor authentication is now active.' });
+      setEnrollData(null);
+      setQrCodeUrl(null);
+      setVerifyCode('');
+      // Refresh factors
+      const { data } = await supabase.auth.mfa.listFactors();
+      if (data) setFactors(data.totp.filter((f: any) => f.status === 'verified'));
+
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Invalid Code', description: error.message });
+    } finally {
+      setIsMfaLoading(false);
+    }
+  };
+
+  const handleDisableMfa = async () => {
+    const factor = factors[0]; // Assume 1 factor for simplicity
+    if (!factor) return;
+    setIsMfaLoading(true);
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      if (error) throw error;
+
+      setFactors([]);
+      toast({ title: 'MFA Disabled', description: 'Two-factor authentication has been turned off.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setIsMfaLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -296,7 +390,7 @@ export default function ProfilePage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: 'creator_lookup',
+            to: churchData.creatorEmail || 'creator_lookup',
             creatorId: churchData.creatorId,
             subject: 'Reservation Canceled - Christianitatis',
             html: creatorEmailHtml
@@ -564,7 +658,50 @@ export default function ProfilePage() {
                   <CardDescription>Increase your account security using an authenticator app (e.g. Google Authenticator).</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">Multi-factor authentication is not yet available.</p>
+                  {mfaError && (
+                    <div className="flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-700 dark:text-red-300 mb-4">
+                      <AlertCircle className="h-5 w-5" />
+                      <p className="font-medium">MFA Service Error: {mfaError}</p>
+                      <p className="text-xs mt-1">Make sure MFA is enabled in your project settings.</p>
+                    </div>
+                  )}
+                  {factors.length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-700 dark:text-green-300">
+                        <CheckCircle className="h-5 w-5" />
+                        <p className="font-medium">MFA is enabled on your account.</p>
+                      </div>
+                      <Button variant="destructive" onClick={handleDisableMfa} disabled={isMfaLoading}>
+                        Disable MFA
+                      </Button>
+                    </div>
+                  ) : qrCodeUrl ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <p className="text-sm text-muted-foreground text-center">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                      <img src={qrCodeUrl} alt="MFA QR Code" className="w-48 h-48 border rounded-lg" />
+                      <div className="w-full max-w-xs space-y-2">
+                        <Label htmlFor="otp">Enter the 6-digit code</Label>
+                        <Input
+                          id="otp"
+                          value={verifyCode}
+                          onChange={(e) => setVerifyCode(e.target.value)}
+                          placeholder="123456"
+                          maxLength={6}
+                        />
+                        <div className="flex gap-2">
+                          <Button className="w-full" onClick={handleVerifyMfa} disabled={isMfaLoading || verifyCode.length < 6}>Verify & Activate</Button>
+                          <Button variant="ghost" onClick={() => { setQrCodeUrl(null); setEnrollData(null); }}>Cancel</Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-start gap-4">
+                      <p className="text-sm text-muted-foreground">Add an extra layer of security to your account by requiring a code from an authenticator app when you log in.</p>
+                      <Button onClick={handleStartMfa} disabled={isMfaLoading}>
+                        Enable 2FA
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

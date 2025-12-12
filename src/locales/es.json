@@ -139,7 +139,8 @@
         "bank": "Banco",
         "name": "Nombre",
         "agency": "Agencia",
-        "account": "Cuenta"
+        "account": "Cuenta",
+        "emailInstruction": "Enviar comprobantes de pago/transferencias al correo: info@christianitatis.org"
       },
       "memo": "Por favor, incluye \"Donación General\" en el campo de concepto o referencia de tu transferencia.",
       "pixTransfer": "Transferencia PIX",

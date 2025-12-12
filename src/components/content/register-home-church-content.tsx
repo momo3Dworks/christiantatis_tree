@@ -60,7 +60,7 @@ const formSchema = z.object({
   phone_number: z.string().min(10, { message: "Phone number must be at least 10 digits." }).transform(sanitize),
   email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
   whatsapp_number: z.string().optional().transform(val => val ? sanitize(val) : val),
-  website_url: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  website_url: z.string().optional().transform(e => e === "" ? undefined : e).transform(e => e && !e.startsWith('http') ? `https://${e}` : e).pipe(z.string().url({ message: "Please enter a valid URL." }).optional()),
   neighborhood: z.string().optional().transform(val => val ? sanitize(val) : val),
   tags: z.string().optional().transform(val => val ? sanitize(val) : val),
   person_limit: z.coerce.number().min(1, "Limit must be at least 1.").optional(),
@@ -210,11 +210,13 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
     }
 
     const contactPhone = user.phone;
-    if (!contactPhone) {
+    const whatsappNumber = user.user_metadata?.whatsapp_number;
+
+    if (!contactPhone && !whatsappNumber) {
       toast({
         variant: "destructive",
         title: "Contact Info Required",
-        description: "Please go to your profile and add a Phone number so the host can contact you.",
+        description: "Please go to your profile and add a Phone number or WhatsApp so the host can contact you.",
         action: <Button variant="outline" size="sm" onClick={() => window.location.href = '/profile'}>Go to Profile</Button>
       });
       return;
@@ -291,6 +293,7 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
                   <li><strong>Name:</strong> ${user.user_metadata?.full_name || 'N/A'}</li>
                   <li><strong>Email:</strong> ${user.email}</li>
                   ${user.phone ? `<li><strong>Phone:</strong> ${user.phone}</li>` : ''}
+                  ${user.user_metadata?.whatsapp_number ? `<li><strong>WhatsApp:</strong> ${user.user_metadata.whatsapp_number}</li>` : ''}
                   </ul>
               </div>
               <p>You can view all your reservations in your profile.</p>
@@ -302,7 +305,7 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: 'creator_lookup',
+            to: church.creatorEmail || 'creator_lookup',
             creatorId: church.creatorId,
             subject: 'New Reservation - Christianitatis',
             html: creatorEmailHtml

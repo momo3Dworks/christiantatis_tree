@@ -108,7 +108,7 @@ export default function DonationContent() {
                     {t('contentPreview.donation.memo')}
                   </p>
                   <p className="text-sm font-semibold text-center pt-2">
-                    Enviar comprobantes de pago/transferencias al correo: info@christianitatis.org
+                    {t('contentPreview.donation.bankInfo.emailInstruction')}
                   </p>
                 </CardContent>
               </Card>

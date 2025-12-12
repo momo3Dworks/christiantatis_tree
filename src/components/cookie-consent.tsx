@@ -14,13 +14,8 @@ const CookieConsent = () => {
   const geolocation = useContext(GeolocationContext);
 
   useEffect(() => {
-    const consent = Cookies.get('cookie_consent');
-    if (!consent) {
-      setShowConsent(true);
-    } else {
-        handleGeolocation();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Always show consent on refresh as requested
+    setShowConsent(true);
   }, []);
 
   const handleGeolocation = () => {

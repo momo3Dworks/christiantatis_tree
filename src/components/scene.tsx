@@ -787,7 +787,10 @@ const Scene = ({ assets, hasInteracted, startIntroAnimation, onIntroAnimationCom
             if (!isAtInitialPosition) {
                 if (hoveredMeshRef.current) {
                     const { mesh, orbSystem } = hoveredMeshRef.current;
-                    gsap.to(sphereToParentMapRef.current.get(mesh)?.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+                    const parent = sphereToParentMapRef.current.get(mesh);
+                    if (parent) {
+                        gsap.to(parent.scale, { x: 1, y: 1, z: 1, duration: 0.3 });
+                    }
                     if (orbSystem) orbSystem.points.visible = false;
                     setHoveredLabel('');
                     playGrassScanAnimation(true);
