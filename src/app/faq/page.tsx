@@ -32,13 +32,21 @@ export default function FaqPage() {
       question: t('faq.q4'),
       answer: t('faq.a4'),
     },
+    {
+      question: t('faq.q5'),
+      answer: t('faq.a5'),
+    },
+    {
+      question: t('faq.q6'),
+      answer: t('faq.a6'),
+    },
   ];
 
   return (
     <div className="container mx-auto px-4 py-24 max-w-3xl">
-       <div className="relative flex items-center justify-center mb-12">
-            <h1 className="text-4xl font-bold text-center">{t('faq.title')}</h1>
-        </div>
+      <div className="relative flex items-center justify-center mb-12">
+        <h1 className="text-4xl font-bold text-center">{t('faq.title')}</h1>
+      </div>
       <Accordion type="single" collapsible className="w-full">
         {faqItems.map((item, index) => (
           <AccordionItem key={index} value={`item-${index}`}>

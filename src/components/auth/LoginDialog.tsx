@@ -18,8 +18,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Chrome } from 'lucide-react';
-import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -32,7 +32,7 @@ const signUpSchema = z.object({
 });
 
 export default function LoginDialog({ children, open, onOpenChange }: { children: React.ReactNode, open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { supabase } = useSupabase();
+  const supabase = useSupabaseClient();
   const { toast } = useToast();
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -44,42 +44,34 @@ export default function LoginDialog({ children, open, onOpenChange }: { children
   });
 
   const handleLogin = async (values: z.infer<typeof loginSchema>) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
+    const { error } = await supabase.auth.signInWithPassword(values);
     if (error) {
       toast({
         variant: "destructive",
-        title: "Error de inicio de sesión",
+        title: "Login Error",
         description: error.message,
       });
     } else {
       toast({
-        title: "Inicio de sesión exitoso",
-        description: "¡Bienvenido de nuevo!",
+        title: "Login Successful",
+        description: "Welcome back!",
       });
       onOpenChange(false);
     }
   };
 
   const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-    });
-
+    const { error } = await supabase.auth.signUp(values);
     if (error) {
-      toast({
+       toast({
         variant: "destructive",
-        title: "Error de registro",
+        title: "Sign Up Error",
         description: error.message,
       });
     } else {
       toast({
-        title: "Registro exitoso",
-        description: "Por favor revisa tu correo para confirmar tu cuenta.",
+        title: "Sign Up Successful",
+        description: "Please check your email to confirm your account.",
       });
       onOpenChange(false);
     }
@@ -89,15 +81,17 @@ export default function LoginDialog({ children, open, onOpenChange }: { children
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      }
+        redirectTo: `${location.origin}/auth/callback`,
+      },
     });
     if (error) {
       toast({
         variant: "destructive",
-        title: "Error con Google",
+        title: "Google Sign-In Error",
         description: error.message,
       });
+    } else {
+      onOpenChange(false);
     }
   };
 

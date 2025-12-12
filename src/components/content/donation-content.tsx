@@ -23,12 +23,12 @@ export default function DonationContent() {
         </header>
 
         <main>
-          <Tabs defaultValue="card" className="w-full">
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-3 h-auto md:h-10">
-              <TabsTrigger value="card" className="py-2.5">
+          <Tabs defaultValue="transfer" className="w-full">
+            <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 h-auto md:h-10">
+              {/* <TabsTrigger value="card" className="py-2.5">
                 <CreditCard className="mr-2" />
                 {t('contentPreview.donation.card')}
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger value="transfer" className="py-2.5">
                 <Landmark className="mr-2" />
                 {t('contentPreview.donation.bank')}
@@ -38,8 +38,8 @@ export default function DonationContent() {
                 {t('contentPreview.donation.pix')}
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="card" className="mt-6">
+
+            {/* <TabsContent value="card" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>{t('contentPreview.donation.payWithCard')}</CardTitle>
@@ -77,7 +77,7 @@ export default function DonationContent() {
                   <Button className="w-full" size="lg">{t('contentPreview.donation.donate')}</Button>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent> */}
 
             <TabsContent value="transfer" className="mt-6">
               <Card>
@@ -96,7 +96,7 @@ export default function DonationContent() {
                     <span className="text-muted-foreground">{t('contentPreview.donation.bankInfo.name')}:</span>
                     <span>ASSOCIACAO CHRISTIANITATIS</span>
                   </div>
-                   <div className="flex justify-between">
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('contentPreview.donation.bankInfo.agency')}:</span>
                     <span>0050</span>
                   </div>
@@ -106,6 +106,9 @@ export default function DonationContent() {
                   </div>
                   <p className="text-xs text-muted-foreground pt-4">
                     {t('contentPreview.donation.memo')}
+                  </p>
+                  <p className="text-sm font-semibold text-center pt-2">
+                    Enviar comprobantes de pago/transferencias al correo: info@christianitatis.org
                   </p>
                 </CardContent>
               </Card>

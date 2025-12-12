@@ -7,6 +7,25 @@ import { useTranslation } from "@/hooks/useTranslation";
 export default function StartBibleMeetingContent() {
   const { t } = useTranslation();
 
+  // Helper function to render text with newlines as paragraphs
+  const renderWithParagraphs = (text: string) => {
+    return text.split('\n\n').map((paragraph, index) => (
+      <p key={index} className="text-muted-foreground mb-4 last:mb-0">
+        {paragraph}
+      </p>
+    ));
+  };
+  
+  const howToStartSteps = [
+    t('contentPreview.startMeeting.howToStartStep1'),
+    t('contentPreview.startMeeting.howToStartStep2'),
+    t('contentPreview.startMeeting.howToStartStep3'),
+    t('contentPreview.startMeeting.howToStartStep4'),
+    t('contentPreview.startMeeting.howToStartStep5'),
+    t('contentPreview.startMeeting.howToStartStep6'),
+    t('contentPreview.startMeeting.howToStartStep7'),
+  ];
+
   return (
     <div className="PreviewContent flex flex-col items-center justify-center p-4 md:p-8 text-foreground">
       <div className="w-full max-w-5xl mx-auto">
@@ -31,22 +50,26 @@ export default function StartBibleMeetingContent() {
                 <CardTitle>{t('contentPreview.startMeeting.whatIsHomeChurchTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  {t('contentPreview.startMeeting.whatIsHomeChurchDesc')}
-                </p>
+                <div>
+                  {renderWithParagraphs(t('contentPreview.startMeeting.whatIsHomeChurchDesc'))}
+                </div>
               </CardContent>
             </Card>
-          </section>
-
-          <section>
-            <h2 className="text-3xl font-bold text-center mb-8">{t('contentPreview.startMeeting.relatedVideosTitle')}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 7 }).map((_, index) => (
-                <div key={index} className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground text-sm">{t('contentPreview.startMeeting.videoPlaceholder')} {index + 1}</p>
-                </div>
-              ))}
-            </div>
+             <Card>
+              <CardHeader>
+                <CardTitle>{t('contentPreview.startMeeting.howToStartTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  {t('contentPreview.startMeeting.howToStartIntro')}
+                </p>
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                  {howToStartSteps.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
           </section>
         </main>
       </div>

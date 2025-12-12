@@ -1,4 +1,3 @@
-
 {
   "header": {
     "events": "Eventos",
@@ -41,9 +40,10 @@
   },
   "content": {
     "youtubeTitle": "Nuestro Canal de YouTube",
-    "youtubePlaceholder": "La integración con la API de YouTube llegará pronto para mostrar los últimos videos.",
     "spotifyTitle": "Últimos Podcasts en Spotify",
-    "spotifyPlaceholder": "La integración con la API de Spotify llegará pronto para mostrar los últimos podcasts."
+    "spotifyPlaceholder": "La integración con la API de Spotify llegará pronto para mostrar los últimos podcasts.",
+    "viewMore": "Ver Más",
+    "viewLess": "Ver Menos"
   },
   "events": {
     "title": "Encuentra un Evento",
@@ -73,14 +73,18 @@
   },
   "faq": {
     "title": "Preguntas Frecuentes",
-    "q1": "¿Cuáles son los horarios de sus servicios?",
-    "a1": "Nuestro servicio principal es el domingo a las 10:00 AM. También tenemos un servicio entre semana los miércoles a las 7:00 PM.",
-    "q2": "¿Tienen programas para niños?",
-    "a2": "Sí, tenemos un vibrante ministerio infantil para edades de 0 a 12 años durante nuestro servicio dominical.",
-    "q3": "¿Cómo puedo involucrarme?",
-    "a3": "Tenemos muchos grupos pequeños y oportunidades de voluntariado. Por favor, visita nuestra página de contacto para ponerte en contacto con un líder de ministerio.",
-    "q4": "¿En qué creen?",
-    "a4": "Nuestras creencias están arraigadas en la Biblia y centradas en Jesucristo. Puedes encontrar una declaración de fe detallada en nuestra página 'Sobre Nosotros' (próximamente)."
+    "q1": "¿Puedo crear una reunión bíblica en cualquier lugar del mundo?",
+    "a1": "Sí, Christianitatis alienta la creación de iglesias en los hogares en cualquier lugar donde haya personas dispuestas a adorar.",
+    "q2": "Cuando registro una Iglesia en el Hogar, ¿mis datos personales están disponibles para cualquiera que visite el sitio?",
+    "a2": "No exponemos tus datos sensibles públicamente. El sitio solo muestra información esencial como el barrio y el horario, y el contacto directo está protegido o se realiza a través de la plataforma.",
+    "q3": "¿Necesito iniciar sesión para acceder al contacto del anfitrión de cada Iglesia en el Hogar?",
+    "a3": "Sí, para garantizar la seguridad de la comunidad, el acceso a los detalles de contacto de los anfitriones requiere autenticación.",
+    "q4": "¿Cuánto dura una reunión bíblica?",
+    "a4": "El tiempo puede variar según cada grupo, pero generalmente las reuniones duran entre 1 hora y media a 2 horas.",
+    "q5": "¿Quién participa en el foro?",
+    "a5": "El foro está abierto a todos los miembros registrados en la plataforma que deseen discutir temas bíblicos y compartir experiencias.",
+    "q6": "¿Es necesario ser cristiano para participar en alguna Iglesia en el Hogar?",
+    "a6": "No, todos son bienvenidos a participar, escuchar la palabra y aprender más sobre la fe cristiana, independientemente de su creencia actual."
   },
   "forum": {
     "title": "Foro Comunitario",
@@ -90,33 +94,33 @@
   "scene": {
     "support": "Apoya el Movimiento",
     "register": "Registrar una Iglesia en Casa",
-    "startMeeting": "Iniciar una Reunión Bíblica",
+    "startMeeting": "Iglesia en Casa",
     "findChurch": "Encontrar una Iglesia en Casa",
     "aboutUs": "Sobre Nosotros",
     "return": "Volver"
   },
   "contentPreview": {
     "aboutUs": {
-      "title": "Sobre Nosotros",
+      "title": "Nuestra Misión",
       "missionTitle": "Nuestra Misión",
-      "missionDescription": "Difundir el mensaje de fe, esperanza y amor, fomentando una comunidad global de creyentes dedicados al crecimiento espiritual y al servicio. Nuestro objetivo es hacer que las enseñanzas de la Biblia sean accesibles para todos, en todas partes, capacitando a las personas para construir una relación personal con Dios.",
+      "missionDescription": "Christianitatis tiene como misión enseñar a las personas a comenzar Iglesias en los Hogares en todo el mundo como una estructura dinámica y multiplicable, capaz de expandirse continuamente mientras se mantengan las condiciones esenciales. Creemos que la calidad del liderazgo y la vitalidad de la vida espiritual son fundamentos indispensables para el florecimiento y la sostenibilidad de estas comunidades de fe.",
       "valuesTitle": "Nuestros Valores",
       "faith": "Fe",
-      "faithDesc": "Arraigados en las enseñanzas de Jesucristo y la Santa Escritura.",
+      "faithDesc": "Nos guiamos por las enseñanzas de Jesucristo y la Sagrada Escritura",
       "community": "Comunidad",
-      "communityDesc": "Construyendo relaciones sólidas y de apoyo entre los creyentes.",
+      "communityDesc": "Queremos construir relaciones fuertes y de apoyo entre aquellos que creen en Jesús",
       "service": "Servicio",
-      "serviceDesc": "Sirviendo a los demás con amor y compasión, siguiendo el ejemplo de Cristo.",
+      "serviceDesc": "Sirviendo al prójimo con amor y compasión, siguiendo el ejemplo de Jesucristo.",
       "integrity": "Integridad",
-      "integrityDesc": "Manteniendo la honestidad y la transparencia en todas nuestras acciones.",
+      "integrityDesc": "Mantenemos la honestidad y transparencia en todas nuestras acciones",
       "worship": "Adoración",
-      "worshipDesc": "Glorificando a Dios en todo lo que hacemos, en espíritu y en verdad.",
+      "worshipDesc": "Glorificamos a Dios en todo lo que hacemos, en espíritu y en verdad.",
       "discipleship": "Discipulado",
-      "discipleshipDesc": "Ayudando a los creyentes a crecer en su fe y convertirse en seguidores de Cristo."
+      "discipleshipDesc": "Ayudando a las personas a crecer en su fe y a convertirse en seguidores de Jesucristo"
     },
     "donation": {
-      "title": "Apoya el Movimiento",
-      "description": "Tu generosidad impulsa nuestra misión de difundir el mensaje y apoyar a las comunidades necesitadas. Cada contribución, grande o pequeña, tiene un impacto significativo.",
+      "title": "Apoya el Movimento",
+      "description": "Tu generosidad fortalece nuestra misión de alcanzar al mayor número posible de personas para que reciban la vida eterna por gracia y mediante la fe en Jesucristo.",
       "card": "Tarjeta de Crédito/Débito",
       "bank": "Transferencia Bancaria",
       "pix": "PIX",
@@ -127,7 +131,7 @@
       "expiry": "Vencimiento",
       "cvc": "CVC",
       "zip": "Código Postal",
-      "amount": "Monto (USD)",
+      "amount": "Monto en dólares",
       "donate": "Donar",
       "bankDetails": "Datos de Transferencia Bancaria",
       "bankDescription": "Usa los siguientes datos para hacer una transferencia bancaria directa.",
@@ -209,13 +213,22 @@
       "loginPrompt": "Por favor, inicia sesión para registrar una iglesia."
     },
     "startMeeting": {
-      "title": "Iniciar una Reunión Bíblica",
+      "title": "Iglesia en Casa",
       "whatIsChurchTitle": "¿Qué es una Iglesia?",
-      "whatIsChurchDesc": "Una iglesia no es un edificio, sino una comunidad de creyentes unidos por su fe en Jesucristo. Es una familia espiritual dedicada a la adoración, el compañerismo, el discipulado, el ministerio y el evangelismo. La iglesia primitiva se reunía en casas, y este modelo enfatiza las relaciones estrechas y el apoyo mutuo.",
-      "whatIsHomeChurchTitle": "¿Qué es una Iglesia en Casa?",
-      "whatIsHomeChurchDesc": "Una iglesia en casa es un pequeño grupo de creyentes que se reúne regularmente en un hogar en lugar de un edificio de iglesia tradicional. Se enfoca en crear un ambiente íntimo para la adoración, la oración, el estudio bíblico y el compañerismo, fomentando conexiones más profundas y el crecimiento personal en un entorno cómodo y accesible.",
+      "whatIsChurchDesc": "La Iglesia somos nosotros, reunidos y reconciliados con Dios a través de Jesucristo. La Iglesia es una realidad espiritual colectiva formada por personas que se unen y se relacionan por haber sido salvas, nacer de nuevo y recibir la vida eterna por gracia, mediante la fe en Jesucristo. Bajo el liderazgo y la autoridad de Jesucristo, la Iglesia, en unidad, está llamada a proclamar el evangelio y manifestar el amor y el Reino de Dios en la Tierra.",
+      "whatIsHomeChurchTitle": "¿Qué es una Iglesia en casa?",
+      "whatIsHomeChurchDesc": "Al no ser una institución religiosa, un edificio o una estructura jerárquica, es decir, por no ser una organización sino un organismo, la Iglesia puede expresarse y reunirse en cualquier lugar, especialmente en una casa, como comunidad de personas que comparten la misma fe y se reúnen para adorar a Dios, aprender de la Palabra y vivir en amor y comunión unos con otros.\n\nLa primera adoración a Jesucristo ocurrió en una casa, en un hogar (Mateo 2:11). Varias de las sanaciones de Jesús, predicaciones e incluso la Última Cena ocurrieron en los hogares (Mateo 8:14-16; Mateo 26:18; Marcos 2:1). El apóstol Pablo también envía saludos a varias iglesias en los hogares, como podemos ver en Romanos 16:3-5, 1 Corintios 16:19 y Filemón 1:2. Incluso antes de su muerte, Pablo reunía a la Iglesia en casa (Hechos 28:30-31).\n\nLa iglesia en casa representa un camino para establecer y restablecer la comunión unos con otros.",
       "relatedVideosTitle": "Videos Relacionados",
-      "videoPlaceholder": "Video de YouTube"
+      "videoPlaceholder": "Video de YouTube",
+      "howToStartTitle": "¿Cómo empezar una reunión bíblica en casa?",
+      "howToStartIntro": "En 7 breves videos, aprenderás cómo iniciar una reunión o comunión bíblica en casa:",
+      "howToStartStep1": "Ora y comienza una reunión bíblica en casa",
+      "howToStartStep2": "Cómo dirigir y qué hacer durante una reunión bíblica",
+      "howToStartStep3": "Cuidado de los niños y seguridad durante las reuniones",
+      "howToStartStep4": "Realización de bautismos",
+      "howToStartStep5": "Qué hacer cuando la reunión bíblica en casa crece demasiado en número de personas",
+      "howToStartStep6": "Manejo de conflictos y desacuerdos en la Iglesia en casa",
+      "howToStartStep7": "Cómo reconocer y contribuir con otras Iglesias en casa de tu ciudad"
     }
   },
   "footer": {

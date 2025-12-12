@@ -1,4 +1,3 @@
-
 {
   "header": {
     "events": "Eventos",
@@ -41,9 +40,10 @@
   },
   "content": {
     "youtubeTitle": "Nosso Canal no YouTube",
-    "youtubePlaceholder": "A integração da API do YouTube chegará em breve para exibir os vídeos mais recentes.",
     "spotifyTitle": "Últimos Podcasts no Spotify",
-    "spotifyPlaceholder": "A integração da API do Spotify chegará em breve para exibir os podcasts mais recentes."
+    "spotifyPlaceholder": "A integração da API do Spotify chegará em breve para exibir os podcasts mais recentes.",
+    "viewMore": "Ver Mais",
+    "viewLess": "Ver Menos"
   },
   "events": {
     "title": "Encontre um Evento",
@@ -73,14 +73,18 @@
   },
   "faq": {
     "title": "Perguntas Frequentes",
-    "q1": "Quais são os horários dos seus cultos?",
-    "a1": "Nosso culto principal é no domingo às 10:00. Também temos um culto no meio da semana às quartas-feiras às 19:00.",
-    "q2": "Vocês têm programas para crianças?",
-    "a2": "Sim, temos um ministério infantil vibrante para idades de 0 a 12 anos durante o nosso culto de domingo.",
-    "q3": "Como posso me envolver?",
-    "a3": "Temos muitos grupos pequenos e oportunidades de voluntariado. Por favor, visite nossa página de contato para entrar em contato com um líder de ministério.",
-    "q4": "No que vocês acreditam?",
-    "a4": "Nossas crenças estão enraizadas na Bíblia e centradas em Jesus Cristo. Você pode encontrar uma declaração de fé detalhada em nossa página 'Sobre Nós' (a ser criada em breve)."
+    "q1": "Posso criar uma reunião bíblica em qualquer lugar do mundo?",
+    "a1": "Sim, a Christianitatis incentiva a criação de igrejas nos lares em qualquer lugar onde haja pessoas dispostas a adorar.",
+    "q2": "Quando cadastro uma Igreja no lar, meus dados pessoais são disponibilizados para qualquer pessoa que entra no site?",
+    "a2": "Não expomos seus dados sensíveis publicamente. O site mostra apenas informações essenciais como bairro e horário, e o contato direto é protegido ou feito através da plataforma.",
+    "q3": "Preciso fazer login para acessar o contato do anfitrião de cada Igreja no lar?",
+    "a3": "Sim, para garantir a segurança da comunidade, o acesso aos detalhes de contato dos anfitriões requer autenticação.",
+    "q4": "Quanto tempo dura uma reunião bíblica?",
+    "a4": "O tempo pode variar de acordo com cada grupo, mas geralmente as reuniões duram entre 1 hora e meia a 2 horas.",
+    "q5": "Quem participa do fórum?",
+    "a5": "O fórum é aberto a todos os membros cadastrados na plataforma que desejam discutir temas bíblicos e compartilhar experiências.",
+    "q6": "É preciso ser cristão para participar de alguma Igreja no lar?",
+    "a6": "Não, todos são bem-vindos para participar, ouvir a palavra e conhecer mais sobre a fé cristã, independentemente de sua crença atual."
   },
   "forum": {
     "title": "Fórum da Comunidade",
@@ -90,33 +94,33 @@
   "scene": {
     "support": "Apoie o Movimento",
     "register": "Registrar uma Igreja em Casa",
-    "startMeeting": "Iniciar uma Reunião Bíblica",
+    "startMeeting": "Igreja no Lar",
     "findChurch": "Encontrar uma Igreja em Casa",
     "aboutUs": "Sobre Nós",
     "return": "Retornar"
   },
   "contentPreview": {
     "aboutUs": {
-      "title": "Sobre Nós",
+      "title": "Nossa Missão",
       "missionTitle": "Nossa Missão",
-      "missionDescription": "Espalhar a mensagem de fé, esperança e amor, fomentando uma comunidade global de crentes dedicados ao crescimento espiritual e ao serviço. Nosso objetivo é tornar os ensinamentos da Bíblia acessíveis a todos, em todos os lugares, capacitando os indivíduos a construir um relacionamento pessoal com Deus.",
+      "missionDescription": "A Christianitatis tem como missão ensinar pessoas a começarem Igrejas nos Lares em todo o mundo como uma estrutura dinâmica e multiplicável, capaz de se expandir continuamente enquanto as condições essenciais forem mantidas. Acreditamos que a qualidade da liderança e a vitalidade da vida espiritual são fundamentos indispensáveis para o florescimento e a sustentabilidade dessas comunidades de fé.",
       "valuesTitle": "Nossos Valores",
       "faith": "Fé",
-      "faithDesc": "Enraizados nos ensinamentos de Jesus Cristo e na Sagrada Escritura.",
+      "faithDesc": "Guiamo-nos pelos ensinamentos de Jesus Cristo e pela Sagrada Escritura",
       "community": "Comunidade",
-      "communityDesc": "Construindo relacionamentos fortes e de apoio entre os crentes.",
+      "communityDesc": "Queremos construir relacionamentos fortes e de apoio entre aqueles que creem em Jesus",
       "service": "Serviço",
-      "serviceDesc": "Servindo aos outros com amor e compaixão, seguindo o exemplo de Cristo.",
+      "serviceDesc": "Servindo ao próximo com amor e compaixão, seguindo o exemplo de Jesus Cristo.",
       "integrity": "Integridade",
-      "integrityDesc": "Mantendo a honestidade e a transparência em todas as nossas ações.",
+      "integrityDesc": "Mantemos a honestidade e transparência em todas as nossas ações",
       "worship": "Adoração",
-      "worshipDesc": "Glorificando a Deus em tudo o que fazemos, em espírito e em verdade.",
+      "worshipDesc": "Glorificamos a Deus em tudo o que fazemos, em espírito e em verdade.",
       "discipleship": "Discipulado",
-      "discipleshipDesc": "Ajudando os crentes a crescerem em sua fé e a se tornarem seguidores de Cristo."
+      "discipleshipDesc": "Ajudando pessoas a crescerem em sua fé e a se tornarem seguidores de Jesus Cristo"
     },
     "donation": {
       "title": "Apoie o Movimento",
-      "description": "Sua generosidade alimenta nossa missão de espalhar a mensagem e apoiar comunidades necessitadas. Cada contribuição, grande ou pequena, causa um impacto significativo.",
+      "description": "Sua generosidade fortalece a nossa missão de alcançar o maior número de pessoas possíveis para que recebam a vida eterna pela graça e mediante a fé em Jesus Cristo.",
       "card": "Cartão de Crédito/Débito",
       "bank": "Transferência Bancária",
       "pix": "PIX",
@@ -127,7 +131,7 @@
       "expiry": "Validade",
       "cvc": "CVC",
       "zip": "CEP",
-      "amount": "Valor (USD)",
+      "amount": "Valor em dólares",
       "donate": "Doar",
       "bankDetails": "Detalhes da Transferência Bancária",
       "bankDescription": "Use os detalhes abaixo para fazer uma transferência bancária direta.",
@@ -209,13 +213,22 @@
       "loginPrompt": "Por favor, faça login para registrar uma igreja."
     },
     "startMeeting": {
-      "title": "Iniciar uma Reunião Bíblica",
-      "whatIsChurchTitle": "O que é uma Igreja?",
-      "whatIsChurchDesc": "Uma igreja não é um prédio, mas uma comunidade de crentes unidos por sua fé em Jesus Cristo. É uma família espiritual dedicada à adoração, comunhão, discipulado, ministério e evangelismo. A igreja primitiva se reunia em casas, e este modelo enfatiza relacionamentos próximos e apoio mútuo.",
-      "whatIsHomeChurchTitle": "O que é uma Igreja em Casa?",
-      "whatIsHomeChurchDesc": "Uma igreja em casa é um pequeno grupo de crentes que se reúne regularmente em uma casa em vez de um prédio de igreja tradicional. Ela se concentra em criar um ambiente íntimo para adoração, oração, estudo bíblico e comunhão, promovendo conexões mais profundas e crescimento pessoal em um ambiente confortável e acessível.",
+      "title": "Igreja no Lar",
+      "whatIsChurchTitle": "O que é Igreja?",
+      "whatIsChurchDesc": "Igreja somos nós, reunidos e reconciliados com Deus através de Jesus Cristo. A Igreja é uma realidade espiritual coletiva formada por pessoas que se unem e se relacionam por terem sido salvas, nascendo de novo e recebendo a vida eterna pela graça, mediante a fé em Jesus Cristo. Sob a liderança e autoridade de Jesus Cristo, a Igreja, em unidade, é chamada para proclamar o evangelho e manifestar o amor e o Reino de Deus na Terra.",
+      "whatIsHomeChurchTitle": "O que é uma Igreja no lar?",
+      "whatIsHomeChurchDesc": "Por não ser uma instituição religiosa, um prédio ou uma estrutura hierárquica, ou seja, por não ser uma organização e sim um organismo, a Igreja pode se expressar e se reunir em qualquer lugar, especialmente numa casa, como comunidade de pessoas que compartilham da mesma fé e se reúnem para adorar a Deus, aprender da Palavra e viver em amor e comunhão uns com os outros.\n\nA primeira adoração a Jesus Cristo ocorreu em uma casa, em um lar (Mateus 2:11). Várias curas de Jesus, pregações e até mesmo a ceia ocorreram nos lares (Mateus 8:14-16; Mateus 26:18; Marcos 2:1). O apóstolo Paulo também envia saudações a várias Igrejas nos lares, como podemos ver em Romanos 16:3-5, 1 Coríntios 16:19 e Filemon 1:2. Até mesmo antes de sua morte, Paulo reunia a Igreja em casa (Atos 28:30-31).\n\nA Igreja no lar representa um caminho para estabelecer e restabelecer a comunhão uns com os outros.",
       "relatedVideosTitle": "Vídeos Relacionados",
-      "videoPlaceholder": "Vídeo do YouTube"
+      "videoPlaceholder": "Vídeo do YouTube",
+      "howToStartTitle": "Como começar uma reunião bíblica no lar?",
+      "howToStartIntro": "Em 7 breves vídeos, você aprenderá como iniciar uma reunião ou comunhão bíblica no lar:",
+      "howToStartStep1": "Ore e comece uma reunião bíblica no lar",
+      "howToStartStep2": "Como conduzir e o que fazer durante uma reunião bíblica",
+      "howToStartStep3": "Cuidados com as crianças e a segurança durante as reuniões",
+      "howToStartStep4": "Realização de batismos",
+      "howToStartStep5": "O que fazer quando a reunião bíblica no lar cresce muito em número de pessoas",
+      "howToStartStep6": "Lidando com conflitos e desentendimentos na Igreja no lar",
+      "howToStartStep7": "Como reconhecer e contribuir com outras Igrejas nos lares da sua cidade"
     }
   },
   "footer": {

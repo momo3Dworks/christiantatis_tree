@@ -90,7 +90,7 @@
   "scene": {
     "support": "Soutenir le Mouvement",
     "register": "Enregistrer une Église de Maison",
-    "startMeeting": "Commencer une Réunion Biblique",
+    "startMeeting": "Église de Maison",
     "findChurch": "Trouver une Église de Maison",
     "aboutUs": "À Propos de Nous",
     "return": "Retour"
@@ -209,13 +209,22 @@
       "loginPrompt": "Veuillez vous connecter pour enregistrer une église."
     },
     "startMeeting": {
-      "title": "Commencer une Réunion Biblique",
-      "whatIsChurchTitle": "Qu'est-ce qu'une Église ?",
-      "whatIsChurchDesc": "Une église n'est pas un bâtiment, mais une communauté de croyants unis par leur foi en Jésus-Christ. C'est une famille spirituelle dédiée à l'adoration, à la communion, au discipulat, au ministère et à l'évangélisation. L'église primitive se réunissait dans les maisons, et ce modèle met l'accent sur des relations étroites et un soutien mutuel.",
+      "title": "Église de Maison",
+      "whatIsChurchTitle": "Qu'est-ce qu'une Église?",
+      "whatIsChurchDesc": "L'Église, c'est nous, rassemblés et réconciliés avec Dieu par Jésus-Christ. L'Église est une réalité spirituelle collective formée de personnes qui s'unissent et se lient parce qu'elles ont été sauvées, nées de nouveau et ont reçu la vie éternelle par la grâce, par la foi en Jésus-Christ. Sous la direction et l'autorité de Jésus-Christ, l'Église, dans l'unité, est appelée à proclamer l'Évangile et à manifester l'amour et le Royaume de Dieu sur la Terre.",
       "whatIsHomeChurchTitle": "Qu'est-ce qu'une Église de Maison ?",
-      "whatIsHomeChurchDesc": "Une église de maison est un petit groupe de croyants qui se réunit régulièrement dans une maison au lieu d'un bâtiment d'église traditionnel. Elle se concentre sur la création d'un environnement intime pour l'adoration, la prière, l'étude biblique et la communion, favorisant des liens plus profonds et une croissance personnelle dans un cadre confortable et accessible.",
+      "whatIsHomeChurchDesc": "Parce qu'elle n'est pas une institution religieuse, un bâtiment ou une structure hiérarchique, c'est-à-dire parce qu'elle n'est pas une organisation mais un organisme, l'Église peut s'exprimer et se rassembler n'importe où, en particulier dans une maison, en tant que communauté de personnes qui partagent la même foi et se réunissent pour adorer Dieu, apprendre de la Parole et vivre dans l'amour et la communion les uns avec les autres.\n\nLa première adoration de Jésus-Christ a eu lieu dans une maison, dans un foyer (Matthieu 2:11). Plusieurs des guérisons de Jésus, ses prédications et même la Cène ont eu lieu dans des maisons (Matthieu 8:14-16; Matthieu 26:18; Marc 2:1). L'apôtre Paul adresse également des salutations à plusieurs églises dans les maisons, comme nous pouvons le voir dans Romains 16:3-5, 1 Corinthiens 16:19 et Philémon 1:2. Même avant sa mort, Paul rassemblait l'Église à la maison (Actes 28:30-31).\n\nL'église de maison représente un moyen d'établir et de rétablir la communion les uns avec les autres.",
       "relatedVideosTitle": "Vidéos Connexes",
-      "videoPlaceholder": "Vidéo YouTube"
+      "videoPlaceholder": "Vidéo YouTube",
+      "howToStartTitle": "Comment démarrer une réunion biblique à la maison?",
+      "howToStartIntro": "En 7 courtes vidéos, vous apprendrez comment démarrer une réunion ou une communion biblique à la maison :",
+      "howToStartStep1": "Priez et commencez une réunion biblique à la maison",
+      "howToStartStep2": "Comment diriger et que faire pendant une réunion biblique",
+      "howToStartStep3": "Garde d'enfants et sécurité pendant les réunions",
+      "howToStartStep4": "Accomplir les baptêmes",
+      "howToStartStep5": "Que faire lorsque la réunion biblique à domicile devient trop nombreuse",
+      "howToStartStep6": "Gérer les conflits et les désaccords dans l'Église à domicile",
+      "howToStartStep7": "Comment reconnaître et contribuer à d'autres Églises à domicile dans votre ville"
     }
   },
   "footer": {

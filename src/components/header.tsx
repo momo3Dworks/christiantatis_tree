@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Sun, Moon, Home, Globe, Play, Pause, User } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, Globe, Play, Pause, User, Youtube, Instagram, Facebook, Twitter } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,8 +19,11 @@ import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { AudioContext } from '@/context/AudioContext';
 import { Label } from '@/components/ui/label';
-import { useSupabase } from '@/lib/supabase/provider';
+import { useUser } from '@/firebase';
 import LoginDialog from './auth/LoginDialog';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+
 
 export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleClick }: { setLoginDialogOpen: (open: boolean) => void, isLoginDialogOpen: boolean, onTitleClick?: () => void }) {
   const [isSheetOpen, setSheetOpen] = useState(false);
@@ -30,8 +33,8 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
   const { toast } = useToast();
   const pathname = usePathname();
   const audioContext = useContext(AudioContext);
-  const { user, isLoading: isUserLoading, supabase } = useSupabase();
-
+  const { user, isUserLoading } = useUser();
+  const supabase = useSupabaseClient();
 
   const navItems = [
     { href: '/', label: t('header.home') },
@@ -101,6 +104,15 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
     });
   };
 
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return 'U';
+    const nameParts = name.split(' ');
+    if (nameParts.length > 1) {
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   return (
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[1350px]">
       <div
@@ -135,6 +147,28 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
                 </Link>
               ))}
             </nav>
+            <div className="flex items-center gap-4 mt-6">
+              <a href="https://www.youtube.com/@christianitatis2106" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Youtube className="w-5 h-5" />
+                <span className="sr-only">YouTube</span>
+              </a>
+              <a href="https://www.instagram.com/christianitatis" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Instagram className="w-5 h-5" />
+                <span className="sr-only">Instagram</span>
+              </a>
+              <a href="https://www.facebook.com/christianitatis" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Facebook className="w-5 h-5" />
+                <span className="sr-only">Facebook</span>
+              </a>
+              <a href="https://www.reddit.com/user/Glass-Composer6628/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm5.74-4.694a.968.968 0 0 0-1.339-1.401 2.661 2.661 0 0 1-3.456 0 .968.968 0 0 0-1.338 1.401 4.59 4.59 0 0 0 6.132 0zM5.742 12a4.017 4.017 0 0 0-3.3-2.164A4.018 4.018 0 0 0 5.742 12zM12 12a4.017 4.017 0 0 0-3.3-2.164A4.018 4.018 0 0 0 12 12zm0-7a3.99 3.99 0 0 1 2.214 7.334 3.99 3.99 0 1 1-2.214-7.334z" /></svg>
+                <span className="sr-only">Reddit</span>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors cursor-not-allowed opacity-50">
+                <Twitter className="w-5 h-5" />
+                <span className="sr-only">X (Twitter)</span>
+              </a>
+            </div>
             <div className="absolute bottom-8 left-0 right-0 p-4 space-y-4">
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <Label htmlFor="theme-toggle">Theme</Label>
@@ -196,15 +230,18 @@ export default function Header({ setLoginDialogOpen, isLoginDialogOpen, onTitleC
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-6 w-6 max-[630px]:h-5 max-[630px]:w-5" />
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.user_metadata?.avatar_url ?? ''} alt={user.user_metadata?.full_name ?? 'User'} />
+                    <AvatarFallback>{getInitials(user.user_metadata?.full_name || user.email)}</AvatarFallback>
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user.email || 'Profile'}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Perfil</Link>
+                  <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>

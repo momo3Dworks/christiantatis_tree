@@ -23,7 +23,9 @@ create table public.home_churches (
   "creatorId" uuid references auth.users(id) on delete cascade,
   reservations text[], -- Array of user UUIDs
   "isRecurring" boolean default true,
-  "isFull" boolean default false
+  "isFull" boolean default false,
+  "creatorName" text not null,
+  "creatorEmail" text not null
 );
 
 -- Enable RLS
@@ -46,4 +48,3 @@ create policy "Creators can delete their own churches" on public.home_churches
 -- Ideally this should be more strict or use a separate table
 create policy "Authenticated users can update reservations" on public.home_churches
   for update using (auth.role() = 'authenticated');
-

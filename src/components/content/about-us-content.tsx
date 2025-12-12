@@ -25,9 +25,7 @@ export default function AboutUsContent() {
         <main className="space-y-12">
           <section className="grid md:grid-cols-1 gap-8">
             <Card>
-              <CardHeader>
-                <CardTitle>{t('contentPreview.aboutUs.missionTitle')}</CardTitle>
-              </CardHeader>
+
               <CardContent>
                 <p className="text-muted-foreground text-lg">
                   {t('contentPreview.aboutUs.missionDescription')}
@@ -41,12 +39,12 @@ export default function AboutUsContent() {
             <div className="grid grid-cols-1 gap-6">
               {values.map((value, index) => (
                 <Card key={index}>
-                    <CardHeader>
-                        <CardTitle>{value.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">{value.description}</p>
-                    </CardContent>
+                  <CardHeader>
+                    <CardTitle>{value.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{value.description}</p>
+                  </CardContent>
                 </Card>
               ))}
             </div>

@@ -1,13 +1,13 @@
 
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient } from '@supabase/supabase-js';
+import { getAuth } from 'firebase-admin/auth';
+import { initializeAdminApp } from '@/firebase/admin';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_123456789'); // Valid key required for real sending
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Required to fetch user email by ID
-);
+
+// Ensure the admin app is initialized
+initializeAdminApp();
 
 export async function POST(req: Request) {
     try {
@@ -17,22 +17,24 @@ export async function POST(req: Request) {
 
         // 1. Handle Multiple User IDs (Broadcast)
         if (userIds && Array.isArray(userIds) && userIds.length > 0) {
-            const requests = userIds.map((id: string) => supabaseAdmin.auth.admin.getUserById(id));
-            const responses = await Promise.all(requests);
-            targetEmails = responses
-                .map(r => r.data.user?.email)
+            const auth = getAuth();
+            const userRecords = await auth.getUsers(userIds.map(uid => ({ uid })));
+            targetEmails = userRecords.users
+                .map(user => user.email)
                 .filter((e): e is string => !!e);
-
-            // Avoid spamming / huge lists in simulation, but for now it's fine.
         }
         // 2. Handle Creator Lookup
         else if (to === 'creator_lookup' && creatorId) {
-            const { data: user, error } = await supabaseAdmin.auth.admin.getUserById(creatorId);
-            if (error || !user) {
+            const auth = getAuth();
+            try {
+                const userRecord = await auth.getUser(creatorId);
+                if (userRecord.email) {
+                    targetEmails.push(userRecord.email);
+                }
+            } catch (error) {
                 console.error('Creator lookup failed', error);
                 return NextResponse.json({ error: 'Creator not found' }, { status: 404 });
             }
-            if (user.user.email) targetEmails.push(user.user.email);
         }
         // 3. Direct Email
         else if (to) {
@@ -47,8 +49,8 @@ export async function POST(req: Request) {
 
         // Send logic
         for (const recipient of targetEmails) {
-            if (process.env.RESEND_API_KEY) {
-                const { data, error } = await resend.emails.send({
+            if (process.env.RESEND_API_KEY && process.env.NODE_ENV === 'production') {
+                 const { data, error } = await resend.emails.send({
                     from: 'Christianitatis <onboarding@resend.dev>',
                     to: [recipient],
                     subject: subject,
@@ -69,6 +71,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, results });
 
     } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        console.error("Email API Error: ", error);
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }

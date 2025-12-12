@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -9,10 +10,11 @@ import { SAOProvider } from '@/context/SAOContext';
 import { AudioProvider } from '@/context/AudioContext';
 import Header from '@/components/header';
 import { usePathname } from 'next/navigation';
-import { SupabaseProvider } from '@/lib/supabase/provider';
+import { createBrowserClient } from '@supabase/ssr';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import CookieConsent from '@/components/cookie-consent';
-import Cookies from 'js-cookie';
 import { GeolocationProvider } from '@/context/GeolocationContext';
+import { FirebaseProvider } from '@/firebase';
 
 
 // This metadata is static and will not be translated
@@ -43,6 +45,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [supabaseClient] = useState(() =>
+    createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  );
+  
   return (
     <html lang="en">
       <head>
@@ -54,21 +63,23 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <SupabaseProvider>
+        <SessionContextProvider supabaseClient={supabaseClient}>
           <SAOProvider>
             <AudioProvider>
               <TranslationProvider>
                 <GeolocationProvider>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <RootLayoutContent>{children}</RootLayoutContent>
-                  </Suspense>
+                  <FirebaseProvider>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <RootLayoutContent>{children}</RootLayoutContent>
+                    </Suspense>
+                  </FirebaseProvider>
                   <Toaster />
                   <CookieConsent />
                 </GeolocationProvider>
               </TranslationProvider>
             </AudioProvider>
           </SAOProvider>
-        </SupabaseProvider>
+        </SessionContextProvider>
       </body>
     </html>
   );

@@ -1,4 +1,3 @@
-
 {
   "header": {
     "events": "Events",
@@ -41,9 +40,10 @@
   },
   "content": {
     "youtubeTitle": "Our YouTube Channel",
-    "youtubePlaceholder": "YouTube API integration coming soon to display latest videos.",
     "spotifyTitle": "Latest Podcasts on Spotify",
-    "spotifyPlaceholder": "Spotify API integration coming soon to display latest podcasts."
+    "spotifyPlaceholder": "Spotify API integration coming soon to display latest podcasts.",
+    "viewMore": "View More",
+    "viewLess": "View Less"
   },
   "events": {
     "title": "Find an Event",
@@ -73,14 +73,18 @@
   },
   "faq": {
     "title": "Frequently Asked Questions",
-    "q1": "What are your service times?",
-    "a1": "Our main service is on Sunday at 10:00 AM. We also have a midweek service on Wednesdays at 7:00 PM.",
-    "q2": "Do you have programs for children?",
-    "a2": "Yes, we have a vibrant children's ministry for ages 0-12 during our Sunday service.",
-    "q3": "How can I get involved?",
-    "a3": "We have many small groups and volunteer opportunities. Please visit our contact page to get in touch with a ministry leader.",
-    "q4": "What do you believe?",
-    "a4": "Our beliefs are rooted in the Bible and centered on Jesus Christ. You can find a detailed statement of faith on our (soon to be created) 'About Us' page."
+    "q1": "Can I create a bible meeting anywhere in the world?",
+    "a1": "Yes, Christianitatis encourages the creation of home churches anywhere there are people willing to worship.",
+    "q2": "When I register a Home Church, is my personal data available to anyone who visits the site?",
+    "a2": "We do not expose your sensitive data publicly. The site only shows essential information such as neighborhood and time, and direct contact is protected or made through the platform.",
+    "q3": "Do I need to log in to access the host's contact for each Home Church?",
+    "a3": "Yes, to ensure community safety, access to host contact details requires authentication.",
+    "q4": "How long does a bible meeting last?",
+    "a4": "The time may vary according to each group, but generally meetings last between 1.5 to 2 hours.",
+    "q5": "Who participates in the forum?",
+    "a5": "The forum is open to all registered members on the platform who wish to discuss biblical topics and share experiences.",
+    "q6": "Do I need to be a Christian to participate in any Home Church?",
+    "a6": "No, everyone is welcome to participate, listen to the word, and learn more about the Christian faith, regardless of their current belief."
   },
   "forum": {
     "title": "Community Forum",
@@ -90,33 +94,33 @@
   "scene": {
     "support": "Support the Movement",
     "register": "Register a Home Church",
-    "startMeeting": "Start a Bible Meeting",
+    "startMeeting": "Home Church",
     "findChurch": "Find a Home Church",
     "aboutUs": "About Us",
     "return": "Return"
   },
   "contentPreview": {
     "aboutUs": {
-      "title": "About Us",
+      "title": "Our Mission",
       "missionTitle": "Our Mission",
-      "missionDescription": "To spread the message of faith, hope, and love, fostering a global community of believers dedicated to spiritual growth and service. We aim to make the teachings of the Bible accessible to everyone, everywhere, empowering individuals to build a personal relationship with God.",
+      "missionDescription": "Christianitatis' mission is to teach people to start Home Churches worldwide as a dynamic and multipliable structure, capable of expanding continuously as long as essential conditions are maintained. We believe that the quality of leadership and the vitality of spiritual life are indispensable foundations for the flourishing and sustainability of these faith communities.",
       "valuesTitle": "Our Values",
       "faith": "Faith",
-      "faithDesc": "Rooted in the teachings of Jesus Christ and the Holy Scripture.",
+      "faithDesc": "Guided by the teachings of Jesus Christ and the Holy Scripture.",
       "community": "Community",
-      "communityDesc": "Building strong, supportive relationships among believers.",
+      "communityDesc": "We aim to build strong, supportive relationships among those who believe in Jesus.",
       "service": "Service",
-      "serviceDesc": "Serving others with love and compassion, following Christ's example.",
+      "serviceDesc": "Serving others with love and compassion, following the example of Jesus Christ.",
       "integrity": "Integrity",
-      "integrityDesc": "Upholding honesty and transparency in all our actions.",
+      "integrityDesc": "We uphold honesty and transparency in all our actions.",
       "worship": "Worship",
-      "worshipDesc": "Glorifying God in all that we do, in spirit and in truth.",
+      "worshipDesc": "We glorify God in everything we do, in spirit and in truth.",
       "discipleship": "Discipleship",
-      "discipleshipDesc": "Helping believers grow in their faith and become followers of Christ."
+      "discipleshipDesc": "Helping people grow in their faith and become followers of Jesus Christ."
     },
     "donation": {
       "title": "Support the Movement",
-      "description": "Your generosity fuels our mission to spread the message and support communities in need. Every contribution, big or small, makes a significant impact.",
+      "description": "Your generosity strengthens our mission to reach as many people as possible so they may receive eternal life by grace through faith in Jesus Christ.",
       "card": "Credit/Debit Card",
       "bank": "Bank Transfer",
       "pix": "PIX",
@@ -127,7 +131,7 @@
       "expiry": "Expiry",
       "cvc": "CVC",
       "zip": "ZIP Code",
-      "amount": "Amount (USD)",
+      "amount": "Amount in dollars",
       "donate": "Donate",
       "bankDetails": "Bank Transfer Details",
       "bankDescription": "Use the details below to make a direct bank transfer.",
@@ -209,13 +213,22 @@
       "loginPrompt": "Please log in to register a church."
     },
     "startMeeting": {
-      "title": "Start a Bible Meeting",
+      "title": "Home Church",
       "whatIsChurchTitle": "What is a Church?",
-      "whatIsChurchDesc": "A church is not a building, but a community of believers united by their faith in Jesus Christ. It's a spiritual family dedicated to worship, fellowship, discipleship, ministry, and evangelism. The early church met in homes, and this model emphasizes close-knit relationships and mutual support.",
+      "whatIsChurchDesc": "The Church is us, gathered and reconciled with God through Jesus Christ. The Church is a collective spiritual reality formed by people who unite and relate because they have been saved, born again, and received eternal life by grace, through faith in Jesus Christ. Under the leadership and authority of Jesus Christ, the Church, in unity, is called to proclaim the gospel and manifest the love and Kingdom of God on Earth.",
       "whatIsHomeChurchTitle": "What is a Home Church?",
-      "whatIsHomeChurchDesc": "A home church is a small group of believers who meet regularly in a home instead of a traditional church building. It focuses on creating an intimate environment for worship, prayer, Bible study, and fellowship, fostering deeper connections and personal growth in a comfortable, accessible setting.",
+      "whatIsHomeChurchDesc": "Because it is not a religious institution, a building, or a hierarchical structure, that is, because it is not an organization but an organism, the Church can express itself and gather anywhere, especially in a home, as a community of people who share the same faith and meet to worship God, learn from the Word, and live in love and fellowship with one another.\n\nThe first worship of Jesus Christ occurred in a house, in a home (Matthew 2:11). Several of Jesus' healings, preachings, and even the Last Supper took place in homes (Matthew 8:14-16; Matthew 26:18; Mark 2:1). The apostle Paul also sends greetings to several churches in homes, as we can see in Romans 16:3-5, 1 Corinthians 16:19, and Philemon 1:2. Even before his death, Paul gathered the Church at home (Acts 28:30-31).\n\nThe home church represents a way to establish and re-establish fellowship with one another.",
       "relatedVideosTitle": "Related Videos",
-      "videoPlaceholder": "YouTube Video"
+      "videoPlaceholder": "YouTube Video",
+      "howToStartTitle": "How to start a biblical meeting at home?",
+      "howToStartIntro": "In 7 brief videos, you will learn how to start a biblical meeting or fellowship at home:",
+      "howToStartStep1": "Pray and start a biblical meeting at home",
+      "howToStartStep2": "How to conduct and what to do during a biblical meeting",
+      "howToStartStep3": "Child care and safety during meetings",
+      "howToStartStep4": "Performing baptisms",
+      "howToStartStep5": "What to do when the home biblical meeting grows too large in number of people",
+      "howToStartStep6": "Dealing with conflicts and disagreements in the home Church",
+      "howToStartStep7": "How to recognize and contribute to other home Churches in your city"
     }
   },
   "footer": {
