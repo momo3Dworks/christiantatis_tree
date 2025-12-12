@@ -69,6 +69,7 @@ export default function ProfilePage() {
   const [createdChurches, setCreatedChurches] = useState<any[]>([]);
   const [reservedChurches, setReservedChurches] = useState<any[]>([]);
   const [isLoadingChurches, setIsLoadingChurches] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Phone Verification State
   const [phone, setPhone] = useState('');
@@ -284,6 +285,8 @@ export default function ProfilePage() {
   const handleDeleteChurch = async () => {
     if (!churchToDelete || !supabase) return;
 
+    setIsDeleting(true);
+
     try {
       const { data: churchData, error: fetchError } = await supabase
         .from('home_churches')
@@ -310,18 +313,28 @@ export default function ProfilePage() {
                  `
           );
 
+          // Add timeout to prevent hanging UI
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
           await fetch('/api/email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userIds: churchData.reservations, // Array of user IDs
+              userIds: churchData.reservations,
               subject: 'Important: Church Deleted - Christianitatis',
               html: emailHtml
-            })
+            }),
+            signal: controller.signal
           });
+          clearTimeout(timeoutId);
 
-        } catch (e) {
-          console.error("Failed to send broadcast deletion email", e);
+        } catch (e: any) {
+          if (e.name === 'AbortError') {
+            console.warn("Email notification timed out, but deletion will proceed.");
+          } else {
+            console.error("Failed to send broadcast deletion email", e);
+          }
         }
       }
       const { error: deleteError } = await supabase
@@ -337,7 +350,6 @@ export default function ProfilePage() {
         title: 'Church Deleted',
         description: 'The church has been successfully deleted.',
       });
-      // The useCollection hook will update the UI automatically
     } catch (error: any) {
       console.error("Error deleting church: ", error);
       toast({
@@ -346,6 +358,7 @@ export default function ProfilePage() {
         description: error.message || 'Could not delete the church.',
       });
     } finally {
+      setIsDeleting(false);
       setShowDeleteAlert(false);
       setChurchToDelete(null);
     }
@@ -829,8 +842,11 @@ export default function ProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setChurchToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteChurch}>Delete</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setChurchToDelete(null)} disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <Button variant="destructive" onClick={handleDeleteChurch} disabled={isDeleting}>
+              {isDeleting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
