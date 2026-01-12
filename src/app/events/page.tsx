@@ -134,30 +134,12 @@ export default function EventsPage() {
 
               {/* Status Filter */}
               <div className="space-y-4">
-                <Label className="font-semibold">{t('contentPreview.registerChurch.status')}</Label>
-                <RadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="status-all" />
-                    <Label htmlFor="status-all">{t('events.all')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="open" id="status-open" />
-                    <Label htmlFor="status-open">{t('contentPreview.registerChurch.statusOptions.open')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="full" id="status-full" />
-                    <Label htmlFor="status-full">{t('contentPreview.registerChurch.statusOptions.full')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="closed" id="status-closed" />
-                    <Label htmlFor="status-closed">{t('contentPreview.registerChurch.statusOptions.closed')}</Label>
-                  </div>
-                </RadioGroup>
+
               </div>
 
               {/* Date Filter */}
               <div className="space-y-4">
-                <Label className="font-semibold">{t('events.date')}</Label>
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button

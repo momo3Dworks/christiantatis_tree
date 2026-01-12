@@ -304,14 +304,12 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
                 <p className="text-sm font-medium text-muted-foreground mb-2">{t('contentPreview.registerChurch.sessionInfo')}</p>
                 <div className="space-y-4 p-4 border rounded-lg">
                   <FormField control={form.control} name="creator_name" render={({ field }) => (
-                    <FormItem><FloatingLabelInput field={field} label={t('Creator Name')} placeholder=" " /></FormItem>
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.creatorName')} placeholder=" " /></FormItem>
                   )} />
                   <FormField control={form.control} name="creator_email" render={({ field }) => (
-                    <FormItem><FloatingLabelInput field={field} label={t('Creator Email')} placeholder=" " /></FormItem>
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.creatorEmail')} placeholder=" " /></FormItem>
                   )} />
-                  <FormField control={form.control} name="email" render={({ field }) => (
-                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.email')} placeholder=" " /></FormItem>
-                  )} />
+
                   <FormField control={form.control} name="whatsapp_number" render={({ field }) => (
                     <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.whatsapp')} placeholder=" " /></FormItem>
                   )} />
@@ -322,7 +320,7 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
                     <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.neighborhood')} placeholder=" " /></FormItem>
                   )} />
                   <FormField control={form.control} name="country" render={({ field }) => (
-                    <FormItem><FloatingLabelInput field={field} label={t('Country')} placeholder=" " /></FormItem>
+                    <FormItem><FloatingLabelInput field={field} label={t('contentPreview.registerChurch.churchCountry')} placeholder=" " /></FormItem>
                   )} />
                 </div>
                 <FormMessage className="mt-1">{form.formState.errors.email?.message}</FormMessage>

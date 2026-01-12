@@ -3,6 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Youtube } from "lucide-react";
 
 export default function StartBibleMeetingContent() {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ export default function StartBibleMeetingContent() {
       </p>
     ));
   };
-  
+
   const howToStartSteps = [
     t('contentPreview.startMeeting.howToStartStep1'),
     t('contentPreview.startMeeting.howToStartStep2'),
@@ -55,7 +56,7 @@ export default function StartBibleMeetingContent() {
                 </div>
               </CardContent>
             </Card>
-             <Card>
+            <Card>
               <CardHeader>
                 <CardTitle>{t('contentPreview.startMeeting.howToStartTitle')}</CardTitle>
               </CardHeader>
@@ -68,6 +69,27 @@ export default function StartBibleMeetingContent() {
                     <li key={index}>{step}</li>
                   ))}
                 </ol>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Youtube className="w-6 h-6 text-red-600" />
+                  {t('contentPreview.startMeeting.relatedVideosTitle')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video w-full rounded-lg overflow-hidden shadow-inner bg-muted">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src="https://www.youtube.com/embed/videoseries?list=PL_XG1XmE0N_L0vY8S8u8Z6R3Yx-N8o9W-"
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
               </CardContent>
             </Card>
           </section>
