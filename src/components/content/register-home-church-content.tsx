@@ -43,6 +43,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import LoginDialog from "../auth/LoginDialog";
 
 
 // Sanitize function to remove HTML tags
@@ -88,11 +89,77 @@ const FloatingLabelInput = ({ field, label, placeholder, type = "text" }: { fiel
 
 
 
-const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocation: any, toast: any, t: (key: string, options?: any) => string, user: any }) => {
+import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { mapsConfig } from "@/lib/maps-config";
+
+// --- Helper Components ---
+
+const LocationPicker = ({ initialLocation, onLocationChange, t }: { initialLocation: { lat: number, lng: number } | null, onLocationChange: (loc: { lat: number, lng: number }) => void, t: any }) => {
+  const [markerPos, setMarkerPos] = useState(initialLocation);
+
+  useEffect(() => {
+    if (initialLocation && !markerPos) {
+      setMarkerPos(initialLocation);
+    }
+  }, [initialLocation]);
+
+  const handleMapClick = (e: any) => {
+    const nextLoc = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
+    setMarkerPos(nextLoc);
+    onLocationChange(nextLoc);
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-muted-foreground">{t('contentPreview.findChurch.mapTitle')}</p>
+      <div className="h-[300px] w-full rounded-lg overflow-hidden border border-white/10 relative">
+        {mapsConfig.apiKey && mapsConfig.mapId ? (
+          <APIProvider apiKey={mapsConfig.apiKey}>
+            <Map
+              mapId={mapsConfig.mapId}
+              defaultCenter={initialLocation || { lat: 0, lng: 0 }}
+              defaultZoom={initialLocation ? 15 : 2}
+              onClick={handleMapClick}
+              gestureHandling={'greedy'}
+              disableDefaultUI={true}
+              className="w-full h-full"
+            >
+              {markerPos && (
+                <AdvancedMarker position={markerPos}>
+                  <img src="/assets/ping.svg" alt="Picker" className="w-10 h-10 transform -translate-x-1/2 -translate-y-1/2" />
+                </AdvancedMarker>
+              )}
+            </Map>
+          </APIProvider>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted/20 backdrop-blur-sm">
+            <p className="text-xs text-muted-foreground p-4 text-center">Configuring map...</p>
+          </div>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground italic px-1">
+        * {t('contentPreview.findChurch.applyFilters')} (Click on map to adjust position)
+      </p>
+    </div>
+  );
+};
+
+const RegistrationForm = React.memo(({ geolocation, toast, t, user, isLoginOpen, setIsLoginOpen }: { geolocation: any, toast: any, t: (key: string, options?: any) => string, user: any, isLoginOpen: boolean, setIsLoginOpen: (open: boolean) => void }) => {
   const { locale } = useTranslation();
   const supabase = useSupabaseClient();
   const dateLocales: { [key: string]: any } = { es, fr, pt };
   const [timeFormat, setTimeFormat] = useState<'12h' | '24h'>('24h');
+  const [pickedLocation, setPickedLocation] = useState<{ lat: number, lng: number } | null>(null);
+
+  // Set initial picked location from geolocation context
+  useEffect(() => {
+    if (geolocation?.location && !pickedLocation) {
+      setPickedLocation({
+        lat: geolocation.location.latitude,
+        lng: geolocation.location.longitude
+      });
+    }
+  }, [geolocation?.location]);
 
   const statusOptions = [
     { value: 'Open', label: t('contentPreview.registerChurch.statusOptions.open') },
@@ -134,11 +201,11 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
   }, [user, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!geolocation?.location || !user) {
+    if (!pickedLocation || !user) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Location or user not available. Please try again later.",
+        title: "Location Required",
+        description: "Please select your church location on the map.",
       });
       return;
     }
@@ -185,8 +252,8 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
       creatorEmail: values.creator_email,
       personLimit: values.person_limit ? Number(values.person_limit) : null,
       tags: values.tags ? values.tags.split(',').map(tag => tag.trim()) : [],
-      latitude: Number(geolocation.location.latitude),
-      longitude: Number(geolocation.location.longitude),
+      latitude: Number(pickedLocation.lat),
+      longitude: Number(pickedLocation.lng),
       reservations: [],
       isFull: false,
       meetingSchedule: scheduleString,
@@ -261,10 +328,27 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
 
   if (!user) {
     return (
-      <Card className="h-full flex flex-col items-center justify-center">
-        <CardContent className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">{t('contentPreview.registerChurch.loginPrompt')}</p>
+      <Card className="h-full flex flex-col items-center justify-center p-8">
+        <CardContent className="text-center space-y-6">
+          <div className="flex justify-center">
+            <div className="p-4 rounded-full bg-muted/20">
+              <UserIcon className="h-16 w-16 text-muted-foreground" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-medium text-foreground">{t('contentPreview.registerChurch.loginPrompt')}</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+              Please sign in to register and manage your home church community.
+            </p>
+          </div>
+          <LoginDialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+            <Button
+              onClick={() => setIsLoginOpen(true)}
+              className="animated-gradient border-0 px-8 py-6 h-auto text-lg font-bold shadow-xl hover:scale-105 transition-transform"
+            >
+              {t('header.onlineBible').toLowerCase().includes('biblia') ? 'Iniciar Sesión' : 'Sign In Now'}
+            </Button>
+          </LoginDialog>
         </CardContent>
       </Card>
     );
@@ -325,6 +409,13 @@ const RegistrationForm = React.memo(({ geolocation, toast, t, user }: { geolocat
                 </div>
                 <FormMessage className="mt-1">{form.formState.errors.email?.message}</FormMessage>
               </div>
+
+              {/* Interactive Location Picker */}
+              <LocationPicker
+                initialLocation={pickedLocation}
+                onLocationChange={setPickedLocation}
+                t={t}
+              />
 
               <FormField
                 control={form.control}
@@ -514,10 +605,18 @@ export default function RegisterHomeChurchContent() {
   const { user } = useUser();
   const geolocation = useContext(GeolocationContext);
   const { toast } = useToast();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   return (
     <div className="PreviewContent p-4 md:p-8 text-foreground h-full flex flex-col">
-      <RegistrationForm geolocation={geolocation} toast={toast} t={t} user={user} />
+      <RegistrationForm
+        geolocation={geolocation}
+        toast={toast}
+        t={t}
+        user={user}
+        isLoginOpen={isLoginOpen}
+        setIsLoginOpen={setIsLoginOpen}
+      />
     </div>
   );
 }

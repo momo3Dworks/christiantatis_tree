@@ -12,7 +12,7 @@ type GeolocationContextType = {
   location: Location | null;
   setLocation: (location: Location) => void;
   error: string | null;
-  setError: (error: string) => void;
+  setError: (error: string | null) => void;
 };
 
 export const GeolocationContext = createContext<GeolocationContextType | undefined>(undefined);

@@ -2,7 +2,7 @@
   "header": {
     "events": "Événements",
     "onlineBible": "Bible en Ligne",
-    "content": "Contenu",
+    "content": "Videocast/Podcast",
     "faq": "FAQ",
     "forum": "Forum",
     "contactUs": "Contactez-nous",
@@ -60,7 +60,7 @@
   },
   "events": {
     "title": "Trouver un Événement",
-    "searchPlaceholder": "Rechercher des événements",
+    "searchPlaceholder": "Rechercher une ville ou un pays",
     "filters": "Filtres",
     "format": "Format",
     "all": "Tous",
@@ -215,7 +215,7 @@
         "tempClosed": "Fermée Temporairement",
         "suspended": "Suspendue"
       },
-      "upcomingMeetings": "Rechercher une ville ou un pays",
+      "upcomingMeetings": "Trouvez une église près de chez vous",
       "locationFeaturePlaceholder": "La fonctionnalité basée sur la localisation sera bientôt disponible.",
       "submitButton": "Soumettre pour Validation",
       "toastTitle": "Demande d'Enregistrement Envoyée !",

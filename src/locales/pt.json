@@ -2,7 +2,7 @@
   "header": {
     "events": "Eventos",
     "onlineBible": "Bíblia Online",
-    "content": "Conteúdo",
+    "content": "Videocast/Podcast",
     "faq": "FAQ",
     "forum": "Fórum",
     "contactUs": "Contato",
@@ -61,7 +61,7 @@
   },
   "events": {
     "title": "Encontre um Evento",
-    "searchPlaceholder": "Pesquisar Eventos",
+    "searchPlaceholder": "Pesquisar cidade ou país",
     "filters": "Filtros",
     "format": "Formato",
     "all": "Todos",
@@ -220,7 +220,7 @@
         "tempClosed": "Fechada Temporariamente",
         "suspended": "Suspensa"
       },
-      "upcomingMeetings": "Pesquisar cidade ou país",
+      "upcomingMeetings": "Encontre uma Igreja no lar",
       "locationFeaturePlaceholder": "Recurso baseado em localização em breve.",
       "submitButton": "Enviar para Validação",
       "toastTitle": "Solicitação de Registro Enviada!",

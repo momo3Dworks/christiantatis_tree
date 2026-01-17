@@ -2,7 +2,7 @@
   "header": {
     "events": "Eventos",
     "onlineBible": "Biblia en Línea",
-    "content": "Contenido",
+    "content": "Videocast/Podcast",
     "faq": "Preguntas Frecuentes",
     "forum": "Foro",
     "contactUs": "Contáctanos",
@@ -61,7 +61,7 @@
   },
   "events": {
     "title": "Encuentra un Evento",
-    "searchPlaceholder": "Buscar Eventos",
+    "searchPlaceholder": "Buscar por ciudad o país",
     "filters": "Filtros",
     "format": "Formato",
     "all": "Todos",
@@ -221,7 +221,7 @@
         "tempClosed": "Cerrada Temporalmente",
         "suspended": "Suspendida"
       },
-      "upcomingMeetings": "Buscar por ciudad o país",
+      "upcomingMeetings": "Encuentra una iglesia en tu casa",
       "locationFeaturePlaceholder": "La función basada en la ubicación llegará pronto.",
       "submitButton": "Enviar para Validación",
       "toastTitle": "¡Solicitud de Registro Enviada!",
@@ -274,7 +274,10 @@
     "cookies": "Cookies"
   },
   "cookies": {
-    "message": "Usamos cookies y solicitamos tu ubicación para mejorar tu experiencia. Al continuar usando este sitio, aceptas nuestro uso de cookies y geolocalización.",
-    "accept": "Aceptar"
+    "title": "Bienvenido a Christianitatis",
+    "message": "Para brindarte la mejor experiencia y ayudarte a encontrar iglesias en hogares cerca de ti, usamos cookies y solicitamos acceso a tu ubicación. Tu privacidad es importante para nosotros.",
+    "blockedTitle": "Acceso a la Ubicación Bloqueado",
+    "blockedMessage": "Parece que el acceso a la ubicación está bloqueado en tu navegador. Para ayudarte a encontrar iglesias cerca de ti, por favor habilita la ubicación en los ajustes de tu navegador (usualmente en la barra de direcciones) y recarga la página.",
+    "accept": "Aceptar y Continuar"
   }
 }

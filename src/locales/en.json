@@ -2,7 +2,7 @@
   "header": {
     "events": "Events",
     "onlineBible": "Online Bible",
-    "content": "Content",
+    "content": "Videocast/Podcast",
     "faq": "FAQ",
     "forum": "Forum",
     "contactUs": "Contact Us",
@@ -61,7 +61,7 @@
   },
   "events": {
     "title": "Find an Event",
-    "searchPlaceholder": "Search Events",
+    "searchPlaceholder": "Search for city or country",
     "filters": "Filters",
     "format": "Format",
     "all": "All",
@@ -221,7 +221,7 @@
         "tempClosed": "Temporarily Closed",
         "suspended": "Suspended"
       },
-      "upcomingMeetings": "Search for city or country",
+      "upcomingMeetings": "Find a church in your home",
       "locationFeaturePlaceholder": "Location-based feature coming soon.",
       "submitButton": "Submit for Validation",
       "toastTitle": "Registration Request Sent!",
@@ -284,7 +284,10 @@
     "cookies": "Cookies"
   },
   "cookies": {
-    "message": "We use cookies and request your location to enhance your experience. By continuing to use this site, you agree to our use of cookies and geolocation.",
-    "accept": "Accept"
+    "title": "Welcome to Christianitatis",
+    "message": "To provide you with the best experience and help you find home churches near you, we use cookies and request access to your location. Your privacy is important to us.",
+    "blockedTitle": "Location Access Blocked",
+    "blockedMessage": "It seems location access is blocked in your browser. To help you find home churches near you, please enable location in your browser settings (usually in the address bar) and refresh the page.",
+    "accept": "Accept and Continue"
   }
 }

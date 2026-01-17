@@ -378,13 +378,19 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
   };
 
 
-  if (!geolocation?.location) {
+  if (!geolocation?.location && !geolocation?.error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Obtaining location...</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-6">
+        <div className="h-10 w-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-muted-foreground animate-pulse">{t('contentPreview.registerChurch.upcomingMeetings')}...</p>
       </div>
     );
   }
+
+  const defaultLocation = { lat: -23.5505, lng: -46.6333 }; // Default to São Paulo or similar if none
+  const initialCenter = geolocation?.location
+    ? { lat: geolocation.location.latitude, lng: geolocation.location.longitude }
+    : defaultLocation;
 
   return (
     <div className="relative w-full h-full overflow-hidden min-h-[500px]">
@@ -393,8 +399,8 @@ const ChurchMap = React.memo(({ churches, geolocation, user, selectedChurchFromH
           <MapUpdater selectedChurch={selectedChurchFromHud} />
           <Map
             mapId={mapsConfig.mapId}
-            defaultCenter={geolocation?.location ? { lat: geolocation.location.latitude, lng: geolocation.location.longitude } : { lat: 0, lng: 0 }}
-            defaultZoom={geolocation?.location ? 12 : 2}
+            defaultCenter={initialCenter}
+            defaultZoom={geolocation?.location ? 12 : 3}
             gestureHandling={'greedy'}
             zoomControl={false}
             mapTypeControl={false}
